@@ -10,22 +10,28 @@ int main(int argc, char* argv[]) {
             sb_add_flag("g");
 
             sb_add_include_path("include");
-             
+
             sb_add_file("src/main.c");
             sb_add_file("src/util.c");
             
             sb_set_out("app");
             sb_export_command();
-        }
 
-        sb_fence();
-        sb_CMD() {
-            sb_cmd_arg("clear");
+            if (sb_check_arg("inc")) {
+                sb_set_find_deps();
+                sb_set_incremental();
+            }
         }
+        if (sb_check_arg("test")) {
+            sb_fence();
+            sb_CMD() {
+                sb_cmd_main("clear");
+            }
 
-        sb_fence();
-        sb_CMD() {
-            sb_cmd_arg("./build/app");
+            sb_fence();
+            sb_CMD() {
+                sb_cmd_arg("./build/app");
+            }
         }
     }
 }

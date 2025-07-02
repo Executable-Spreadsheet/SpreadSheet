@@ -126,6 +126,74 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt, va_list a
                 putc(digit, fd);
             }
         } break;
+        case 'l':
+        {
+            switch (fmt[2])
+                {
+                    case 'X':
+                        {
+                            fmt++;
+                            u64 p = va_arg(args, u64);
+
+                            u32 num_digits = 0;
+                            u64 temp = p;
+                            while (temp) {
+                                num_digits += 1;
+                                temp >>= 4;
+                            }
+
+                            for (i32 i = num_digits - 1; i >= 0; i--) {
+                                u8 v = (p >> (4 * i)) & 0xF;
+                                if (v < 10) putc(v + '0', fd);
+                                else putc(v + ('A' - 10), fd);
+                            }
+                        } break;
+                    case 'x':
+                        {
+                            fmt++;
+                            u64 p = va_arg(args, u64);
+
+                            u32 num_digits = 0;
+                            u64 temp = p;
+                            while (temp) {
+                                num_digits += 1;
+                                temp >>= 4;
+                            }
+
+                            for (i32 i = num_digits - 1; i >= 0; i--) {
+                                u8 v = (p >> (4 * i)) & 0xF;
+                                if (v < 10) putc(v + '0', fd);
+                                else putc(v + ('a' - 10), fd);
+                            }
+                        } break;
+                    case 'd':
+                        fmt++;
+                    default:
+                        {
+                            u32 num_digits = 1;
+                            i64 n = va_arg(args, i64);
+                            if (n < 0) { 
+                                n *= -1;
+                                putc('-', fd);
+                            }
+                            u32 val = n;
+
+                            u32 temp = val/10; 
+                            while (temp) {
+                                temp /= 10; 
+                                num_digits *= 10;
+                            }
+
+                            while (num_digits) {
+                                u32 shift = num_digits/10;
+                                shift = num_digits ? num_digits : 1;
+                                i8 digit = ((val % (num_digits * 10)) / num_digits) + '0';
+                                num_digits /= 10;        
+                                putc(digit, fd);
+                            }
+                        } break;
+                }
+        }
         case 'x':
         {
             u32 p = va_arg(args, u32);
@@ -212,7 +280,7 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt, va_list a
         } break;
         default:
         {
-            panic();
+                todo();
         } break;
     }
     fmt += 2;
@@ -299,6 +367,8 @@ static alloc_func_def(StackAllocate) {
     StackAllocator* s = ctx;
 
     if (oldsize == 0) {
+        log("Stack Alloc: %p %d", ctx, newsize);
+        if (s->size + newsize > s->cap) return 0; //error
         void* out = &s->data[s->size];
         s->size += newsize;
 
@@ -307,6 +377,9 @@ static alloc_func_def(StackAllocate) {
 
     //realloc works via an alloc + memcpy
     if (ptr && oldsize && newsize) {
+        log("Stack Realloc: %p (%p, %d) -> %d", ctx, ptr, oldsize, newsize);
+        if (s->size + newsize > s->cap) return ptr; //error
+        
         void* dst = &s->data[s->size];
         s->size += newsize;
 
@@ -315,6 +388,7 @@ static alloc_func_def(StackAllocate) {
     }
 
     if (ptr) {
+        log("Stack Free: %p (%p, %d)", ctx, ptr, oldsize);
         //free
         return 0;
     }
@@ -345,4 +419,43 @@ void StackAllocatorReset(Allocator* a) {
 void StackAllocatorDestroy(const Allocator* a) {
     StackAllocator* s = a->ctx;
     Free(s->a, s, sizeof(StackAllocator) + s->cap);
+}
+
+//Dumps entire file into buffer
+#include "stdio.h"
+#include "sys/stat.h"
+
+
+SString DumpFile(Allocator a, const char* filename) {
+    FILE* f = fopen(filename, "r");
+
+    struct stat info;
+    if (stat(filename, &info)) {
+        err("Failed to stat file");
+        panic();
+    }
+
+    SString output = {
+        .size = info.st_size,
+        .data = Alloc(a, info.st_size)
+    };
+
+    fread(output.data, 1, info.st_size, f);
+    fclose(f);
+
+
+    return output;
+}
+
+void DumpFileS(SString* dst, SString filename) {
+    todo();
+}
+
+//Write full contents of buffer into file
+void WriteFile(const char* data) {
+    todo();
+}
+
+void WriteFileS(SString data) {
+    todo();
 }

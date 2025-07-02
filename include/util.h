@@ -64,6 +64,10 @@ u32 stou(const char* s);
 u32 sstou(SString s);
 u32 lstou(LString s);
 
+SString SStrDup(SString s);
+SString SStrCmp(SString a, SString b);
+
+
 /*
 +----------------------------------------------------+
 |     INFO:                                          |
@@ -80,20 +84,22 @@ u32 lstou(LString s);
 void print(FILE* fd, const char* fmt, ...); 
 
 /*
-Print sub options
-%d -> 32 bit int
-%f -> 32 or 64 bit float
-%p -> pointer
-%x -> lower case hex
-%X -> upper case hex
-%% -> single %
+Print formatting options
+%d  -> 32 bit int
+%l  -> 64 bit int
+%ld -> 64 bit int
+%f  -> 32 or 64 bit float
+%p  -> pointer
+%x  -> lower case hex
+%X  -> upper case hex
+%lx -> 64 bit hex
+%lX -> 64 bit upper case hex
+%%  -> single %
 
 
 --- These ones are different than printf -----
 %s -> SString
 %n -> Null terminated string
-
- 
 */
 
 
@@ -116,6 +122,14 @@ Print sub options
 
 #include <assert.h>
 #define panic() assert(0)
+#define todo() \
+    { \
+        err("Not Implemented"); \
+        panic(); \
+    }
+
+#define REQ_ZERO(x) \
+    assert(!(x))
 
 
 /*
@@ -156,5 +170,24 @@ Allocator GlobalAllocatorCreate();
 Allocator StackAllocatorCreate(const Allocator a, u64 minsize);
 void StackAllocatorReset(Allocator* a);
 void StackAllocatorDestroy(const Allocator* a);
+
+/*
++------------------------------------------------------+
+|   INFO:                                              |
+|                                                      | 
+|   Some file handling functions.                      |
+|   Make sure to discuss later about                   |
+|   whether to use POSIX/stdlib or to use native       |
+|   OS API                                             |
++------------------------------------------------------+
+*/
+
+//Dumps entire file into buffer
+SString DumpFile(Allocator a, const char* filename);
+void DumpFileS(SString* dst, SString filename);
+
+//Write full contents of buffer into file
+void WriteFile(const char* data);
+void WriteFileS(SString data);
 
 #endif
