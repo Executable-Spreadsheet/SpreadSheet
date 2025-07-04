@@ -1,7 +1,9 @@
 
+Updated: today
+
+
 ## Decisions
 - Language : C
-- 
 
 
 ## User Stories
@@ -47,6 +49,4 @@
     - Build Tool: make
 
 - CI/CD (testing/build automation)
-
-
 
