@@ -1,68 +1,46 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <util/util.h>
-#include <libparasheet/lib_internal.h>
+#include <ncurses.h>
 
-int main() {
+/*
++---------------------------------------------------------------+
+|    INFO(ELI): Just for simplicity, We should start but        |
+|    putting all the functions in the same file, we can         |
+|    break them out later if it gets too long and unweildy      |
+|    but for right now keeping things as simple as possible     |
+|    will make things faster.                                   |
++---------------------------------------------------------------+
+*/
 
-    SpreadSheet s = {
-        .mem = GlobalAllocatorCreate(),
-    };
 
-    for (u32 i = 0; i < 3; i++) {
-        CellValue v = (CellValue) {
-            .t = CT_INT,
-            .d = {i},
-        };
-        SpreadSheetSetCell(&s, (v2u){i, 0}, v);
-    }
 
-    for (u32 i = 0; i < 3; i++) {
-        CellValue* c = SpreadSheetGetCell(&s, (v2u){i, 0});
-        print(stdout, "cell: %p\n", c);
-        if (c) {
-            print(stdout, "value: %d\n", c->d.i);
-            print(stdout, "\tbsize: %d\n", s.bsize);
-        }
-    }
+int main(int argc, char* argv[]) {
+    initscr();
+    noecho();               //prevent echoing output
+    raw();                  //remove buffering
+    keypad(stdscr, TRUE);   //enable extended keys
+    set_escdelay(0);        //remove delay when processing esc
 
-    for (u32 i = 0; i < 3; i++) {
-        SpreadSheetClearCell(&s, (v2u){i, 0});
-    }
+    clear();
+    u8 c = 0;
+    while (1) {
+        clear();
+        //rendering
 
-    print(stdout, "poolsize: %d\n", s.bcap);
-    print(stdout, "freelist:");
-    for (u32 i = 0; i < s.fsize; i++) {
-        print(stdout, " %d", s.freestatus[i]);
-    }
-    print(stdout, "\n");
+        printw("Hello World!\n");
+        move(1, 0);
+        printw("Current Screen size: (%d, %d)", LINES, COLS);
 
-    for (u32 i = 0; i < 3; i++) {
-        CellValue v = (CellValue) {
-            .t = CT_INT,
-            .d = {i},
-        };
-        SpreadSheetSetCell(&s, (v2u){BLOCK_SIZE + i + 1, 0}, v);
+        refresh();
+
+        //updating
+        c = getch();
+        if (c == 27) break;
     }
 
 
-    for (u32 i = 0; i < 3; i++) {
-        CellValue* c = SpreadSheetGetCell(&s, (v2u){BLOCK_SIZE + i + 1, 0});
-        print(stdout, "cell: %p\n", c);
-        if (c) {
-            print(stdout, "value: %d\n", c->d.i);
-            print(stdout, "\tbsize: %d\n", s.bsize);
-        }
-    }
-
-    print(stdout, "poolsize: %d\n", s.bcap);
-    print(stdout, "freelist:");
-    for (u32 i = 0; i < s.fsize; i++) {
-        print(stdout, " %d", s.freestatus[i]);
-    }
-    print(stdout, "\n");
-
-    SpreadSheetFree(&s);
-
+    endwin();
+    return 0;
 }
 
