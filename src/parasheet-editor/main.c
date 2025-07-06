@@ -1,59 +1,44 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <util/util.h>
-#include <libparasheet/lib_internal.h>
+#include <ncurses.h>
 
-int main() {
+/*
++---------------------------------------------------------------+
+|    INFO(ELI): Just for simplicity, We should start but        |
+|    putting all the functions in the same file, we can         |
+|    break them out later if it gets too long and unweildy      |
+|    but for right now keeping things as simple as possible     |
+|    will make things faster.                                   |
++---------------------------------------------------------------+
+*/
 
-    AST a = {
-        .mem = GlobalAllocatorCreate(),
-    };
+int main(int argc, char* argv[]) {
+    initscr();
+    noecho();               //prevent echoing output
+    raw();                  //remove buffering
+    keypad(stdscr, TRUE);   //enable extended keys
+    set_escdelay(0);        //remove delay when processing esc
 
-    {
-        ASTNode n = {
-            .op = AST_INT,
-            .lchild = UINT32_MAX,
-            .rchild = UINT32_MAX,
-        };
-        ASTInsert(&a, n);
-    }
-    {
-        ASTNode* n = ASTPush(&a);
-        n->op = AST_INT;
-    }
-    {
-        ASTNode* n = ASTPush(&a);
-        n->op = AST_ADD;
-        n->lchild = 0;
-        n->rchild = 1;
-    }
+    clear();
+    u8 c = 0;
+    while (1) {
+        clear();
+        //rendering
 
-    {
-        ASTNode n = {
-            .op = AST_INT,
-            .lchild = UINT32_MAX,
-            .rchild = UINT32_MAX,
-        };
-        ASTInsert(&a, n);
-    }
-    {
-        ASTNode* n = ASTPush(&a);
-        n->op = AST_INT;
-    }
-    {
-        ASTNode* n = ASTPush(&a);
-        n->op = AST_ADD;
-        n->lchild = 3;
-        n->rchild = 4;
-    }
-    {
-        ASTNode* n = ASTPush(&a);
-        n->op = AST_ADD;
-        n->lchild = 2;
-        n->rchild = 5;
+        printw("Hello World!\n");
+        move(1, 0);
+        printw("Current Screen size: (%d, %d)", LINES, COLS);
+
+        refresh();
+
+        //updating
+        c = getch();
+        if (c == 27) break;
     }
 
-    ASTPrint(stdout, &a);
 
+    endwin();
+    return 0;
 }
 
