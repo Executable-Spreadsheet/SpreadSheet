@@ -188,7 +188,7 @@ UTIL_RELEASE_SUBDIRECTORES:=$(sort $(patsubst %/,%,$(dir $(addprefix $(UTIL_RELE
 UTIL_DEBUG_SUBDIRECTORES:=$(sort $(patsubst %/,%,$(dir $(addprefix $(UTIL_DEBUG_OBJ_DIR)/,$(UTIL_SRCS))))) $(sort $(patsubst %/,%,$(dir $(addprefix $(UTIL_DEBUG_DEP_DIR)/,$(UTIL_SRCS)))))
 
 # Declare phony targets (targets without a corresponding file)
-.PHONY: all clean all-debug all-release editor-all editor-debug editor-release editor-test editor-run editor-run-release cli-all cli-debug cli-release cli-test cli-run cli-run-release library-all library-debug library-release library-test util-all util-debug util-release util-test
+.PHONY: all clean help all-debug all-release editor-all editor-debug editor-release editor-test editor-run editor-run-release cli-all cli-debug cli-release cli-test cli-run cli-run-release library-all library-debug library-release library-test util-all util-debug util-release util-test
 
 # Define Phony Targets
 all: all-debug all-release
@@ -226,6 +226,32 @@ util-release: $(UTIL_RELEASE_OBJS)
 # Delete all build files
 clean:
 	$(CLEAN)
+
+# Help page
+help:
+	@echo "GNU make is a build system that builds targets, which are usually files. GNU make looks at dependencies and file update timestamps so it will only rebuild when necessary. The following extra non-file build targets have been defined in the Makefile for this project:"
+	@echo ""
+	@echo "all - Build all targets"
+	@echo "clean - Delete all build outputs"
+	@echo "help - Display this help page"
+	@echo "all-debug - Build the all debug targets"
+	@echo "all-release - Build all release targets"
+	@echo "editor-all - Build all parasheet-editor targets"
+	@echo "editor-debug - Build all parasheet-editor debug targets"
+	@echo "editor-release - Build all parasheet-editor release targets"
+	@echo "editor-run - Build and run the debug version of parasheet-editor"
+	@echo "editor-run-release - Build and run the debug version of parasheet-editor"
+	@echo "cli-all - Build all parasheet-cli targets"
+	@echo "cli-debug - Build all parasheet-cli debug targets"
+	@echo "cli-release - Build all parasheet-cli release targets"
+	@echo "cli-run - Build and run the debug version of parasheet-cli"
+	@echo "cli-run-release - Build and run the debug version of parasheet-cli"
+	@echo "library-all - Build all libparasheet targets"
+	@echo "library-debug - Build all libparasheet debug targets"
+	@echo "library-release - Build all libparasheet release targets"
+	@echo "util-all - Build all util targets"
+	@echo "util-debug - Build all util debug targets"
+	@echo "util-release - Build all util release targets"
 
 # Create all neccessary directories
 $(EDITOR_RELEASE_SUBDIRECTORES):
