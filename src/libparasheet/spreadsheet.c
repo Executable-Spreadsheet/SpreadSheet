@@ -9,8 +9,9 @@
 +---------------------------------------------------+
 |   INFO(ELI):                                      |
 |   This file should contain the implementation for |
-|   the internal spreadsheet representation. It may |
-|   be broken out into other files later.           |
+|   the internal spreadsheet representation.        |
+|                                                   |
+|   *It may be broken out into other files later.*  |
 +---------------------------------------------------+
 */
 
