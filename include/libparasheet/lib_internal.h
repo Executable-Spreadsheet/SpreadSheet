@@ -90,9 +90,9 @@ void SpreadSheetFree(SpreadSheet* sheet);
 //
 //They also are required for the SpreadSheet to
 //reuse empty blocks.
-u32 BlockInsert(SpreadSheet* sheet, v2u pos, u32 bid);
-u32 BlockGet(SpreadSheet* sheet, v2u pos);
-void BlockDelete(SpreadSheet* sheet, v2u pos);
+u32 SheetBlockInsert(SpreadSheet* sheet, v2u pos, u32 bid);
+u32 SheetBlockGet(SpreadSheet* sheet, v2u pos);
+void SheetBlockDelete(SpreadSheet* sheet, v2u pos);
 
 
 

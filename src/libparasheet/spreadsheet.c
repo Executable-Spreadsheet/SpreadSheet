@@ -71,7 +71,7 @@ static void ResizeSheet(SpreadSheet* sheet) {
         //log("\tkey: (%d %d)", oldkeys[i].x, oldkeys[i].y);
         if (!CMPV2(oldkeys[i], Invalid)) {
             log("reinsert: %d", oldvalues[i]);
-            BlockInsert(sheet, oldkeys[i], oldvalues[i]);
+            SheetBlockInsert(sheet, oldkeys[i], oldvalues[i]);
         }
     }
 
@@ -81,7 +81,7 @@ static void ResizeSheet(SpreadSheet* sheet) {
 }
 
 
-u32 BlockInsert(SpreadSheet* sheet, v2u pos, u32 bid) {
+u32 SheetBlockInsert(SpreadSheet* sheet, v2u pos, u32 bid) {
     ResizeSheet(sheet);
 
     //maybe in future we just use power of 2 sizes?
@@ -112,7 +112,7 @@ u32 BlockInsert(SpreadSheet* sheet, v2u pos, u32 bid) {
     return sheet->values[idx];
 }
 
-u32 BlockGet(SpreadSheet* sheet, v2u pos) {
+u32 SheetBlockGet(SpreadSheet* sheet, v2u pos) {
     u32 idx = hash((u8*)&pos, sizeof(pos)) % sheet->cap;
 
     for (u32 i = 0; i < sheet->cap; i++) {
@@ -130,7 +130,7 @@ u32 BlockGet(SpreadSheet* sheet, v2u pos) {
     panic();
 }
 
-void BlockDelete(SpreadSheet* sheet, v2u pos) {
+void SheetBlockDelete(SpreadSheet* sheet, v2u pos) {
     u32 idx = hash((u8*)&pos, sizeof(pos)) % sheet->cap;
 
     for (u32 i = 0; i < sheet->size; i++) {
@@ -155,7 +155,7 @@ void BlockDelete(SpreadSheet* sheet, v2u pos) {
 
 void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue val) {
     v2u blockpos = CELL_TO_BLOCK(pos);
-    u32 blockid = BlockInsert(sheet, blockpos, UINT32_MAX);
+    u32 blockid = SheetBlockInsert(sheet, blockpos, UINT32_MAX);
     Block* block = &sheet->blockpool[blockid];
 
     v2u offset = CELL_TO_OFFSET(pos);
@@ -165,7 +165,7 @@ void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue val) {
     //So this is always safe
     if (val.t == CT_EMPTY) {
         if (block->cells[index].t != CT_EMPTY) block->nonempty--;
-        if (block->nonempty <= 0) BlockDelete(sheet, blockpos);
+        if (block->nonempty <= 0) SheetBlockDelete(sheet, blockpos);
         return;
     }
     else if (block->cells[index].t == CT_EMPTY) block->nonempty++;
@@ -179,7 +179,7 @@ void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue val) {
 //unintuitive.
 CellValue* SpreadSheetGetCell(SpreadSheet* sheet, v2u pos) {
     v2u blockpos = CELL_TO_BLOCK(pos);
-    u32 blockid = BlockGet(sheet, blockpos);
+    u32 blockid = SheetBlockGet(sheet, blockpos);
 
     if (blockid == UINT32_MAX) {
         return NULL;
@@ -191,9 +191,10 @@ CellValue* SpreadSheetGetCell(SpreadSheet* sheet, v2u pos) {
     return &block->cells[index];
 }
 
+
 void SpreadSheetClearCell(SpreadSheet* sheet, v2u pos) {
     v2u blockpos = CELL_TO_BLOCK(pos);
-    u32 blockid = BlockInsert(sheet, blockpos, UINT32_MAX);
+    u32 blockid = SheetBlockInsert(sheet, blockpos, UINT32_MAX);
     Block* block = &sheet->blockpool[blockid];
 
     //ensure block exists
@@ -211,7 +212,7 @@ void SpreadSheetClearCell(SpreadSheet* sheet, v2u pos) {
     if (block->nonempty > 0) return;
     //if the block is completely empty
 
-    BlockDelete(sheet, blockpos);
+    SheetBlockDelete(sheet, blockpos);
 }
 
 void SpreadSheetFree(SpreadSheet* sheet) {
