@@ -17,53 +17,53 @@
 
 const static v2u Invalid = {UINT32_MAX, UINT32_MAX};
 
-static void AllocBlock(SpreadSheet* s) {
-    u32 oldsize = s->bcap;
+static void AllocBlock(SpreadSheet* sheet) {
+    u32 oldsize = sheet->bcap;
 
-    while (s->bsize + 1 >= s->bcap) {
-        s->bcap = s->bcap ? s->bcap * 2 : 2;
+    while (sheet->bsize + 1 >= sheet->bcap) {
+        sheet->bcap = sheet->bcap ? sheet->bcap * 2 : 2;
     }
 
-    s->blockpool = Realloc(s->mem, s->blockpool, oldsize * sizeof(Block), s->bcap * sizeof(Block)); 
-    s->freestatus = Realloc(s->mem, s->freestatus, oldsize * sizeof(i32), s->bcap * sizeof(i32));
+    sheet->blockpool = Realloc(sheet->mem, sheet->blockpool, oldsize * sizeof(Block), sheet->bcap * sizeof(Block)); 
+    sheet->freestatus = Realloc(sheet->mem, sheet->freestatus, oldsize * sizeof(i32), sheet->bcap * sizeof(i32));
 
     //add new blocks to free list
-    for (u32 i = oldsize; i < s->bcap; i++) {
-        s->freestatus[s->fsize++] = i;
+    for (u32 i = oldsize; i < sheet->bcap; i++) {
+        sheet->freestatus[sheet->fsize++] = i;
     }
 
-    memset(&s->blockpool[oldsize], 0, (s->bcap - oldsize) * sizeof(Block));
+    memset(&sheet->blockpool[oldsize], 0, (sheet->bcap - oldsize) * sizeof(Block));
 }
 
-static u32 PickBlock(SpreadSheet* s) {
-    if (!s->fsize) AllocBlock(s);
-    return s->freestatus[--s->fsize];
+static u32 PickBlock(SpreadSheet* sheet) {
+    if (!sheet->fsize) AllocBlock(sheet);
+    return sheet->freestatus[--sheet->fsize];
 }
 
-static void FreeBlock(SpreadSheet* s, u32 i) {
-    s->freestatus[s->fsize++] = i;
-    memset(&s->blockpool[i], 0, sizeof(Block));
+static void FreeBlock(SpreadSheet* sheet, u32 blockid) {
+    sheet->freestatus[sheet->fsize++] = blockid;
+    memset(&sheet->blockpool[blockid], 0, sizeof(Block));
 }
 
 
-static void ResizeSheet(SpreadSheet* s) {
-    if (s->size + 1 < (s->cap * MAX_LOAD_FACTOR)) return;
+static void ResizeSheet(SpreadSheet* sheet) {
+    if (sheet->size + 1 < (sheet->cap * MAX_LOAD_FACTOR)) return;
 
-    u32 oldsize = s->cap;
+    u32 oldsize = sheet->cap;
 
-    while (s->size + 1 >= (s->cap * MAX_LOAD_FACTOR)) { 
-        s->cap = s->cap ? s->cap * 2 : 4;
+    while (sheet->size + 1 >= (sheet->cap * MAX_LOAD_FACTOR)) { 
+        sheet->cap = sheet->cap ? sheet->cap * 2 : 4;
     }
 
-    u32* oldvalues = s->values;
-    v2u* oldkeys = s->keys;
+    u32* oldvalues = sheet->values;
+    v2u* oldkeys = sheet->keys;
 
-    s->values = Alloc(s->mem, s->cap * sizeof(u32)); 
-    s->keys = Alloc(s->mem, s->cap * sizeof(v2u));
-    s->size = 0;
+    sheet->values = Alloc(sheet->mem, sheet->cap * sizeof(u32)); 
+    sheet->keys = Alloc(sheet->mem, sheet->cap * sizeof(v2u));
+    sheet->size = 0;
 
-    for (u32 i = 0; i < s->cap; i++) {
-        s->keys[i] = Invalid;
+    for (u32 i = 0; i < sheet->cap; i++) {
+        sheet->keys[i] = Invalid;
     }
 
     //TODO(ELI): reinsert items 
@@ -71,13 +71,13 @@ static void ResizeSheet(SpreadSheet* s) {
         //log("\tkey: (%d %d)", oldkeys[i].x, oldkeys[i].y);
         if (!CMPV2(oldkeys[i], Invalid)) {
             log("reinsert: %d", oldvalues[i]);
-            BlockInsert(s, oldkeys[i], oldvalues[i]);
+            BlockInsert(sheet, oldkeys[i], oldvalues[i]);
         }
     }
 
 
-    Free(s->mem, oldvalues, oldsize * sizeof(u32));
-    Free(s->mem, oldkeys, oldsize * sizeof(v2u));
+    Free(sheet->mem, oldvalues, oldsize * sizeof(u32));
+    Free(sheet->mem, oldkeys, oldsize * sizeof(v2u));
 }
 
 
@@ -153,23 +153,23 @@ void BlockDelete(SpreadSheet* sheet, v2u pos) {
 
 
 
-void SpreadSheetSetCell(SpreadSheet* s, v2u p, CellValue v) {
-    v2u blockpos = CELL_TO_BLOCK(p);
-    u32 blockid = BlockInsert(s, blockpos, UINT32_MAX);
-    Block* block = &s->blockpool[blockid];
+void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue val) {
+    v2u blockpos = CELL_TO_BLOCK(pos);
+    u32 blockid = BlockInsert(sheet, blockpos, UINT32_MAX);
+    Block* block = &sheet->blockpool[blockid];
 
-    v2u offset = CELL_TO_OFFSET(p);
+    v2u offset = CELL_TO_OFFSET(pos);
     u32 index = offset.x + offset.y * BLOCK_SIZE;
 
     //NOTE(ELI): Block Insert forces the block to exist if it doesn't already
     //So this is always safe
-    if (v.t == CT_EMPTY) {
+    if (val.t == CT_EMPTY) {
         if (block->cells[index].t != CT_EMPTY) block->nonempty--;
-        if (block->nonempty <= 0) BlockDelete(s, blockpos);
+        if (block->nonempty <= 0) BlockDelete(sheet, blockpos);
         return;
     }
     else if (block->cells[index].t == CT_EMPTY) block->nonempty++;
-    block->cells[index] = v;
+    block->cells[index] = val;
 }
 
 //NOTE(ELI): This can be NULL because the Cell
@@ -177,31 +177,31 @@ void SpreadSheetSetCell(SpreadSheet* s, v2u p, CellValue v) {
 //which would mean that calling this function could
 //actually cause memory allocations which is super
 //unintuitive.
-CellValue* SpreadSheetGetCell(SpreadSheet* s, v2u p) {
-    v2u blockpos = CELL_TO_BLOCK(p);
-    u32 blockid = BlockGet(s, blockpos);
+CellValue* SpreadSheetGetCell(SpreadSheet* sheet, v2u pos) {
+    v2u blockpos = CELL_TO_BLOCK(pos);
+    u32 blockid = BlockGet(sheet, blockpos);
 
     if (blockid == UINT32_MAX) {
         return NULL;
     }
 
-    Block* block = &s->blockpool[blockid];
-    v2u offset = CELL_TO_OFFSET(p);
+    Block* block = &sheet->blockpool[blockid];
+    v2u offset = CELL_TO_OFFSET(pos);
     u32 index = offset.x + offset.y * BLOCK_SIZE;
     return &block->cells[index];
 }
 
-void SpreadSheetClearCell(SpreadSheet* s, v2u p) {
-    v2u blockpos = CELL_TO_BLOCK(p);
-    u32 blockid = BlockInsert(s, blockpos, UINT32_MAX);
-    Block* block = &s->blockpool[blockid];
+void SpreadSheetClearCell(SpreadSheet* sheet, v2u pos) {
+    v2u blockpos = CELL_TO_BLOCK(pos);
+    u32 blockid = BlockInsert(sheet, blockpos, UINT32_MAX);
+    Block* block = &sheet->blockpool[blockid];
 
     //ensure block exists
     if (!block) {
         return;
     }
 
-    v2u offset = CELL_TO_OFFSET(p);
+    v2u offset = CELL_TO_OFFSET(pos);
     u32 index = offset.x + offset.y * BLOCK_SIZE;
 
     if (block->cells[index].t != CT_EMPTY) {
@@ -211,12 +211,12 @@ void SpreadSheetClearCell(SpreadSheet* s, v2u p) {
     if (block->nonempty > 0) return;
     //if the block is completely empty
 
-    BlockDelete(s, blockpos);
+    BlockDelete(sheet, blockpos);
 }
 
-void SpreadSheetFree(SpreadSheet* s) {
-    Free(s->mem, s->blockpool, s->bcap * sizeof(Block));
-    Free(s->mem, s->freestatus, s->bcap * sizeof(u32));
-    Free(s->mem, s->keys, s->cap * sizeof(v2u));
-    Free(s->mem, s->values, s->cap * sizeof(u32));
+void SpreadSheetFree(SpreadSheet* sheet) {
+    Free(sheet->mem, sheet->blockpool, sheet->bcap * sizeof(Block));
+    Free(sheet->mem, sheet->freestatus, sheet->bcap * sizeof(u32));
+    Free(sheet->mem, sheet->keys, sheet->cap * sizeof(v2u));
+    Free(sheet->mem, sheet->values, sheet->cap * sizeof(u32));
 }

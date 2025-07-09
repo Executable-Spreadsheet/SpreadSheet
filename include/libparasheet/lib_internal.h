@@ -76,11 +76,11 @@ typedef struct SpreadSheet {
 } SpreadSheet;
 
 
-void SpreadSheetSetCell(SpreadSheet* s, v2u p, CellValue v);
-CellValue* SpreadSheetGetCell(SpreadSheet* s, v2u p);
+void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue value);
+CellValue* SpreadSheetGetCell(SpreadSheet* sheet, v2u pos);
 
-void SpreadSheetClearCell(SpreadSheet* s, v2u p);
-void SpreadSheetFree(SpreadSheet* s);
+void SpreadSheetClearCell(SpreadSheet* sheet, v2u pos);
+void SpreadSheetFree(SpreadSheet* sheet);
 
 
 
