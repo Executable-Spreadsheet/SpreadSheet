@@ -1,43 +1,68 @@
+#include <stdint.h>
+#include <stdio.h>
 #include <util/util.h>
+#include <libparasheet/lib_internal.h>
 
 int main() {
 
-    Allocator g = GlobalAllocatorCreate();
-    Allocator a = StackAllocatorCreate(g, sizeof(int) * 100);
+    SpreadSheet s = {
+        .mem = GlobalAllocatorCreate(),
+    };
 
-
-    int* s = Alloc(a, sizeof(int) * 10);
-    for (u32 i = 0; i < 10; i++) {
-        s[i] = i;
-    }
-    for (u32 i = 0; i < 10; i++) {
-        log("s: %d", s[i]);
-    }
-
-    s = Realloc(a, s, sizeof(int) * 10, sizeof(int) * 15);
-
-    for (u32 i = 0; i < 15; i++) {
-        s[i] = i;
-    }
-    for (u32 i = 0; i < 15; i++) {
-        log("s: %d", s[i]);
+    for (u32 i = 0; i < 3; i++) {
+        CellValue v = (CellValue) {
+            .t = CT_INT,
+            .d = {i},
+        };
+        SpreadSheetSetCell(&s, (v2u){i, 0}, v);
     }
 
-
-    Free(a, s, sizeof(int) * 15);
-    StackAllocatorReset(&a);
-
-
-    u64* l = Alloc(a, sizeof(u64) * 10);
-
-    for (u32 i = 0; i < 10; i++) {
-        l[i] = i * 10;
-    }
-    for (u32 i = 0; i < 10; i++) {
-        log("s: %lX", l[i]);
+    for (u32 i = 0; i < 3; i++) {
+        CellValue* c = SpreadSheetGetCell(&s, (v2u){i, 0});
+        print(stdout, "cell: %p\n", c);
+        if (c) {
+            print(stdout, "value: %d\n", c->d.i);
+            print(stdout, "\tbsize: %d\n", s.bsize);
+        }
     }
 
+    for (u32 i = 0; i < 3; i++) {
+        SpreadSheetClearCell(&s, (v2u){i, 0});
+    }
 
-    StackAllocatorDestroy(&a);
+    print(stdout, "poolsize: %d\n", s.bcap);
+    print(stdout, "freelist:");
+    for (u32 i = 0; i < s.fsize; i++) {
+        print(stdout, " %d", s.freestatus[i]);
+    }
+    print(stdout, "\n");
+
+    for (u32 i = 0; i < 3; i++) {
+        CellValue v = (CellValue) {
+            .t = CT_INT,
+            .d = {i},
+        };
+        SpreadSheetSetCell(&s, (v2u){BLOCK_SIZE + i + 1, 0}, v);
+    }
+
+
+    for (u32 i = 0; i < 3; i++) {
+        CellValue* c = SpreadSheetGetCell(&s, (v2u){BLOCK_SIZE + i + 1, 0});
+        print(stdout, "cell: %p\n", c);
+        if (c) {
+            print(stdout, "value: %d\n", c->d.i);
+            print(stdout, "\tbsize: %d\n", s.bsize);
+        }
+    }
+
+    print(stdout, "poolsize: %d\n", s.bcap);
+    print(stdout, "freelist:");
+    for (u32 i = 0; i < s.fsize; i++) {
+        print(stdout, " %d", s.freestatus[i]);
+    }
+    print(stdout, "\n");
+
+    SpreadSheetFree(&s);
+
 }
 

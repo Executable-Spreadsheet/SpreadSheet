@@ -1,8 +1,10 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
+
 
 /* 
 +---------------------------------------------------------+
@@ -104,7 +106,7 @@ Print formatting options
 
 
 //nice logger with automatic newline
-#define log(x, ...)  print(stdout, "[LOG] %n:%d]:\t" x "\n", __FILE__, __LINE__,##__VA_ARGS__)
+#define log(x, ...)  print(stderr, "[LOG] %n:%d]:\t" x "\n", __FILE__, __LINE__,##__VA_ARGS__)
 #define warn(x, ...) print(stderr, "\033[38;2;255;255;0m[WARN] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
 #define err(x, ...)  print(stderr, "\033[38;2;255;0;0m[ERROR] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
 
@@ -155,13 +157,13 @@ typedef struct Allocator {
 } Allocator;
 
 #define Alloc(m, size) \
-    m.a(0, size, NULL, a.ctx)
+    (log("Mem Alloc: %d", size), m.a(0, size, NULL, m.ctx)) \
 
 #define Free(m, ptr, size) \
-    m.a(size, 0, ptr, m.ctx)
+    (log("Mem Free: %p", ptr), m.a(size, 0, ptr, m.ctx)) \
     
 #define Realloc(m, ptr, oldsize, newsize) \
-    m.a(oldsize, newsize, ptr, a.ctx)
+    (log("Mem Realloc: %p %d", ptr, newsize), m.a(oldsize, newsize, ptr, m.ctx)) \
 
 
 //Memory allocators
@@ -189,5 +191,38 @@ void DumpFileS(SString* dst, SString filename);
 //Write full contents of buffer into file
 void WriteFile(const char* data);
 void WriteFileS(SString data);
+
+
+/*
++------------------------------------------------------+
+|   INFO:                                              |
+|                                                      | 
+|   Math functions. Maybe if we have a ton of these    |
+|   we will move them to another file but should be    |
+|   okay for now.                                      |
++------------------------------------------------------+
+*/
+
+typedef struct v2f {
+    f32 x;
+    f32 y;
+} v2f;
+
+typedef struct v2i {
+    i32 x;
+    i32 y;
+} v2i;
+
+typedef struct v2u {
+    u32 x;
+    u32 y;
+} v2u;
+
+#define CMPV2(a, b) \
+    (a.x == b.x && a.y == b.y)
+
+
+u64 hash(u8* buf, u64 size);
+
 
 #endif
