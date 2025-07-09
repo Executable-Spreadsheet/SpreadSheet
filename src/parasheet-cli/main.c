@@ -1,3 +1,4 @@
-#include <libparasheet/foo.h>
 
-int main() { foo(); }
+int main() { 
+    return 0;
+}

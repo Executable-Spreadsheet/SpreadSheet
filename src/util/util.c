@@ -116,8 +116,6 @@ static const char *print_arg(FILE *fd, u32 precision, const char *fmt,
     }
 
     while (num_digits) {
-      u32 shift = num_digits / 10;
-      shift = num_digits ? num_digits : 1;
       i8 digit = ((val % (num_digits * 10)) / num_digits) + '0';
       num_digits /= 10;
       putc(digit, fd);
@@ -181,8 +179,6 @@ static const char *print_arg(FILE *fd, u32 precision, const char *fmt,
       }
 
       while (num_digits) {
-        u32 shift = num_digits / 10;
-        shift = num_digits ? num_digits : 1;
         i8 digit = ((val % (num_digits * 10)) / num_digits) + '0';
         num_digits /= 10;
         putc(digit, fd);
@@ -245,8 +241,6 @@ static const char *print_arg(FILE *fd, u32 precision, const char *fmt,
     }
 
     while (num_digits) {
-      u32 shift = num_digits / 10;
-      shift = num_digits ? num_digits : 1;
       i8 digit = ((integer % (num_digits * 10)) / num_digits) + '0';
       num_digits /= 10;
       putc(digit, fd);
@@ -267,8 +261,6 @@ static const char *print_arg(FILE *fd, u32 precision, const char *fmt,
     frac += val >= 0.5 ? 1 : 0;
 
     while (num_digits) {
-      u32 shift = num_digits / 10;
-      shift = num_digits ? num_digits : 1;
       i8 digit = ((frac % (num_digits * 10)) / num_digits) + '0';
       num_digits /= 10;
       putc(digit, fd);
@@ -318,19 +310,20 @@ void print(FILE *fd, const char *fmt, ...) {
 
 // Global Allocator (malloc, calloc, etc.)
 static alloc_func_def(GlobalAllocate) {
+  if (oldsize == 0 && ptr == 0 && newsize == 0) {
+        return 0;
+  }
+
   if (oldsize == 0) {
-    log("malloc: %d", newsize);
     return malloc(newsize);
   }
 
   if (ptr && newsize == 0) {
-    log("free: %p %d", ptr, oldsize);
     free(ptr);
     return 0;
   }
 
   if (ptr) {
-    log("realloc: old (%p, %d) -> %d", ptr, oldsize, newsize);
     return realloc(ptr, newsize);
   }
 
@@ -440,3 +433,17 @@ void DumpFileS(SString *dst, SString filename) { todo(); }
 void WriteFile(const char *data) { todo(); }
 
 void WriteFileS(SString data) { todo(); }
+
+
+//INFO(ELI): Going to go with FNV-1a since its fast
+//and easy to implement.
+u64 hash(u8* buf, u64 size) {
+    u64 hash = 14695981039346656037UL;
+    for (u64 i = 0; i < size; i++) {
+        hash ^= buf[i];
+        hash = hash * 1099511628211UL;
+    }
+    return hash;
+}
+
+
