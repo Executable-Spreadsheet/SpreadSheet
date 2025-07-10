@@ -20,8 +20,8 @@
 
 
 
-void drawBox(v2u pos, v2u size, SString s);
-SString CellDisplay(Allocator a, SpreadSheet* s, v2u pos, u32 maxlen);
+void drawBox(v2u pos, v2u size, SString str);
+SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen);
 
 
 int main(int argc, char* argv[]) {
@@ -56,14 +56,14 @@ int main(int argc, char* argv[]) {
                 if (i == cursor.x && j == cursor.y) {
                     continue;
                 }
-                SString info = CellDisplay(stack, &sheet, (v2u){base.x + i, base.y + j}, CELL_WIDTH - 2);
+                SString info = cellDisplay(stack, &sheet, (v2u){base.x + i, base.y + j}, CELL_WIDTH - 2);
                 drawBox((v2u){i * CELL_WIDTH, j * CELL_HEIGHT}, (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
                 StackAllocatorReset(&stack);
             }
         }
 
         attron(A_REVERSE);
-        SString info = CellDisplay(stack, &sheet, (v2u){cursor.x, cursor.y}, CELL_WIDTH - 2);
+        SString info = cellDisplay(stack, &sheet, (v2u){cursor.x, cursor.y}, CELL_WIDTH - 2);
         drawBox((v2u){cursor.x * CELL_WIDTH, cursor.y * CELL_HEIGHT}, (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
         StackAllocatorReset(&stack);
 
@@ -92,15 +92,15 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-SString CellDisplay(Allocator a, SpreadSheet* s, v2u pos, u32 maxlen) {
-    CellValue* cell = SpreadSheetGetCell(s, pos);
+SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen) {
+    CellValue* cell = SpreadSheetGetCell(sheet, pos);
 
     if (!cell) {
         return (SString){NULL, 0};
     }
 
     SString value = {NULL, 0};
-    value.data = Alloc(a, maxlen);
+    value.data = Alloc(mem, maxlen);
     char* fmt = "";
 
     switch (cell->t) {
@@ -115,7 +115,7 @@ SString CellDisplay(Allocator a, SpreadSheet* s, v2u pos, u32 maxlen) {
     return value;
 }
 
-void drawBox(v2u pos, v2u size, SString s) {
+void drawBox(v2u pos, v2u size, SString str) {
     
     mvaddch(pos.y + 0,      pos.x + 0, '+');
     mvaddch(pos.y + 0,      pos.x + size.x, '+');
@@ -129,5 +129,5 @@ void drawBox(v2u pos, v2u size, SString s) {
     mvvline(pos.y + 1, pos.x + size.x, '|', size.y - 1);
 
     attrset(A_NORMAL);
-    mvprintw(pos.y + size.y/2, pos.x + 1, "%.*s", s.size, s.data);
+    mvprintw(pos.y + size.y/2, pos.x + 1, "%.*s", str.size, str.data);
 }

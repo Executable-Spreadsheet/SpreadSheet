@@ -239,7 +239,7 @@ typedef struct v2u {
 u64 hash(u8* buf, u64 size);
 
 #define MAX(a, b) \
-    (a >= b ? a : b)
+    (a > b ? a : b)
 
 #define MIN(a, b) \
     (a < b ? a : b)
