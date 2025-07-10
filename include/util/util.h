@@ -31,6 +31,7 @@ typedef float  f32;
 typedef double f64;
 
 
+
 /* 
 +---------------------------------------------------------+
 |  INFO:                                                  | 
@@ -86,6 +87,17 @@ SString SStrCmp(SString a, SString b);
 //raw fprintf replacement
 void print(FILE* fd, const char* fmt, ...); 
 
+extern FILE* errfile;
+extern FILE* logfile;
+
+//helper specific print functions (implicit destination)
+void errprint(const char* fmt, ...);
+void logprint(const char* fmt, ...);
+
+void setlogfile(FILE* file);
+void seterrfile(FILE* file);
+
+
 /*
 Print formatting options
 %d  -> 32 bit int
@@ -107,9 +119,10 @@ Print formatting options
 
 
 //nice logger with automatic newline
-#define log(x, ...)  print(stdout, "[LOG] %n:%d]:\t" x "\n", __FILE__, __LINE__,##__VA_ARGS__)
-#define warn(x, ...) print(stderr, "\033[38;2;255;255;0m[WARN] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
-#define err(x, ...)  print(stderr, "\033[38;2;255;0;0m[ERROR] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
+
+#define log(x, ...)  logprint("[LOG] %n:%d]:\t" x "\n", __FILE__, __LINE__,##__VA_ARGS__)
+#define warn(x, ...) errprint("\033[38;2;255;255;0m[WARN] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
+#define err(x, ...)  errprint("\033[38;2;255;0;0m[ERROR] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
 
 //Fun fact, the popular spdlog library is actually the same speed as 
 //printf so it provides no perf benefit
@@ -225,6 +238,14 @@ typedef struct v2u {
 
 u64 hash(u8* buf, u64 size);
 
+#define MAX(a, b) \
+    (a >= b ? a : b)
+
+#define MIN(a, b) \
+    (a < b ? a : b)
+
+#define CLAMP(t, min, max) \
+    MAX(MIN(t, max), min) 
 
 #define KB(x) (x * 1024)
 #define MB(x) (x * 1024 * 1024)

@@ -21,7 +21,7 @@
 
 
 void drawBox(v2u pos, v2u size, SString s);
-SString CellDisplay(Allocator a, SpreadSheet* s, v2u pos);
+SString CellDisplay(Allocator a, SpreadSheet* s, v2u pos, u32 maxlen);
 
 
 int main(int argc, char* argv[]) {
@@ -36,44 +36,83 @@ int main(int argc, char* argv[]) {
     SpreadSheet sheet = {
         .mem = GlobalAllocatorCreate(),
     };
+
     Allocator stack = StackAllocatorCreate(sheet.mem, KB(1));
 
-    clear();
-    u8 c = 0;
+    //set logging
+    logfile = fopen("log.out", "w+");
+
+    //persistant
+    u8 ch = 0;
+    v2i base = {0, 0};
+    v2i cursor = {0, 0};
+
     while (1) {
         clear();
         //rendering
 
-        v2u base = {0, 0};
         for (u32 i = 0; i < COLS/CELL_WIDTH + 1; i++) {
             for (u32 j = 0; j < LINES/CELL_HEIGHT + 1; j++) {
-                SString info = CellDisplay(stack, &sheet, (v2u){base.x + i, base.y + j});
+                if (i == cursor.x && j == cursor.y) {
+                    continue;
+                }
+                SString info = CellDisplay(stack, &sheet, (v2u){base.x + i, base.y + j}, CELL_WIDTH - 2);
                 drawBox((v2u){i * CELL_WIDTH, j * CELL_HEIGHT}, (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
+                StackAllocatorReset(&stack);
             }
         }
+
+        attron(A_REVERSE);
+        SString info = CellDisplay(stack, &sheet, (v2u){cursor.x, cursor.y}, CELL_WIDTH - 2);
+        drawBox((v2u){cursor.x * CELL_WIDTH, cursor.y * CELL_HEIGHT}, (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
+        StackAllocatorReset(&stack);
+
+        mvprintw(LINES - 2, 0, "Cursor (%d %d)  ch: %d", cursor.x, cursor.y, ch);
 
         refresh();
 
         //updating
-        c = getch();
-        if (c == 27) break;
+        ch = getch();
+        if (ch == 27) break;
+
+        switch(ch) {
+            case 'h': { cursor.x -= 1; } break;
+            case 'j': { cursor.y += 1; } break;
+            case 'k': { cursor.y -= 1; } break;
+            case 'l': { cursor.x += 1; } break;
+            default: break;
+        }
+
+        cursor.x = MAX(cursor.x, 0);
+        cursor.y = MAX(cursor.y, 0);
     }
 
 
     endwin();
-
     return 0;
 }
 
-SString CellDisplay(Allocator a, SpreadSheet* s, v2u pos) {
-    CellValue* c = SpreadSheetGetCell(s, pos);
+SString CellDisplay(Allocator a, SpreadSheet* s, v2u pos, u32 maxlen) {
+    CellValue* cell = SpreadSheetGetCell(s, pos);
 
-    if (!c) {
+    if (!cell) {
         return (SString){NULL, 0};
     }
 
-    todo();
+    SString value = {NULL, 0};
+    value.data = Alloc(a, maxlen);
+    char* fmt = "";
 
+    switch (cell->t) {
+        case CT_EMPTY: break;
+        case CT_FLOAT: { fmt = "%f"; } break;
+        case CT_INT: { fmt = "%d"; } break;
+
+        default: { endwin(); todo(); } break;
+    }
+
+    value.size = snprintf((char*)value.data, maxlen, fmt, cell->d);
+    return value;
 }
 
 void drawBox(v2u pos, v2u size, SString s) {
@@ -83,12 +122,12 @@ void drawBox(v2u pos, v2u size, SString s) {
     mvaddch(pos.y + size.y, pos.x + 0, '+');
     mvaddch(pos.y + size.y, pos.x + size.x, '+');
 
-    mvprintw(pos.y + size.y/2, pos.x + 1, "%.*s", s.size, s.data);
-
     mvhline(pos.y + 0,      pos.x + 1, '-', size.x - 1);
     mvhline(pos.y + size.y, pos.x + 1, '-', size.x - 1);
 
     mvvline(pos.y + 1, pos.x + 0,      '|', size.y - 1);
     mvvline(pos.y + 1, pos.x + size.x, '|', size.y - 1);
 
+    attrset(A_NORMAL);
+    mvprintw(pos.y + size.y/2, pos.x + 1, "%.*s", s.size, s.data);
 }
