@@ -57,6 +57,7 @@ typedef struct LString {
 } LString;
 
 #define isdigit(x) (x >= '0' && x <= '9')
+#define isspace(x) (x == ' ' || x == '\t' || x == '\n' || x == '\r' || x == '\v')
 
 //macro to convert string literals to sstrings
 #define sstring(x) (SString){(i8*)x, sizeof(x)}
