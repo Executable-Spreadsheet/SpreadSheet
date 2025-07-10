@@ -94,6 +94,58 @@ u32 SheetBlockInsert(SpreadSheet* sheet, v2u pos, u32 bid);
 u32 SheetBlockGet(SpreadSheet* sheet, v2u pos);
 void SheetBlockDelete(SpreadSheet* sheet, v2u pos);
 
+/*
++-------------------------------------------------------------------+
+|   INFO(ELI): Here is the AST implementation. If everyone agrees   |
+|   later we can break this out into its own header, but for        |
+|   the moment it makes sense to just throw everything in here      |
+|   since this header is fairly small.                              |
++-------------------------------------------------------------------+
+*/
+
+typedef enum ASTNodeType : u32 {
+    AST_INVALID = 0, //mark unintialized Node as invalid
+
+    //literals
+    AST_INT,
+    AST_FLOAT,
+
+    //Ops
+    AST_ADD,
+    AST_SUB,
+    AST_MUL,
+    AST_DIV,
+
+    //Probably want this
+    AST_CALL,
+} ASTNodeOp;
+
+typedef enum ASTValueType : u32 {
+    V_INT,
+    V_FLOAT,
+} ASTValueType;
+
+typedef struct ASTNode {
+    ASTNodeOp op;
+    ASTValueType vt;
+    u32 lchild;
+    u32 rchild;
+} ASTNode;
+
+typedef struct AST {
+    Allocator mem;
+    ASTNode* nodes;
+    u32 size;
+    u32 cap;
+} AST;
+
+void ASTInsert(AST* tree, ASTNode node);
+ASTNode* ASTPush(AST* tree);
+
+SString ASTFormat(Allocator mem, AST* tree);
+void ASTPrint(FILE* fd, AST* tree);
+
+void ASTFree(AST* tree);
 
 
 #endif

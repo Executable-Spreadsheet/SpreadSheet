@@ -3,11 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdbool.h>
 
-#include "libparasheet/lib_internal.h"         // for CellValue, v2u, SpreadSheet, SpreadSheetSetCell
-#include "util/util.h"               // for DumpFile, Allocator
+#include "libparasheet/lib_internal.h"  // for CellValue, SpreadSheet, SpreadSheetSetCell
+#include "util/util.h"                  // for DumpFile, Allocator, v2u
 
 // === Parse Helpers ===
 
