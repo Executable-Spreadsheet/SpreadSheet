@@ -60,4 +60,6 @@ int test() {
     print(stdout, "\n");
 
     SpreadSheetFree(&s);
+
+    return 0;
 }
