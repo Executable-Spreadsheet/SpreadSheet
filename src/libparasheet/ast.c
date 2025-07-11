@@ -21,6 +21,10 @@ SString ASTFormat(Allocator mem, AST* tree) {
     todo();
 }
 
+void ASTPrint(FILE* fd, AST* tree) {
+    todo();
+}
+
 void ASTFree(AST* tree) {
     Free(tree->mem, tree->nodes, tree->cap * sizeof(ASTNode));
 }
