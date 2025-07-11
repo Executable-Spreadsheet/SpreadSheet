@@ -153,7 +153,6 @@ typedef struct AST {
 void ASTInsert(AST* tree, ASTNode node);
 ASTNode* ASTPush(AST* tree);
 
-SString ASTFormat(Allocator mem, AST* tree);
 void ASTPrint(FILE* fd, AST* tree);
 
 void ASTFree(AST* tree);
