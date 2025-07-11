@@ -53,6 +53,7 @@ typedef struct Block {
     CellValue cells[BLOCK_SIZE * BLOCK_SIZE];
 } Block;
 
+
 //TODO(ELI): In future organize to minimize padding
 //rn things are split based on usage but this should be
 //improved in the future.
@@ -67,6 +68,10 @@ typedef struct SpreadSheet {
     //pool of reusable blocks
     Block* blockpool;
     u32 bsize;
+
+    SString* stringbuf;
+    u32 ssize;
+    u32 scap;
 
     i32* freestatus;
     u32 fsize;
