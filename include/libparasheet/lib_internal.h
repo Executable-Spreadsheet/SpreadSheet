@@ -125,6 +125,17 @@ typedef enum ASTValueType : u32 {
     V_FLOAT,
 } ASTValueType;
 
+/*
+INFO(ELI): So basically I decided to throw
+child indicies into the ASTNode since it allows
+for traditional pre order and inorder traversals
+as well as the more useful post order traversal.
+
+This might get changed later since it can't support
+more than 2 children, or if we do it is a constant
+memory cost.
+
+*/
 typedef struct ASTNode {
     ASTNodeOp op;
     ASTValueType vt;
