@@ -23,6 +23,24 @@
 void drawBox(v2u pos, v2u size, SString str);
 SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen);
 
+#define KEY_ESCAPE 27
+
+struct KeyBinds {
+    u8 cursor_up;
+    u8 cursor_down;
+    u8 cursor_left;
+    u8 cursor_right;
+    u8 terminal;
+    u8 exit;
+} KeyBinds = {
+    .cursor_up = 'k';
+    cursor_down = 'j';
+    cursor_left = 'h';
+    cursor_right = 'l';
+    terminal = ':';
+    exit = 'q';
+}
+
 
 int main(int argc, char* argv[]) {
     initscr();
@@ -85,6 +103,8 @@ int main(int argc, char* argv[]) {
 
         cursor.x = MAX(cursor.x, 0);
         cursor.y = MAX(cursor.y, 0);
+        c = getch();
+        if (c == KEY_ESCAPE) break;
     }
 
 
