@@ -75,7 +75,10 @@ EDITOR_INCLUDE_DIRS:=$(INCLUDE_DIRS)
 EDITOR_TEST_SRC_DIR:=$(TEST_SRC_DIR)/parasheet-editor
 EDITOR_BUILD_DIR:=$(BUILD_DIR)/parasheet-editor
 EDITOR_CFLAGS:=$(CFLAGS)
-EDITOR_LDFLAGS:=$(LDFLAGS) -lparasheet
+
+#Edited to link to ncurses
+EDITOR_LDFLAGS:=$(LDFLAGS) -lparasheet -lncurses
+
 EDITOR_RELEASE_DIR:=$(EDITOR_BUILD_DIR)/release
 EDITOR_RELEASE_OBJ_DIR:=$(EDITOR_RELEASE_DIR)/objs
 EDITOR_RELEASE_DEP_DIR:=$(EDITOR_RELEASE_DIR)/deps
@@ -370,7 +373,7 @@ $(CLI_TEST_EXE_DIR)/%: $(CLI_TEST_SRC_DIR)/%$(SOURCE_FILE_EXTENSION) $(filter-ou
 	$(CC) -MT $(call ospath,$@) -MMD -MP -MF $(call ospath,$(CLI_TEST_DEP_DIR)/$*.d) $(CLI_TEST_CFLAGS) $(call ospath,$(addprefix -I,$(CLI_INCLUDE_DIRS))) $(call ospath,$< $(filter-out %main.o,$(CLI_DEBUG_OBJS)) $(UTIL_DEBUG_OBJS)) -o $(call ospath,$@) $(CLI_TEST_LDFLAGS)
 
 $(LIBRARY_TEST_EXE_DIR)/%: $(LIBRARY_TEST_SRC_DIR)/%$(SOURCE_FILE_EXTENSION) $(filter-out main.o,$(LIBRARY_DEBUG_OBJS)) $(UTIL_DEBUG_OBJS) | $(LIBRARY_TEST_SUBDIRECTORES)
-	$(CC) -MT $(call ospath,$@) -MMD -MP -MF $(call ospath,$(LIBRARY_TEST_DEP_DIR)/$*.d) $(LIBRARY_TEST_CFLAGS) $(call ospath,$(addprefix -I,$(LIBRARY_INCLUDE_DIRS))) $(call ospath,$< $(UTIL_DEBUG_OBJS)) -o $(call ospath,$@) $(LIBRARY_TEST_LDFLAGS)
+	$(CC) -MT $(call ospath,$@) -MMD -MP -MF $(call ospath,$(LIBRARY_TEST_DEP_DIR)/$*.d) $(LIBRARY_TEST_CFLAGS) $(call ospath,$(addprefix -I,$(LIBRARY_INCLUDE_DIRS))) $(call ospath,$< $(LIBRARY_DEBUG_OBJS) $(UTIL_DEBUG_OBJS)) -o $(call ospath,$@) $(LIBRARY_TEST_LDFLAGS)
 
 $(UTIL_TEST_EXE_DIR)/%: $(UTIL_TEST_SRC_DIR)/%$(SOURCE_FILE_EXTENSION) $(filter-out main.o,$(UTIL_DEBUG_OBJS)) $(UTIL_DEBUG_OBJS) | $(UTIL_TEST_SUBDIRECTORES)
 	$(CC) -MT $(call ospath,$@) -MMD -MP -MF $(call ospath,$(UTIL_TEST_DEP_DIR)/$*.d) $(UTIL_TEST_CFLAGS) $(call ospath,$(addprefix -I,$(UTIL_INCLUDE_DIRS))) $(call ospath,$< $(UTIL_DEBUG_OBJS)) -o $(call ospath,$@) $(UTIL_TEST_LDFLAGS)

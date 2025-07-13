@@ -115,6 +115,36 @@ They respectively produce the following output lines:
 In addition both warn and err are color coded 
 yellow and red respectively.
 
+To further control the output of logging, there are
+two functions provided:
+
+```c
+void setlogfile(FILE* file);
+void seterrfile(FILE* file);
+```
+
+These functions allow you to specify where logging
+will output to. When using ncurses these functions should
+be used in order to not mess up the output.
+
+
+
+As an internal note; they use the following 2 functions.
+```c
+void errprint(const char* fmt, ...);
+void logprint(const char* fmt, ...);
+```
+
+There is no reason to use these outside of the log macro,
+however they are roughly equivalent to:
+
+```c
+print(logfile, fmt, ...);
+print(errfile, fmt, ...);
+```
+
+But they will initialize log and err file if they aren't
+already initialized.
 
 ## Error Checking
 
@@ -229,3 +259,21 @@ u64 hash(u8* buf, u64 size);
 ```
 
 As of 7/9 it uses FNV-1a. 
+
+```c
+#define MAX(a, b)
+#define MIN(a, b)
+#define CLAMP(t, min, max)
+```
+
+These three macros are provided as helpers for
+integer comparison and clamping. They are type agnostic,
+as long as a and b can be compared using `<` and `>`.
+
+```c
+#define KB(x)
+#define MB(x)
+#define GB(x)
+```
+These three macros are used for quickly writing out
+Kib, Mib, and Gib.

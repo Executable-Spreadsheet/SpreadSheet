@@ -2,9 +2,8 @@
 #define CSV_H
 
 #include "libparasheet/lib_internal.h" // for SpreadSheet, CellValue
-#include <stddef.h> // for size_t
 #include <stdbool.h>
-
+#include <stddef.h> // for size_t
 
 /*
 +------------------------------------------------------------+
