@@ -23,6 +23,7 @@
 #define KEY_ESCAPE 27
 #define KEY_ENTER_REAL 10
 
+
 void drawBox(v2u pos, v2u size, SString str);
 SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen);
 
@@ -76,17 +77,17 @@ typedef struct RenderHandler {
 } RenderHandler;
 
 // clarise: can i make this a SString later?
-char* stateToString(EditorState state){
-    if (state == NORMAL){return "NORMAL";}
-    else if (state == TERMINAL){return "TERMINAL";}
-    else if (state == EDIT){return "EDIT";}
-    else if (state == SHUTDOWN){return "SHUTDOWN";}
-    else {return "INVALID";}
-}
 
-void boundCursor(RenderHandler* handler){
-        handler->cursor.x = MAX(handler->cursor.x, 0);
-        handler->cursor.y = MAX(handler->cursor.y, 0);
+// NOTE(ELI): I made this an SString and converted it to a switch
+// since that seemed better for formating and readability.
+SString stateToString(EditorState state){
+    switch (state) {
+        case NORMAL:    return sstring("NORMAL");
+        case TERMINAL:  return sstring("TERMINAL");
+        case EDIT:      return sstring("EDIT");
+        case SHUTDOWN:  return sstring("SHUTDOWN");
+        default:        return sstring("INVALID");
+    }
 }
 
 void handleKey(RenderHandler* handler){
@@ -94,8 +95,8 @@ void handleKey(RenderHandler* handler){
     switch (handler->state){
         case NORMAL:
             if (keyIn == handler->keybinds.cursor_up) {
-            handler->cursor.y -= 1;
-             }
+                handler->cursor.y -= 1;
+            }
             else if (keyIn == handler->keybinds.cursor_down) {
                 handler->cursor.y += 1;
             }
@@ -130,8 +131,9 @@ void handleKey(RenderHandler* handler){
             break;
     }
 
-    // cleanup
-    boundCursor(handler);
+    // Clamp Cursor
+    handler->cursor.x = MAX(handler->cursor.x, 0);
+    handler->cursor.y = MAX(handler->cursor.y, 0);
 }
 
 
@@ -148,13 +150,16 @@ int main(int argc, char* argv[]) {
     SpreadSheet sheet = {
         .mem = GlobalAllocatorCreate(),
     };
-    
     Allocator stack = StackAllocatorCreate(sheet.mem, KB(1));
+
     
     //set logging
     //INFO(ELI): dev/null stops all printing,
     //change to enable printing to log file
-    logfile = fopen("dev/null", "w+");
+    logfile = fopen("/dev/null", "w+");
+
+
+    SpreadSheetSetCell(&sheet, (v2u){0,0}, (CellValue){.t = CT_INT, .d = {1}});
 
     // if you want different keybinds u change that here
     RenderHandler handler = {
@@ -175,10 +180,14 @@ int main(int argc, char* argv[]) {
                 if (i == handler.cursor.x && j == handler.cursor.y) {
                     continue;
                 }
+
                 SString info = cellDisplay(stack, &sheet, 
-                        (v2u){handler.base.x + i, handler.base.y + j}, CELL_WIDTH - 2);
+                                           (v2u){handler.base.x + i, handler.base.y + j},
+                                           CELL_WIDTH - 2);
+
                 drawBox((v2u){i * CELL_WIDTH, j * CELL_HEIGHT}, 
                         (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
+
                 StackAllocatorReset(&stack);
             }
         }
@@ -189,16 +198,15 @@ int main(int argc, char* argv[]) {
                 {handler.cursor.x, handler.cursor.y}, CELL_WIDTH - 2);
         drawBox((v2u){handler.cursor.x * CELL_WIDTH, handler.cursor.y * CELL_HEIGHT},
                 (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
+
         StackAllocatorReset(&stack);
 
         mvprintw(LINES - 2, 0, "Cursor (%d %d)  ch: %d State: %s", 
-                handler.cursor.x, handler.cursor.y, handler.ch, stateToString(handler.state));
-
+                handler.cursor.x, handler.cursor.y, handler.ch, stateToString(handler.state).data);
         refresh();
 
         //updating
         handler.ch = getch();
-        
         handleKey(&handler);
         if (handler.state == SHUTDOWN) break;
 
