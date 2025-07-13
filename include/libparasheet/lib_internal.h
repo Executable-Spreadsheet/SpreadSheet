@@ -14,67 +14,61 @@
 +---------------------------------------------------+
 */
 
-
 #define BLOCK_SIZE 16
 #define MAX_LOAD_FACTOR 0.6
 
-#define CELL_TO_BLOCK(c) \
-    ((v2u){c.x / BLOCK_SIZE, c.y / BLOCK_SIZE})
+#define CELL_TO_BLOCK(c) ((v2u){c.x / BLOCK_SIZE, c.y / BLOCK_SIZE})
 
-#define CELL_TO_OFFSET(c) \
-    ((v2u){c.x % BLOCK_SIZE, c.y % BLOCK_SIZE})
+#define CELL_TO_OFFSET(c) ((v2u){c.x % BLOCK_SIZE, c.y % BLOCK_SIZE})
 
-
-//Gonna use a tagged union for spreadsheet values.
-//It just makes a lot of sense and it is fairly compact.
+// Gonna use a tagged union for spreadsheet values.
+// It just makes a lot of sense and it is fairly compact.
 
 typedef enum CellType : u32 {
-    CT_EMPTY = 0,
-    CT_CODE,
-    CT_TEXT,
-    CT_INT,
-    CT_FLOAT,
+	CT_EMPTY = 0,
+	CT_CODE,
+	CT_TEXT,
+	CT_INT,
+	CT_FLOAT,
 } CellType;
 
 typedef struct CellValue {
-    CellType t;
-    union {
-        u32 i;
-        f32 f;
-        u32 index; //index into external buffer
-    } d;
+	CellType t;
+	union {
+		u32 i;
+		f32 f;
+		u32 index; // index into external buffer
+	} d;
 } CellValue;
 
-
 typedef struct Block {
-    u32 nonempty; //keeps track of nonempty cells,
-                  //when empty it gets marked as free
+	u32 nonempty; // keeps track of nonempty cells,
+				  // when empty it gets marked as free
 
-    CellValue cells[BLOCK_SIZE * BLOCK_SIZE];
+	CellValue cells[BLOCK_SIZE * BLOCK_SIZE];
 } Block;
 
-//TODO(ELI): In future organize to minimize padding
-//rn things are split based on usage but this should be
-//improved in the future.
+// TODO(ELI): In future organize to minimize padding
+// rn things are split based on usage but this should be
+// improved in the future.
 typedef struct SpreadSheet {
-    Allocator mem; //probably should be global allocator but
-                // might as well give ourselves options
-    //main cell map
-    u32* values;
-    v2u* keys;
-    u32 size;
+	Allocator mem; // probably should be global allocator but
+				   //  might as well give ourselves options
+	// main cell map
+	u32* values;
+	v2u* keys;
+	u32 size;
 
-    //pool of reusable blocks
-    Block* blockpool;
-    u32 bsize;
+	// pool of reusable blocks
+	Block* blockpool;
+	u32 bsize;
 
-    i32* freestatus;
-    u32 fsize;
+	i32* freestatus;
+	u32 fsize;
 
-    u32 bcap;
-    u32 cap;
+	u32 bcap;
+	u32 cap;
 } SpreadSheet;
-
 
 void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue value);
 CellValue* SpreadSheetGetCell(SpreadSheet* sheet, v2u pos);
@@ -82,14 +76,12 @@ CellValue* SpreadSheetGetCell(SpreadSheet* sheet, v2u pos);
 void SpreadSheetClearCell(SpreadSheet* sheet, v2u pos);
 void SpreadSheetFree(SpreadSheet* sheet);
 
-
-
-//INFO(ELI): I decided to have these return indicies
-//since indicies are mostly stable and remain
-//valid even after a resize.
+// INFO(ELI): I decided to have these return indicies
+// since indicies are mostly stable and remain
+// valid even after a resize.
 //
-//They also are required for the SpreadSheet to
-//reuse empty blocks.
+// They also are required for the SpreadSheet to
+// reuse empty blocks.
 u32 SheetBlockInsert(SpreadSheet* sheet, v2u pos, u32 bid);
 u32 SheetBlockGet(SpreadSheet* sheet, v2u pos);
 void SheetBlockDelete(SpreadSheet* sheet, v2u pos);
@@ -104,27 +96,27 @@ void SheetBlockDelete(SpreadSheet* sheet, v2u pos);
 */
 
 typedef enum ASTNodeType : u32 {
-    AST_INVALID = 0, //mark unintialized Node as invalid
+	AST_INVALID = 0, // mark unintialized Node as invalid
 
-    //literals
-    AST_INT,
-    AST_FLOAT,
+	// literals
+	AST_INT,
+	AST_FLOAT,
 
-    //Ops
-    AST_ADD,
-    AST_SUB,
-    AST_MUL,
-    AST_DIV,
-    AST_FLOAT_TO_INT,
-    AST_INT_TO_FLOAT,
+	// Ops
+	AST_ADD,
+	AST_SUB,
+	AST_MUL,
+	AST_DIV,
+	AST_FLOAT_TO_INT,
+	AST_INT_TO_FLOAT,
 
-    //Probably want this
-    AST_CALL,
+	// Probably want this
+	AST_CALL,
 } ASTNodeOp;
 
 typedef enum ASTValueType : u32 {
-    V_INT,
-    V_FLOAT,
+	V_INT,
+	V_FLOAT,
 } ASTValueType;
 
 /*
@@ -139,33 +131,31 @@ memory cost.
 
 */
 typedef struct ASTNode {
-    ASTNodeOp op;
-    ASTValueType vt;
+	ASTNodeOp op;
+	ASTValueType vt;
 
-    //Union for storing literal values
-    union {
-        u32 i; //Symbols use this as an index
-        f32 f;
-    } data;
+	// Union for storing literal values
+	union {
+		u32 i; // Symbols use this as an index
+		f32 f;
+	} data;
 
-    u32 lchild;
-    u32 rchild;
+	u32 lchild;
+	u32 rchild;
 } ASTNode;
 
 typedef struct AST {
-    Allocator mem;
-    ASTNode* nodes;
-    u32 size;
-    u32 cap;
+	Allocator mem;
+	ASTNode* nodes;
+	u32 size;
+	u32 cap;
 } AST;
 
-#define ASTGet(tree, idx) \
-    ((tree)->nodes[idx]) 
+#define ASTGet(tree, idx) ((tree)->nodes[idx])
 
 u32 ASTPush(AST* tree);
 
 void ASTPrint(FILE* fd, AST* tree);
 void ASTFree(AST* tree);
-
 
 #endif
