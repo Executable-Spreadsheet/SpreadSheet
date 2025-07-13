@@ -18,14 +18,9 @@ static void ResizeNodes(AST* tree) {
     memset(&tree->nodes[oldsize], 0, oldsize);
 }
 
-void ASTInsert(AST* tree, ASTNode node) {
+u32 ASTPush(AST* tree) {
     ResizeNodes(tree);
-    tree->nodes[tree->size++] = node;
-}
-
-ASTNode* ASTPush(AST* tree) {
-    ResizeNodes(tree);
-    return &tree->nodes[tree->size++];
+    return tree->size++;
 }
 
 SString nodeops[] = {

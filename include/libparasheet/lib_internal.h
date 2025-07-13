@@ -139,6 +139,13 @@ memory cost.
 typedef struct ASTNode {
     ASTNodeOp op;
     ASTValueType vt;
+
+    //Union for storing literal values
+    union {
+        u32 i; //Symbols use this as an index
+        f32 f;
+    } data;
+
     u32 lchild;
     u32 rchild;
 } ASTNode;
@@ -150,11 +157,12 @@ typedef struct AST {
     u32 cap;
 } AST;
 
-void ASTInsert(AST* tree, ASTNode node);
-ASTNode* ASTPush(AST* tree);
+#define ASTGet(tree, idx) \
+    (tree->nodes[idx]) 
+
+u32 ASTPush(AST* tree);
 
 void ASTPrint(FILE* fd, AST* tree);
-
 void ASTFree(AST* tree);
 
 
