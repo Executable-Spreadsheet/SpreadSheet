@@ -152,7 +152,9 @@ int main(int argc, char* argv[]) {
     Allocator stack = StackAllocatorCreate(sheet.mem, KB(1));
     
     //set logging
-    logfile = fopen("log.out", "w+");
+    //INFO(ELI): dev/null stops all printing,
+    //change to enable printing to log file
+    logfile = fopen("dev/null", "w+");
 
     // if you want different keybinds u change that here
     RenderHandler handler = {
@@ -165,7 +167,7 @@ int main(int argc, char* argv[]) {
 
     // rendering loop
     while (1) {
-        clear();
+        erase();
         //rendering
 
         for (u32 i = 0; i < COLS/CELL_WIDTH + 1; i++) {
