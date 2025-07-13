@@ -116,7 +116,6 @@ u32 SheetBlockInsert(SpreadSheet* sheet, v2u pos, u32 bid) {
 }
 
 u32 SheetBlockGet(SpreadSheet* sheet, v2u pos) {
-<<<<<<< HEAD
     if (!sheet->cap) {
         //If there are no mappings
         //return -1
@@ -125,9 +124,6 @@ u32 SheetBlockGet(SpreadSheet* sheet, v2u pos) {
 
 
     u32 idx = hash((u8*)&pos, sizeof(pos)) % sheet->cap;
-=======
-	u32 idx = hash((u8*)&pos, sizeof(pos)) % sheet->cap;
->>>>>>> 82272e5 (Mass clang-format to fit new style guide)
 
 	for (u32 i = 0; i < sheet->cap; i++) {
 		v2u curr = sheet->keys[idx];

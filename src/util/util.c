@@ -276,18 +276,8 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
 	return fmt;
 }
 
-<<<<<<< HEAD
-
 static void vprint(FILE *fd, const char *fmt, va_list args) {
   while (fmt[0]) {
-=======
-void print(FILE* fd, const char* fmt, ...) {
-	va_list args;
-	va_start(args, fmt);
-
-	while (fmt[0]) {
->>>>>>> 82272e5 (Mass clang-format to fit new style guide)
-
 		switch (fmt[0]) {
 		case '%': {
 			u32 precision = 4;
@@ -295,7 +285,6 @@ void print(FILE* fd, const char* fmt, ...) {
 				fmt += 1;
 				precision = 0;
 
-<<<<<<< HEAD
         while (fmt[1] && isdigit(fmt[1])) {
           precision *= 10;
           precision += fmt[1] - '0';
@@ -344,24 +333,6 @@ void print(FILE *fd, const char *fmt, ...) {
     va_start(args, fmt);
     vprint(fd, fmt, args);
     va_end(args);
-=======
-				while (fmt[1] && isdigit(fmt[1])) {
-					precision *= 10;
-					precision += fmt[1] - '0';
-					fmt++;
-				}
-			}
-			fmt = print_arg(fd, precision, fmt, args);
-		} break;
-		default: {
-			putc(fmt[0], fd);
-			fmt++;
-		} break;
-		}
-	}
-
-	va_end(args);
->>>>>>> 82272e5 (Mass clang-format to fit new style guide)
 }
 
 //------------ Memory Allocators --------------

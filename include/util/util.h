@@ -117,18 +117,7 @@ Print formatting options
 %n -> Null terminated string
 */
 
-// nice logger with automatic newline
-#define log(x, ...)                                                            \
-	print(stdout, "[LOG] %n:%d]:\t" x "\n", __FILE__, __LINE__, ##__VA_ARGS__)
-#define warn(x, ...)                                                           \
-	print(stderr, "\033[38;2;255;255;0m[WARN] %n:%d]:\t" x "\033[0m\n",        \
-		  __FILE__, __LINE__, ##__VA_ARGS__)
-#define err(x, ...)                                                            \
-	print(stderr, "\033[38;2;255;0;0m[ERROR] %n:%d]:\t" x "\033[0m\n",         \
-		  __FILE__, __LINE__, ##__VA_ARGS__)
-
 //nice logger with automatic newline
-
 #define log(x, ...)  logprint("[LOG] %n:%d]:\t" x "\n", __FILE__, __LINE__,##__VA_ARGS__)
 #define warn(x, ...) errprint("\033[38;2;255;255;0m[WARN] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
 #define err(x, ...)  errprint("\033[38;2;255;0;0m[ERROR] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
