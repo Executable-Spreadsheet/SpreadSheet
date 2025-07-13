@@ -1,0 +1,8 @@
+---
+BasedOnStyle: LLVM
+UseTab: Always
+IndentWidth: 4
+TabWidth: 4
+DerivePointerAlignment: false
+PointerAlignment: Left
+...
