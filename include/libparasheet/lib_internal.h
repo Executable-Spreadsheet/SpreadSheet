@@ -158,7 +158,7 @@ typedef struct AST {
 } AST;
 
 #define ASTGet(tree, idx) \
-    (tree->nodes[idx]) 
+    ((tree)->nodes[idx]) 
 
 u32 ASTPush(AST* tree);
 
