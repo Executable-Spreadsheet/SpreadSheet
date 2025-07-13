@@ -166,8 +166,13 @@ void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue val) {
 	u32 blockid = SheetBlockInsert(sheet, blockpos, UINT32_MAX);
 	Block* block = &sheet->blockpool[blockid];
 
+<<<<<<< HEAD
 	v2u offset = CELL_TO_OFFSET(pos);
 	u32 index = offset.x + offset.y * BLOCK_SIZE;
+=======
+    v2u offset = CELL_TO_OFFSET(pos);
+    u32 index = CELL_TO_INDEX(offset);
+>>>>>>> b806feb (swapped iter order)
 
 	// NOTE(ELI): Block Insert forces the block to exist if it doesn't already
 	// So this is always safe
@@ -211,8 +216,8 @@ void SpreadSheetClearCell(SpreadSheet* sheet, v2u pos) {
 		return;
 	}
 
-	v2u offset = CELL_TO_OFFSET(pos);
-	u32 index = offset.x + offset.y * BLOCK_SIZE;
+    v2u offset = CELL_TO_OFFSET(pos);
+    u32 index = CELL_TO_INDEX(offset);
 
 	if (block->cells[index].t != CT_EMPTY) {
 		block->nonempty--;

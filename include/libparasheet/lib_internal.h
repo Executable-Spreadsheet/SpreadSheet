@@ -21,8 +21,11 @@
 
 #define CELL_TO_OFFSET(c) ((v2u){c.x % BLOCK_SIZE, c.y % BLOCK_SIZE})
 
-// Gonna use a tagged union for spreadsheet values.
-// It just makes a lot of sense and it is fairly compact.
+#define CELL_TO_INDEX(v) \
+    (v.y + v.x * BLOCK_SIZE)
+
+//Gonna use a tagged union for spreadsheet values.
+//It just makes a lot of sense and it is fairly compact.
 
 typedef enum CellType : u32 {
 	CT_EMPTY = 0,
