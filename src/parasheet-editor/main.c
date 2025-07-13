@@ -27,7 +27,7 @@ void drawBox(v2u pos, v2u size, SString str);
 SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen);
 
 // supplies the currently selected keybinds
-struct KeyBinds {
+typedef struct KeyBinds {
     u8 cursor_up;
     u8 cursor_down;
     u8 cursor_left;
@@ -36,8 +36,7 @@ struct KeyBinds {
     u8 exit; // quit the program
     u8 edit; // open a cell for editing
     u8 nav;  // go back to normal mode
-};
-typedef struct KeyBinds KeyBinds;
+} KeyBinds;
 
 // keybinds are currently hard set but that can change later
 KeyBinds keybinds_hjkl = {
@@ -61,22 +60,20 @@ KeyBinds keybinds_wasd = {
     .nav = (u8)KEY_ESCAPE
 };
 
-enum EditorState {
+typedef enum EditorState {
     NORMAL,
     TERMINAL,
     EDIT,
     SHUTDOWN
-};
-typedef enum EditorState EditorState;
+} EditorState;
 
-struct RenderHandler {
+typedef struct RenderHandler {
     u8 ch;
     v2i base;
     v2i cursor;
     KeyBinds keybinds;
     EditorState state;
-};
-typedef struct RenderHandler RenderHandler;
+} RenderHandler;
 
 // clarise: can i make this a SString later?
 char* stateToString(EditorState state){
