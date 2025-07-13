@@ -31,6 +31,8 @@ SString nodeops[] = {
     sstring("SUB"),     //SUB
     sstring("MUL"),     //MUL
     sstring("DIV"),     //DIV
+    sstring("FLOAT to INT"), //FLOAT TO INT
+    sstring("INT to FLOAT"), //INT TO FLOAT
 
     sstring("CALL"),    //CALL
 };

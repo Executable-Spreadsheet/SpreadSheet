@@ -115,6 +115,8 @@ typedef enum ASTNodeType : u32 {
     AST_SUB,
     AST_MUL,
     AST_DIV,
+    AST_FLOAT_TO_INT,
+    AST_INT_TO_FLOAT,
 
     //Probably want this
     AST_CALL,
