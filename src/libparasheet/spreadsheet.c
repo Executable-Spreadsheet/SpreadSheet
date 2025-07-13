@@ -114,6 +114,13 @@ u32 SheetBlockInsert(SpreadSheet* sheet, v2u pos, u32 bid) {
 }
 
 u32 SheetBlockGet(SpreadSheet* sheet, v2u pos) {
+    if (!sheet->cap) {
+        //If there are no mappings
+        //return -1
+        return -1;
+    }
+
+
     u32 idx = hash((u8*)&pos, sizeof(pos)) % sheet->cap;
 
     for (u32 i = 0; i < sheet->cap; i++) {

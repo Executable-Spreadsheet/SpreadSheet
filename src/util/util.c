@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 //----- String Conversions ---------
 
 u32 stou(const char *s) {
@@ -275,10 +276,8 @@ static const char *print_arg(FILE *fd, u32 precision, const char *fmt,
   return fmt;
 }
 
-void print(FILE *fd, const char *fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
 
+static void vprint(FILE *fd, const char *fmt, va_list args) {
   while (fmt[0]) {
 
     switch (fmt[0]) {
@@ -302,8 +301,40 @@ void print(FILE *fd, const char *fmt, ...) {
     } break;
     }
   }
+}
 
-  va_end(args);
+FILE* errfile = NULL;
+FILE* logfile = NULL;
+
+void logprint(const char* fmt, ...) {
+    if (!logfile) {
+        logfile = stdout;
+    }
+
+    va_list args;
+    va_start(args, fmt);
+    vprint(logfile, fmt, args);
+    va_end(args);
+
+}
+
+void errprint(const char* fmt, ...) {
+    if (!errfile) {
+        errfile = stderr;
+    }
+
+    va_list args;
+    va_start(args, fmt);
+    vprint(errfile, fmt, args);
+    va_end(args);
+}
+
+
+void print(FILE *fd, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vprint(fd, fmt, args);
+    va_end(args);
 }
 
 //------------ Memory Allocators --------------
