@@ -226,4 +226,9 @@ typedef struct v2u {
 u64 hash(u8* buf, u64 size);
 
 
+#define KB(x) (x * 1024)
+#define MB(x) (x * 1024 * 1024)
+#define GB(x) (x * 1024 * 1024 * 1024)
+
+
 #endif
