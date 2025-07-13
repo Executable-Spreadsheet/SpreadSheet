@@ -21,7 +21,7 @@
 
 // ASCII VALUES
 #define KEY_ESCAPE 27
-#define KEY_ENTER 10
+#define KEY_ENTER_REAL 10
 
 void drawBox(v2u pos, v2u size, SString str);
 SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen);
@@ -37,26 +37,27 @@ struct KeyBinds {
     u8 edit; // open a cell for editing
     u8 nav;  // go back to normal mode
 };
+typedef struct KeyBinds KeyBinds;
 
 // keybinds are currently hard set but that can change later
-struct KeyBinds keybinds_hjkl = {
+KeyBinds keybinds_hjkl = {
     .cursor_up = 'k',
     .cursor_down = 'j',
     .cursor_left = 'h',
     .cursor_right = 'l',
     .terminal = ':',
     .exit = 'q',
-    .edit = (u8)KEY_ENTER,
+    .edit = (u8)KEY_ENTER_REAL,
     .nav = (u8)KEY_ESCAPE
 };
-struct KeyBinds keybinds_wasd = {
+KeyBinds keybinds_wasd = {
     .cursor_up = 'w',
     .cursor_down = 's',
     .cursor_left = 'a',
     .cursor_right = 'd',
     .terminal = ':',
     .exit = 'q',
-    .edit = (u8)KEY_ENTER,
+    .edit = (u8)KEY_ENTER_REAL,
     .nav = (u8)KEY_ESCAPE
 };
 
@@ -65,30 +66,33 @@ enum EditorState {
     TERMINAL,
     EDIT,
     SHUTDOWN
-} EditorState;
+};
+typedef enum EditorState EditorState;
 
 struct RenderHandler {
     u8 ch;
     v2i base;
     v2i cursor;
-    struct KeyBinds keybinds;
-    enum EditorState state;
+    KeyBinds keybinds;
+    EditorState state;
 };
+typedef struct RenderHandler RenderHandler;
 
 // clarise: can i make this a SString later?
-char* stateToString(enum EditorState state){
+char* stateToString(EditorState state){
     if (state == NORMAL){return "NORMAL";}
-    if (state == TERMINAL){return "TERMINAL";}
-    if (state == EDIT){return "EDIT";}
-    if (state == SHUTDOWN){return "SHUTDOWN";}
+    else if (state == TERMINAL){return "TERMINAL";}
+    else if (state == EDIT){return "EDIT";}
+    else if (state == SHUTDOWN){return "SHUTDOWN";}
+    else {return "INVALID";}
 }
 
-void boundCursor(struct RenderHandler* handler){
+void boundCursor(RenderHandler* handler){
         handler->cursor.x = MAX(handler->cursor.x, 0);
         handler->cursor.y = MAX(handler->cursor.y, 0);
 }
 
-int handleKey(struct RenderHandler* handler){
+void handleKey(RenderHandler* handler){
     char keyIn = handler->ch;
     switch (handler->state){
         case NORMAL:
@@ -124,26 +128,13 @@ int handleKey(struct RenderHandler* handler){
                 handler->state = NORMAL;
             }
             break;
+        case SHUTDOWN:
+            // no behavior; silencing compiler warning
+            break;
     }
 
     // cleanup
     boundCursor(handler);
-
-    /* clarise:
-    // original switch statement has been abandoned-- putting the info in a struct is not
-    // possible with a switch statement, since it requires constants
-    // if theres a way around it i would be willing to refactor later for style 
-    */
-    // TEMPORARILY PRESERVED
-    /*
-    switch(handler->ch) {
-            case keybinds.cursor_left: { handler->cursor.x -= 1; } break;
-            case 'j': { handler->cursor.y += 1; } break;
-            case 'k': { handler->cursor.y -= 1; } break;
-            case 'l': { handler->cursor.x += 1; } break;
-            default: break;
-        }
-    */
 }
 
 
@@ -167,7 +158,7 @@ int main(int argc, char* argv[]) {
     logfile = fopen("log.out", "w+");
 
     // if you want different keybinds u change that here
-    struct RenderHandler handler = {
+    RenderHandler handler = {
         .ch = 0,
         .base = {0, 0},
         .cursor = {0, 0},
