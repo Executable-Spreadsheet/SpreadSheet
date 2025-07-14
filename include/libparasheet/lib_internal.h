@@ -49,6 +49,7 @@ u32 StringAddS(StringTable* table, SString string);
 //free the strings automatically
 SString StringDel(StringTable* table, u32 index);
 
+const SString StringGet(StringTable* table, u32 index);
 
 void StringFree(StringTable* table);
 
