@@ -46,6 +46,12 @@ u32 lstou(LString s) {
 	return out;
 }
 
+//------------- String Functions ---------------
+
+i32 SStrCmp(SString a, SString b) {
+    return (a.size != b.size) || memcmp(a.data, b.data, a.size);
+}
+
 //------------- Custom Printf ------------------
 
 static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
