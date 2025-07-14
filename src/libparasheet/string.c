@@ -3,8 +3,19 @@
 #include <string.h>
 #include <util/util.h>
 
+//NOTE(ELI): This declaration is here for recursive purposes. The Resize function
+//depends on the insertion function and the insertion function always calls
+//the resize function first. This forward declaration is therefore required.
+//
+//I could have separated them so that there is a version of insertion which calls
+//resize and a version which doesn't but it didn't seem necessary at the moment,
+//but feel free in the future!!
 static u32 StringAddInternal(StringTable* table, SString string, u32 sidx);
 
+/*
+* Allocates a unique index to a string. Will automatically resize
+* the arrays keeping track of each string. Internal use only
+*/
 static u32 AllocString(StringTable* table, SString s) {
     if (table->fsize == 0) {
         u32 oldsize = table->scap;
@@ -32,6 +43,10 @@ static u32 AllocString(StringTable* table, SString s) {
 }
 
 
+/*
+* Resizes the hash table, doubles the size and
+* copies each element over. Internal use only
+*/
 static void StringResize(StringTable* table) {
     if (table->size + 1 <= (table->cap * MAX_LOAD_FACTOR))
         return;
@@ -61,6 +76,11 @@ static void StringResize(StringTable* table) {
     Free(table->mem, oldmeta, oldsize * sizeof(u32));
 }
 
+/*
+* Internal implementation of string insertion. The additional sidx
+* parameter is used for reinserting strings when resizing and is hidden
+* from the standard api functions.
+*/
 static u32 StringAddInternal(StringTable* table, SString string, u32 sidx) {
     StringResize(table);
 
