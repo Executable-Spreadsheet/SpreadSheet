@@ -149,6 +149,10 @@ SString StringDel(StringTable* table, u32 index) {
     panic(); 
 }
 
+const SString StringGet(StringTable* table, u32 index) {
+    return table->strings[index];
+}
+
 void StringFree(StringTable* table) {
     Free(table->mem, table->vals, table->cap * sizeof(u32));
     Free(table->mem, table->meta, table->cap * sizeof(u32));
