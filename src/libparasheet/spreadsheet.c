@@ -20,9 +20,7 @@ const static v2u Tomb = {UINT32_MAX, 0};
 static void AllocBlock(SpreadSheet* sheet) {
 	u32 oldsize = sheet->bcap;
 
-	while (sheet->bsize + 1 >= sheet->bcap) {
-		sheet->bcap = sheet->bcap ? sheet->bcap * 2 : 2;
-	}
+    sheet->bcap = sheet->bcap ? sheet->bcap * 2 : 2;
 
 	sheet->blockpool =
 		Realloc(sheet->mem, sheet->blockpool, oldsize * sizeof(Block),
@@ -32,7 +30,7 @@ static void AllocBlock(SpreadSheet* sheet) {
 				sheet->bcap * sizeof(i32));
 
 	// add new blocks to free list
-	for (u32 i = oldsize; i < sheet->bcap; i++) {
+	for (i32 i = sheet->bcap - 1; i >= (i32)oldsize; i--) {
 		sheet->freestatus[sheet->fsize++] = i;
 	}
 
@@ -41,8 +39,7 @@ static void AllocBlock(SpreadSheet* sheet) {
 }
 
 static u32 PickBlock(SpreadSheet* sheet) {
-	if (!sheet->fsize)
-		AllocBlock(sheet);
+	if (!sheet->fsize) AllocBlock(sheet);
 	return sheet->freestatus[--sheet->fsize];
 }
 
