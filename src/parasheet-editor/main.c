@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <util/util.h>
 #include <ncurses.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 
 /*
@@ -90,6 +92,20 @@ SString stateToString(EditorState state){
     }
 }
 
+void editCell(){
+    // somehow deduplicate open cells
+    // create new tempfile for cell
+    // open vim on tempfile
+    // TODO
+    char * termname = ttyname(STDIN_FILENO);
+//    logfile = fopen("log.out", "w+");
+    log("there should be something between");
+    log("tty output: %n", (u8*) termname);
+    log("me and my brother");
+    // https://askubuntu.com/questions/974756/how-can-i-open-a-extra-console-and-run-a-program-in-it-with-one-command
+    system("gnome-terminal -- bash -c \"vim hello_world.md; exec bash\"");
+}
+
 void handleKey(RenderHandler* handler){
     char keyIn = handler->ch;
     switch (handler->state){
@@ -113,6 +129,7 @@ void handleKey(RenderHandler* handler){
             }
             else if (keyIn == handler->keybinds.edit) {
                 handler->state = EDIT;
+                editCell();
             }
             break;
         case EDIT:
@@ -156,8 +173,8 @@ int main(int argc, char* argv[]) {
     //set logging
     //INFO(ELI): dev/null stops all printing,
     //change to enable printing to log file
-    logfile = fopen("/dev/null", "w+");
-
+    //logfile = fopen("/dev/null", "w+");
+    logfile = fopen("log.out", "w+");
 
     SpreadSheetSetCell(&sheet, (v2u){0,0}, (CellValue){.t = CT_INT, .d = {1}});
 
