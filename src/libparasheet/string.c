@@ -3,7 +3,7 @@
 #include <string.h>
 #include <util/util.h>
 
-static u32 StringAddv(StringTable* table, SString string, u32 sidx);
+static u32 StringAddInternal(StringTable* table, SString string, u32 sidx);
 
 static u32 AllocString(StringTable* table, SString s) {
     if (table->fsize == 0) {
@@ -52,7 +52,7 @@ static void StringResize(StringTable* table) {
 
     for (u32 i = 0; i < oldsize; i++) {
         if (oldmeta[i] != UINT32_MAX) {
-            StringAddv(table, table->strings[oldvals[i]], oldvals[i]);
+            StringAddInternal(table, table->strings[oldvals[i]], oldvals[i]);
         }
     }
 
@@ -61,7 +61,7 @@ static void StringResize(StringTable* table) {
     Free(table->mem, oldmeta, oldsize * sizeof(u32));
 }
 
-static u32 StringAddv(StringTable* table, SString string, u32 sidx) {
+static u32 StringAddInternal(StringTable* table, SString string, u32 sidx) {
     StringResize(table);
 
     u32 idx = hash((u8*)string.data, string.size) % table->cap;
@@ -115,11 +115,11 @@ u32 StringAdd(StringTable* table, i8* string) {
         .data = string,
         .size = strlen((char*)string)
     };
-    return StringAddv(table, sized, UINT32_MAX);
+    return StringAddInternal(table, sized, UINT32_MAX);
 }
 
 u32 StringAddS(StringTable* table, SString string) {
-    return StringAddv(table, string, UINT32_MAX);
+    return StringAddInternal(table, string, UINT32_MAX);
 }
 
 SString StringDel(StringTable* table, u32 index) {
