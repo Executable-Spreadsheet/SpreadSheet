@@ -61,16 +61,16 @@ typedef struct LString {
 
 // macro to convert string literals to sstrings
 #define sstring(x)                                                             \
-	(SString) { (i8*)x, sizeof(x) }
+	(SString) { (i8*)x, sizeof(x) - 1 }
 #define lstring(x)                                                             \
-	(LString) { (i8*)x, sizeof(x) }
+	(LString) { (i8*)x, sizeof(x) - 1 }
 
 u32 stou(const char* s);
 u32 sstou(SString s);
 u32 lstou(LString s);
 
 SString SStrDup(SString s);
-SString SStrCmp(SString a, SString b);
+i32 SStrCmp(SString a, SString b);
 
 /*
 +----------------------------------------------------+

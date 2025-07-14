@@ -14,6 +14,58 @@
 +---------------------------------------------------+
 */
 
+/*
++--------------------------------------+
+|   INFO(ELI): String Interning        |
++--------------------------------------+
+*/
+
+typedef struct StringTable {
+    Allocator mem; //should almost certainly be Global allocator
+
+    //Hash table
+    u32* meta; //metadata used for Robin Hood Hashing
+    u32* vals; //indicies into string buffer (contains StrIDs)
+    u32 size;
+    u32 cap;
+
+    //String Storage
+    SString* strings;
+    u32* entry; //back reference to hashtable
+    u32* freelist; //free slots in string buffer
+    u32 fsize;
+    u32 ssize;
+    u32 scap;
+
+
+} StringTable;
+
+typedef u32 StrID;
+
+StrID StringAdd(StringTable* table, i8* string);
+StrID StringAddS(StringTable* table, SString string);
+
+//NOTE(ELI): If you allocated the string in the table
+//you have to free the returned string manually. The table
+//allows for things like string literals and so can't
+//free the strings automatically
+SString StringDel(StringTable* table, StrID index);
+const SString StringGet(StringTable* table, StrID index);
+
+#define StringCmp(a, b) \
+    (a == b)
+
+void StringFree(StringTable* table);
+
+
+
+
+/*
++--------------------------------------+
+|   INFO(ELI): Spread Sheet Section    |
++--------------------------------------+
+*/
+
 #define BLOCK_SIZE 16
 #define MAX_LOAD_FACTOR 0.6
 
@@ -160,5 +212,30 @@ u32 ASTPush(AST* tree);
 
 void ASTPrint(FILE* fd, AST* tree);
 void ASTFree(AST* tree);
+
+
+/*
++-----------------------------------------------+
+|   INFO(ELI):                                  |
+|                                               |
+|   Here is the section for the Symbol table.   |
++-----------------------------------------------+
+*/
+
+typedef enum SymbolType {
+    S_VAR,
+} SymbolType;
+
+typedef struct SymbolEntry {
+    SymbolType t; 
+    u32 idx;
+} SymbolEntry;
+
+typedef struct SymbolTable {
+    u32* keys;
+    SymbolEntry* entries;
+} SymbolTable;
+
+
 
 #endif
