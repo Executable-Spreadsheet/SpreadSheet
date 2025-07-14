@@ -14,6 +14,52 @@
 +---------------------------------------------------+
 */
 
+/*
++--------------------------------------+
+|   INFO(ELI): String Interning        |
++--------------------------------------+
+*/
+
+typedef struct StringTable {
+    Allocator mem; //should almost certainly be Global allocator
+
+    u32* meta; //metadata used for Robin Hood Hashing
+    u32* vals;
+    u32 size;
+    u32 cap;
+
+    SString* strings;
+    u32* entry;
+    u32* freelist;
+
+    u32 fsize;
+    u32 ssize;
+
+    u32 scap;
+
+
+} StringTable;
+
+u32 StringAdd(StringTable* table, i8* string);
+u32 StringAddS(StringTable* table, SString string);
+
+//NOTE(ELI): If you allocated the string in the table
+//you have to free the returned string manually. The table
+//allows for things like string literals and so can't
+//free the strings automatically
+SString StringDel(StringTable* table, u32 index);
+
+
+void StringFree(StringTable* table);
+
+
+
+/*
++--------------------------------------+
+|   INFO(ELI): Spread Sheet Section    |
++--------------------------------------+
+*/
+
 #define BLOCK_SIZE 16
 #define MAX_LOAD_FACTOR 0.6
 
