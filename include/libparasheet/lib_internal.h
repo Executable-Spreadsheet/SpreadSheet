@@ -40,18 +40,23 @@ typedef struct StringTable {
 
 } StringTable;
 
-u32 StringAdd(StringTable* table, i8* string);
-u32 StringAddS(StringTable* table, SString string);
+typedef u32 StrID;
+
+StrID StringAdd(StringTable* table, i8* string);
+StrID StringAddS(StringTable* table, SString string);
 
 //NOTE(ELI): If you allocated the string in the table
 //you have to free the returned string manually. The table
 //allows for things like string literals and so can't
 //free the strings automatically
-SString StringDel(StringTable* table, u32 index);
+SString StringDel(StringTable* table, StrID index);
+const SString StringGet(StringTable* table, StrID index);
 
-const SString StringGet(StringTable* table, u32 index);
+#define StringCmp(a, b) \
+    (a == b)
 
 void StringFree(StringTable* table);
+
 
 
 
