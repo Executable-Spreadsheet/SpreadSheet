@@ -64,3 +64,8 @@ you have to delete the current string and then re insert it. This
 doesn't require freeing any memory, since StringDel doesn't
 delete any memory.
 
+```c
+#define StringCmp(a, b)
+```
+This is a macro for comparing string ids. It is equivalent to
+`a == b` so yeah.
