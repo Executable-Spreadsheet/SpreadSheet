@@ -161,4 +161,29 @@ u32 ASTPush(AST* tree);
 void ASTPrint(FILE* fd, AST* tree);
 void ASTFree(AST* tree);
 
+
+/*
++-----------------------------------------------+
+|   INFO(ELI):                                  |
+|                                               |
+|   Here is the section for the Symbol table.   |
++-----------------------------------------------+
+*/
+
+typedef enum SymbolType {
+    S_VAR,
+} SymbolType;
+
+typedef struct SymbolEntry {
+    SymbolType t; 
+    u32 idx;
+} SymbolEntry;
+
+typedef struct SymbolTable {
+    u32* keys;
+    SymbolEntry* entries;
+} SymbolTable;
+
+
+
 #endif
