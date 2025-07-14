@@ -23,18 +23,18 @@
 typedef struct StringTable {
     Allocator mem; //should almost certainly be Global allocator
 
+    //Hash table
     u32* meta; //metadata used for Robin Hood Hashing
-    u32* vals;
+    u32* vals; //indicies into string buffer (contains StrIDs)
     u32 size;
     u32 cap;
 
+    //String Storage
     SString* strings;
-    u32* entry;
-    u32* freelist;
-
+    u32* entry; //back reference to hashtable
+    u32* freelist; //free slots in string buffer
     u32 fsize;
     u32 ssize;
-
     u32 scap;
 
 
