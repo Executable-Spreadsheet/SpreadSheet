@@ -67,5 +67,5 @@ delete any memory.
 ```c
 #define StringCmp(a, b)
 ```
-This is a macro for comparing string ids. It is equivalent to
+This is a macro for comparing strings by their ids. It is equivalent to
 `a == b` so yeah.
