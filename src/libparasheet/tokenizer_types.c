@@ -16,14 +16,13 @@ TokenList* CreateTokenList(Allocator allocator) {
 	return tokenList;
 }
 
-void PushTokenID(TokenList* tokenList, TokenType type, SString string, u32 symbolTableIndex) {
+void PushTokenID(TokenList* tokenList, TokenType type, SString string,
+				 u32 symbolTableIndex) {
 	if (tokenList->size == tokenList->capacity) {
-		//FIXED: Pass sizes in bytes, not counts
-		tokenList->tokens = Realloc(
-			tokenList->mem,
-			tokenList->tokens,
-			tokenList->capacity * sizeof(Token),
-			tokenList->capacity * 2 * sizeof(Token));
+		// FIXED: Pass sizes in bytes, not counts
+		tokenList->tokens = Realloc(tokenList->mem, tokenList->tokens,
+									tokenList->capacity * sizeof(Token),
+									tokenList->capacity * 2 * sizeof(Token));
 
 		tokenList->capacity *= 2;
 	}
@@ -40,7 +39,7 @@ Token* PopTokenDangerous(TokenList* tokenList) {
 		return NULL;
 	}
 	tokenList->size -= 1;
-	Token* top = &(tokenList->tokens[tokenList->size]);	
+	Token* top = &(tokenList->tokens[tokenList->size]);
 	return top;
 }
 
