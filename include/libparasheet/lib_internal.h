@@ -223,7 +223,8 @@ void ASTFree(AST* tree);
 +-----------------------------------------------+
 */
 
-typedef enum SymbolType {
+typedef enum SymbolType : u32 {
+    S_INVALID = 0,
     S_VAR,
 } SymbolType;
 
@@ -232,10 +233,34 @@ typedef struct SymbolEntry {
     u32 idx;
 } SymbolEntry;
 
-typedef struct SymbolTable {
+//Insertion and getting only, never delete
+typedef struct SymbolMap {
+    Allocator mem;
+
     u32* keys;
     SymbolEntry* entries;
+    u32 size;
+    u32 cap;
+} SymbolMap;
+
+//deletions happen via popping a scope
+typedef struct SymbolTable {
+    Allocator mem;
+    SymbolMap* scopes;
+    u32 size;
+    u32 cap;
 } SymbolTable;
+
+u32 SymbolMapInsert(SymbolMap* map, StrID key);
+u32 SymbolMapGet(SymbolMap* map, StrID key);
+void SymbolMapFree(SymbolMap* map);
+
+
+void SymbolInsert(SymbolTable* table, StrID key, SymbolEntry e);
+SymbolEntry SymbolGet(SymbolTable* table, StrID key);
+
+void SymbolPushScope(SymbolTable* table);
+void SymbolPopScope(SymbolTable* table);
 
 
 
