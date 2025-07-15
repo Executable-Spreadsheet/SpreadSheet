@@ -1,0 +1,2 @@
+terminal gnome-terminal
+editor gedit
