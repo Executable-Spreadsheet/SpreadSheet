@@ -381,7 +381,6 @@ static alloc_func_def(StackAllocate) {
   StackAllocator *s = ctx;
 
   if (oldsize == 0) {
-    log("Stack Alloc: %p %d", ctx, newsize);
     if (s->size + newsize > s->cap)
       return 0; // error
     void *out = &s->data[s->size];
@@ -392,7 +391,6 @@ static alloc_func_def(StackAllocate) {
 
   // realloc works via an alloc + memcpy
   if (ptr && oldsize && newsize) {
-    log("Stack Realloc: %p (%p, %d) -> %d", ctx, ptr, oldsize, newsize);
     if (s->size + newsize > s->cap)
       return ptr; // error
 
@@ -404,7 +402,6 @@ static alloc_func_def(StackAllocate) {
   }
 
   if (ptr) {
-    log("Stack Free: %p (%p, %d)", ctx, ptr, oldsize);
     // free
     return 0;
   }
