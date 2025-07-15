@@ -25,6 +25,9 @@
 #define KEY_ESCAPE 27
 #define KEY_ENTER_REAL 10
 
+#define STRING_SIZE 2048
+#define CONFIG_FILEPATH "config.txt"
+
 
 void drawBox(v2u pos, v2u size, SString str);
 SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen);
@@ -74,11 +77,12 @@ typedef struct RenderHandler {
     u8 ch;
     v2i base;
     v2i cursor;
-    KeyBinds keybinds;
     EditorState state;
+    SpreadSheet * sheet;
+    KeyBinds keybinds;
+    u8 preferred_terminal[STRING_SIZE];
+    u8 preferred_text_editor[STRING_SIZE];
 } RenderHandler;
-
-// clarise: can i make this a SString later?
 
 // NOTE(ELI): I made this an SString and converted it to a switch
 // since that seemed better for formating and readability.
@@ -92,18 +96,47 @@ SString stateToString(EditorState state){
     }
 }
 
-void editCell(){
+void editCell(RenderHandler * handler){
     // somehow deduplicate open cells
     // create new tempfile for cell
     // open vim on tempfile
     // TODO
-    char * termname = ttyname(STDIN_FILENO);
-//    logfile = fopen("log.out", "w+");
-    log("there should be something between");
-    log("tty output: %n", (u8*) termname);
-    log("me and my brother");
+    char command[STRING_SIZE];
     // https://askubuntu.com/questions/974756/how-can-i-open-a-extra-console-and-run-a-program-in-it-with-one-command
-    system("gnome-terminal -- bash -c \"vim hello_world.md; exec bash\"");
+    snprintf(command, STRING_SIZE, "%s -- bash -c \" %s cell%d-%d; exec bash\"", handler->preferred_terminal, handler->preferred_text_editor, handler->cursor.x, handler->cursor.y);
+    log("wasd: %n, %n", handler->preferred_text_editor, handler->preferred_terminal);
+    log("cmd: %n", command);
+    system(command);
+}
+
+void readConfig(RenderHandler* handler){
+    FILE * configFile = fopen(CONFIG_FILEPATH, "r");
+    if (!configFile){
+        warn("No Config File Detected.");
+        return;
+    }
+    char configLine[STRING_SIZE];
+    configLine[STRING_SIZE - 1] = '\0';
+    // parse each line
+    while (fgets(configLine, sizeof(configLine)-1, configFile) != NULL){
+        strtok(configLine, " ");
+        char * info = strtok(NULL, "\n");
+        // configLine is the item, info is the content
+        // oof no switch statements with strings (reasonable) :/
+        if (!strcmp(configLine, "terminal")){
+            log("terminal line");
+            strcpy(handler->preferred_terminal, info);
+            log("pt: %n", handler->preferred_terminal);
+        }
+        else if (!strcmp(configLine, "editor")){
+            log("editor line");
+            strcpy(handler->preferred_text_editor, info);
+            log("te: %n", handler->preferred_text_editor);
+        }
+        else {
+            err("Invalid identifier in config file: %n", configLine);
+        }
+    }
 }
 
 void handleKey(RenderHandler* handler){
@@ -129,7 +162,7 @@ void handleKey(RenderHandler* handler){
             }
             else if (keyIn == handler->keybinds.edit) {
                 handler->state = EDIT;
-                editCell();
+                editCell(&handler);
             }
             break;
         case EDIT:
@@ -175,17 +208,27 @@ int main(int argc, char* argv[]) {
     //change to enable printing to log file
     //logfile = fopen("/dev/null", "w+");
     logfile = fopen("log.out", "w+");
+    errfile = fopen("err.out", "w+");
 
     SpreadSheetSetCell(&sheet, (v2u){0,0}, (CellValue){.t = CT_INT, .d = {1}});
 
     // if you want different keybinds u change that here
-    RenderHandler handler = {
+    struct RenderHandler handler = {
         .ch = 0,
         .base = {0, 0},
         .cursor = {0, 0},
         .state = NORMAL,
-        .keybinds = keybinds_wasd
+        .sheet = &sheet,
+        .keybinds = keybinds_wasd,
+        .preferred_terminal[256] = "",
+        .preferred_text_editor[256] = ""
     };
+    
+    handler.preferred_terminal[255] = '\0';
+    handler.preferred_text_editor[255] = '\0';
+    readConfig(&handler);
+    log("term: %n", handler.preferred_terminal);
+    log("edit: %n", handler.preferred_text_editor);
 
     // rendering loop
     while (1) {
