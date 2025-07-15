@@ -3,8 +3,10 @@
 #include <libparasheet/lib_internal.h>
 #include <string.h>
 
+//Forward declaration for Indirect Recursion
 static u32 MapInsertInternal(SymbolMap* map, StrID key, SymbolEntry e);
 
+//Resize the symbol hash table
 static void SymbolMapResize(SymbolMap* map) {
     u32 oldsize = map->cap; 
 
@@ -34,6 +36,8 @@ static void SymbolMapResize(SymbolMap* map) {
     Free(map->mem, oentries, oldsize * sizeof(SymbolEntry));
 }
 
+//Insertion which supports writing entries directly. Used in both
+//the public SymbolInsert and the internal Resize
 static u32 MapInsertInternal(SymbolMap* map, StrID key, SymbolEntry e) {
     if (map->size + 1 >= map->cap * MAX_LOAD_FACTOR)
         SymbolMapResize(map);
