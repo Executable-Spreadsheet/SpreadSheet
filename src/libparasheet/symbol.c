@@ -38,7 +38,7 @@ static void SymbolMapResize(SymbolMap* map) {
 
 //Insertion which supports writing entries directly. Used in both
 //the public SymbolInsert and the internal Resize
-static u32 MapInsertInternal(SymbolMap* map, StrID key, SymbolEntry e) {
+static u32 MapInsertInternal(SymbolMap* map, StrID key, SymbolEntry entry) {
     if (map->size + 1 >= map->cap * MAX_LOAD_FACTOR)
         SymbolMapResize(map);
 
@@ -54,7 +54,7 @@ static u32 MapInsertInternal(SymbolMap* map, StrID key, SymbolEntry e) {
         if (curr == UINT32_MAX) {
             map->size++;
             map->keys[idx] = key;
-            map->entries[idx] = e;
+            map->entries[idx] = entry;
             return idx;
         }
 
@@ -95,9 +95,9 @@ void SymbolMapFree(SymbolMap* map) {
     Free(map->mem, map->entries, map->cap * sizeof(SymbolEntry));
 }
 
-void SymbolInsert(SymbolTable* table, StrID key, SymbolEntry e) {
+void SymbolInsert(SymbolTable* table, StrID key, SymbolEntry entry) {
     u32 idx = SymbolMapInsert(&table->scopes[table->size - 1], key);
-    table->scopes[table->size - 1].entries[idx] = e;
+    table->scopes[table->size - 1].entries[idx] = entry;
 }
 
 SymbolEntry SymbolGet(SymbolTable* table, StrID key) {

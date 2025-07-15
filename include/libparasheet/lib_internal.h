@@ -229,7 +229,7 @@ typedef enum SymbolType : u32 {
 } SymbolType;
 
 typedef struct SymbolEntry {
-    SymbolType t; 
+    SymbolType type; 
     u32 idx;
 } SymbolEntry;
 
@@ -256,7 +256,7 @@ u32 SymbolMapGet(SymbolMap* map, StrID key);
 void SymbolMapFree(SymbolMap* map);
 
 
-void SymbolInsert(SymbolTable* table, StrID key, SymbolEntry e);
+void SymbolInsert(SymbolTable* table, StrID key, SymbolEntry entry);
 SymbolEntry SymbolGet(SymbolTable* table, StrID key);
 
 void SymbolPushScope(SymbolTable* table);

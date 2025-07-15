@@ -10,7 +10,7 @@ int main() {
     for (u32 i = 0; i < 10; i++) {
         u32 e = SymbolMapInsert(&map, i);
         map.entries[e] = (SymbolEntry){
-            .t = 0,
+            .type = 0,
             .idx = i,
         };
     }
@@ -18,7 +18,7 @@ int main() {
     for (u32 i = 0; i < 10; i++) {
         u32 e = SymbolMapInsert(&map, i);
         map.entries[e] = (SymbolEntry){
-            .t = 0,
+            .type = 0,
             .idx = i * 2,
         };
     }
@@ -43,23 +43,23 @@ int main() {
     SymbolPushScope(&t);
 
     for (u32 i = 0; i < 10; i++) {
-        SymbolInsert(&t, i, (SymbolEntry){.t = S_VAR, .idx = i});
+        SymbolInsert(&t, i, (SymbolEntry){.type = S_VAR, .idx = i});
     }
     SymbolPushScope(&t);
     for (u32 i = 5; i < 15; i++) {
-        SymbolInsert(&t, i, (SymbolEntry){.t = S_VAR, .idx = i * 2});
+        SymbolInsert(&t, i, (SymbolEntry){.type = S_VAR, .idx = i * 2});
     }
 
     for (u32 i = 0; i < 15; i++) {
         SymbolEntry e = SymbolGet(&t, i);
-        print(stdout, "\t(%d %d %d)\n", i, e.t, e.idx);
+        print(stdout, "\t(%d %d %d)\n", i, e.type, e.idx);
     }
 
     SymbolPopScope(&t);
 
     for (u32 i = 0; i < 15; i++) {
         SymbolEntry e = SymbolGet(&t, i);
-        print(stdout, "\t(%d %d %d)\n", i, e.t, e.idx);
+        print(stdout, "\t(%d %d %d)\n", i, e.type, e.idx);
     }
 
 
