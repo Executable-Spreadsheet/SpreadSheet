@@ -113,6 +113,7 @@ typedef struct SpreadSheet {
 	u32* values;
 	v2u* keys;
 	u32 size;
+    u32 tomb;
 
 	// pool of reusable blocks
 	Block* blockpool;

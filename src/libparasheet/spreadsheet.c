@@ -15,13 +15,12 @@
 */
 
 const static v2u Invalid = {UINT32_MAX, UINT32_MAX};
+const static v2u Tomb = {UINT32_MAX, 0};
 
 static void AllocBlock(SpreadSheet* sheet) {
 	u32 oldsize = sheet->bcap;
 
-	while (sheet->bsize + 1 >= sheet->bcap) {
-		sheet->bcap = sheet->bcap ? sheet->bcap * 2 : 2;
-	}
+    sheet->bcap = sheet->bcap ? sheet->bcap * 2 : 2;
 
 	sheet->blockpool =
 		Realloc(sheet->mem, sheet->blockpool, oldsize * sizeof(Block),
@@ -31,7 +30,7 @@ static void AllocBlock(SpreadSheet* sheet) {
 				sheet->bcap * sizeof(i32));
 
 	// add new blocks to free list
-	for (u32 i = oldsize; i < sheet->bcap; i++) {
+	for (i32 i = sheet->bcap - 1; i >= (i32)oldsize; i--) {
 		sheet->freestatus[sheet->fsize++] = i;
 	}
 
@@ -40,8 +39,7 @@ static void AllocBlock(SpreadSheet* sheet) {
 }
 
 static u32 PickBlock(SpreadSheet* sheet) {
-	if (!sheet->fsize)
-		AllocBlock(sheet);
+	if (!sheet->fsize) AllocBlock(sheet);
 	return sheet->freestatus[--sheet->fsize];
 }
 
@@ -51,9 +49,6 @@ static void FreeBlock(SpreadSheet* sheet, u32 blockid) {
 }
 
 static void ResizeSheet(SpreadSheet* sheet) {
-	if (sheet->size + 1 < (sheet->cap * MAX_LOAD_FACTOR))
-		return;
-
 	u32 oldsize = sheet->cap;
 
 	while (sheet->size + 1 >= (sheet->cap * MAX_LOAD_FACTOR)) {
@@ -66,15 +61,14 @@ static void ResizeSheet(SpreadSheet* sheet) {
 	sheet->values = Alloc(sheet->mem, sheet->cap * sizeof(u32));
 	sheet->keys = Alloc(sheet->mem, sheet->cap * sizeof(v2u));
 	sheet->size = 0;
+    sheet->tomb = 0;
 
 	for (u32 i = 0; i < sheet->cap; i++) {
 		sheet->keys[i] = Invalid;
 	}
 
-	// TODO(ELI): reinsert items
 	for (u32 i = 0; i < oldsize; i++) {
-		// log("\tkey: (%d %d)", oldkeys[i].x, oldkeys[i].y);
-		if (!CMPV2(oldkeys[i], Invalid)) {
+		if (!CMPV2(oldkeys[i], Invalid) && !CMPV2(oldkeys[i], Tomb)) {
 			log("reinsert: %d", oldvalues[i]);
 			SheetBlockInsert(sheet, oldkeys[i], oldvalues[i]);
 		}
@@ -85,7 +79,9 @@ static void ResizeSheet(SpreadSheet* sheet) {
 }
 
 u32 SheetBlockInsert(SpreadSheet* sheet, v2u pos, u32 bid) {
-	ResizeSheet(sheet);
+    if ((sheet->size + sheet->tomb + 1) >= sheet->cap * MAX_LOAD_FACTOR) {
+        ResizeSheet(sheet);
+    }
 
 	// maybe in future we just use power of 2 sizes?
 	u32 idx = hash((u8*)&pos, sizeof(pos)) % sheet->cap;
@@ -147,8 +143,9 @@ void SheetBlockDelete(SpreadSheet* sheet, v2u pos) {
 		v2u curr = sheet->keys[idx];
 		if (CMPV2(curr, pos)) {
 			FreeBlock(sheet, sheet->values[idx]);
-			sheet->keys[idx] = Invalid;
-			sheet->size--;
+			sheet->keys[idx] = Tomb;
+            sheet->size--;
+            sheet->tomb++;
 			return;
 		}
 
