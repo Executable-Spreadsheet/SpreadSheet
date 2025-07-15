@@ -5,6 +5,8 @@ TokenList* CreateTokenList(Allocator allocator) {
 	tokenList->mem = allocator;
 	tokenList->size = 0;
 
+	tokenList->head = 0;
+
 	tokenList->capacity = 2;
 	tokenList->tokens = Alloc(allocator, tokenList->capacity * sizeof(Token));
 
@@ -39,6 +41,21 @@ Token* PopTokenDangerous(TokenList* tokenList) {
 	Token* top = &(tokenList->tokens[tokenList->size]);
 	tokenList->size -= 1;
 	return top;
+}
+
+Token* ConsumeToken(TokenList* tokenList) {
+	if (tokenList->head == tokenList->size) {
+		return NULL;
+	}
+	Token* consumed = &(tokenList->tokens[tokenList->head]);
+	tokenList->head += 1;
+	return consumed;
+}
+void UnconsumeToken(TokenList* tokenList) {
+	if (tokenList->head == 0) {
+		return;
+	}
+	tokenList->head -= 1;
 }
 
 void DestroyTokenList(TokenList** tokenListPtr) {

@@ -22,6 +22,11 @@ typedef enum TokenType : u32 {
 	TOKEN_KEYWORD_STRING,
 	TOKEN_KEYWORD_CELL,
 
+	// Type Keyword Tokens
+	TOKEN_KEYWORD_TYPE_INT,
+	TOKEN_KEYWORD_TYPE_FLOAT,
+	TOKEN_KEYWORD_TYPE_STRING,
+
 	// Literal Tokens
 	TOKEN_LITERAL_INT,
 	TOKEN_LITERAL_FLOAT,
@@ -42,6 +47,14 @@ typedef enum TokenType : u32 {
 	TOKEN_GROUPING_CLOSE_BRACKET,
 	TOKEN_GROUPING_OPEN_BRACE,
 	TOKEN_GROUPING_CLOSE_BRACE,
+
+	// Other Special Characters
+	TOKEN_EQUALS,
+	TOKEN_COMMMA,
+	TOKEN_SEMICOLON,
+
+	// Enum Size
+	TOKEN_TYPE_ENUM_SIZE
 } TokenType;
 
 typedef struct Token {
@@ -53,6 +66,7 @@ typedef struct Token {
 typedef struct TokenList {
 	Allocator mem;
 	Token* tokens;
+	u32 head;
 	u32 size;
 	u32 capacity;
 } TokenList;
@@ -64,6 +78,9 @@ void PushToken(TokenList* tokenList, TokenType type, SString string);
 void PushTokenID(TokenList* tokenList, TokenType type, SString string, u32 symbolTableIndex);
 
 Token* PopTokenDangerous(TokenList* tokenList);
+
+Token* ConsumeToken(TokenList* tokenList);
+void UnconsumeToken(TokenList* tokenList);
 
 void DestroyTokenList(TokenList** tokenList);
 
