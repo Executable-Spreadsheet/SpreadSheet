@@ -18,7 +18,7 @@ TokenList* CreateTokenList(Allocator allocator) {
 
 void PushTokenID(TokenList* tokenList, TokenType type, SString string, u32 symbolTableIndex) {
 	if (tokenList->size == tokenList->capacity) {
-		// 💥 FIXED: Pass sizes in bytes, not counts
+		//FIXED: Pass sizes in bytes, not counts
 		tokenList->tokens = Realloc(
 			tokenList->mem,
 			tokenList->tokens,
