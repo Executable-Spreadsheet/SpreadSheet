@@ -30,18 +30,6 @@ typedef float f32;
 typedef double f64;
 
 
-/*+---------------------------------------------------------+
-This creates a bool type and the true/false constants if you're compiling 
-as C (not C++), using existing u8 (which is uint8_t).
-+---------------------------------------------------------+*/
-
-#ifndef __cplusplus
-typedef u8 bool;
-#define true 1
-#define false 0
-#endif
-
-
 
 /* 
 +---------------------------------------------------------+
