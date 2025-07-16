@@ -4,26 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 
-// Allocator for testing
-static void* test_allocator_func(u64 oldsize, u64 newsize, void* ptr, void* ctx) {
-    (void)ctx;
-    if (oldsize == 0 && newsize > 0) {
-        return malloc(newsize);
-    } else if (newsize == 0 && ptr != NULL) {
-        free(ptr);
-        return NULL;
-    } else {
-        return realloc(ptr, newsize);
-    }
-}
-
-static Allocator make_test_allocator() {
-    return (Allocator){
-        .a = test_allocator_func,
-        .ctx = NULL
-    };
-}
-
 // Optional helper
 static const char* TokenTypeToString(TokenType t) {
     switch (t) {
@@ -38,7 +18,7 @@ static const char* TokenTypeToString(TokenType t) {
 }
 
 int main() {
-    Allocator allocator = make_test_allocator();
+    Allocator allocator = GlobalAllocatorCreate();
 
     const char* input = "if (x + 42)";
 

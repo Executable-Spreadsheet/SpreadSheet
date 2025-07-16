@@ -1,6 +1,8 @@
 #include <libparasheet/tokenizer_types.h>
 #include <util/util.h>
 #include <string.h>
+#include <stdbool.h>
+
 
 static bool is_whitespace(char c) {
 	return c == ' ' || c == '\t' || c == '\n' || c == '\r';
@@ -26,17 +28,14 @@ static bool SString_EqualsCString(const SString* s, const char* cstr) {
 	return memcmp(s->data, cstr, len) == 0;
 }
 
-// Create a new string from source[start:end]
-SString substr(Allocator allocator, const char* src, u32 start, u32 end) {
-	u32 len = end - start;
+// Create a non-owning substring (view)
+SString substr(const char* src, u32 start, u32 end) {
 	SString result;
-	result.size = len;
-	result.data = Alloc(allocator, len + 1); // +1 for '\0'
-	memcpy(result.data, src + start, len);
-	result.data[len] = '\0'; // null terminate
-	log("Mem Alloc: %d", len + 1);
+	result.size = end - start;
+	result.data = (i8*)(src + start);
 	return result;
 }
+
 
 // Create a one-char SString
 SString from_char(Allocator allocator, char c) {
@@ -109,7 +108,7 @@ TokenList* Tokenize(const char* source, Allocator allocator) {
 		if (is_alpha(c) || c == '_') {
 			u32 start = i;
 			while (is_alnum(source[i]) || source[i] == '_') i++;
-			SString s = substr(allocator, source, start, i);
+			SString s = substr(source, start, i);
 			TokenType type = lookup_keyword(&s);
 			if (type == TOKEN_INVALID) {
 				u32 idx = fake_symbol_table_insert(s);
@@ -125,7 +124,7 @@ TokenList* Tokenize(const char* source, Allocator allocator) {
 		if (isdigit(c)) {
 			u32 start = i;
 			while (isdigit(source[i])) i++;
-			SString s = substr(allocator, source, start, i);
+			SString s = substr(source, start, i);
 			log("Parsed integer literal: %s", s);
 			PushToken(tokens, TOKEN_LITERAL_INT, s);
 			continue;
@@ -135,7 +134,7 @@ TokenList* Tokenize(const char* source, Allocator allocator) {
 			i++;
 			u32 start = i;
 			while (source[i] && source[i] != '"') i++;
-			SString s = substr(allocator, source, start, i);
+			SString s = substr(source, start, i);
 			if (source[i] == '"') i++;
 			log("Parsed string literal: %s", s);
 			PushToken(tokens, TOKEN_LITERAL_STRING, s);
@@ -143,7 +142,7 @@ TokenList* Tokenize(const char* source, Allocator allocator) {
 		}
 
 		// Operators & symbols
-        fprintf(stderr, "Parsed single-char token: '%c'\n", c);
+		log("Parsed single-char token: '%c'", c);
         handle_single_char_token(tokens, allocator, c);
 
 		i++;
