@@ -12,6 +12,7 @@ static const char* TokenTypeToString(TokenType t) {
         case TOKEN_LITERAL_INT: return "TOKEN_LITERAL_INT";
         case TOKEN_OP_PLUS: return "TOKEN_OP_PLUS";
         case TOKEN_GROUPING_OPEN_PAREN: return "TOKEN_GROUPING_OPEN_PAREN";
+        case TOKEN_GROUPING_CLOSE_PAREN: return "TOKEN_GROUPING_CLOSE_PAREN";
         case TOKEN_INVALID: return "TOKEN_INVALID";
         default: return "UNKNOWN_TOKEN";
     }
