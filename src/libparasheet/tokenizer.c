@@ -143,7 +143,7 @@ TokenList* Tokenize(const char* source, Allocator allocator) {
 		}
 
 		// Operators & symbols
-        log("Parsed single-char token: '%c'", c);
+        fprintf(stderr, "Parsed single-char token: '%c'\n", c);
         handle_single_char_token(tokens, allocator, c);
 
 		i++;
