@@ -3,7 +3,7 @@
 
 #include <util/util.h>
 
-typedef enum TokenType : u32 {
+typedef enum TokenType {
 	TOKEN_INVALID = 0, // Mark unintialized Token as invalid
 
 	// Identifier Token, i.e. user declared variables

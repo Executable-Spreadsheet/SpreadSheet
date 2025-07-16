@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "tokenizer.h": "c",
+        "util.h": "c",
+        "tokenizer_types.h": "c"
+    }
+}

@@ -192,7 +192,7 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
 			}
 		} break;
 		}
-	}
+	} break;
 	case 'x': {
 		u32 p = va_arg(args, u32);
 
