@@ -69,6 +69,10 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
 			c++;
 		}
 	} break;
+	case 'c': { //Added case c, can be modified
+		char ch = va_arg(args, int);
+		putc(ch, fd);
+	} break;
 	case 's': {
 		SString v = va_arg(args, SString);
 
@@ -192,7 +196,7 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
 			}
 		} break;
 		}
-	}
+	} break;
 	case 'x': {
 		u32 p = va_arg(args, u32);
 

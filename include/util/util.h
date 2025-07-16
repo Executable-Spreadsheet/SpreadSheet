@@ -30,6 +30,7 @@ typedef float f32;
 typedef double f64;
 
 
+
 /* 
 +---------------------------------------------------------+
 |  INFO:                                                  |
@@ -54,6 +55,7 @@ typedef struct LString {
 	i8* data;
 	u64 size;
 } LString;
+
 
 #define isdigit(x) (x >= '0' && x <= '9')
 #define isspace(x)                                                             \
