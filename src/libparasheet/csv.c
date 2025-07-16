@@ -118,8 +118,7 @@ bool csv_load_file(const char* filename, SpreadSheet* sheet) {
 
 // === Export CSV File ===
 
-void csv_export_file(const char* filename, SpreadSheet* sheet) {
-	Allocator a = GlobalAllocatorCreate();
+void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet) {
 	SString out = {.data = Alloc(a, MB(1)), .size = 0};
 	i8* cursor = out.data;
 
