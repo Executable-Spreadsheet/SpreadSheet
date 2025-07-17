@@ -15,7 +15,9 @@ static bool is_alpha(char c) {
 // 	return c >= '0' && c <= '9';
 // }
 
+
 static bool is_alnum(char c) { return is_alpha(c) || isdigit(c); }
+
 
 // Internal string compare helper
 static bool SString_EqualsCString(const SString* s, const char* cstr) {
@@ -34,6 +36,7 @@ SString substr(const char* src, u32 start, u32 end) {
 	result.data = (i8*)(src + start);
 	return result;
 }
+
 
 // Create a one-char SString
 SString from_char(Allocator allocator, char c) {

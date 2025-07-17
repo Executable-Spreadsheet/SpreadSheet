@@ -115,3 +115,55 @@ bool csv_load_file(const char* filename, SpreadSheet* sheet) {
 
 	return true;
 }
+
+// === Export CSV File ===
+
+void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet) {
+	SString out = {.data = Alloc(a, MB(1)), .size = 0};
+	i8* cursor = out.data;
+
+	u32 maxx = 0;
+	u32 maxy = 0;
+  v2u Invalid = {UINT32_MAX, UINT32_MAX};
+
+	for (u32 i = 0; i < sheet->cap; i++) {
+		if (!CMPV2(sheet->keys[i], Invalid)) {
+			v2u pos = sheet->keys[i];
+			if (pos.x * BLOCK_SIZE > maxx) maxx = pos.x * BLOCK_SIZE;
+			if (pos.y * BLOCK_SIZE > maxy) maxy = pos.y * BLOCK_SIZE;
+		}
+	}
+	maxx += BLOCK_SIZE;
+	maxy += BLOCK_SIZE;
+
+	for (u32 y = 0; y < maxy; y++) {
+		for (u32 x = 0; x < maxx; x++) {
+			v2u pos = {.x = x, .y = y};
+			CellValue* val = SpreadSheetGetCell(sheet, pos);
+
+			if (val && val->t != CT_EMPTY) {
+				switch (val->t) {
+					case CT_INT:
+						cursor += sprintf((char *)cursor, "%d", val->d.i);
+						break;
+					case CT_FLOAT:
+						cursor += sprintf((char *)cursor, "%f", val->d.f);
+						break;
+					case CT_TEXT:
+						cursor += sprintf((char *)cursor, "%u", val->d.index);
+						break;
+					default:
+						break;
+				}
+			}
+
+			if (x + 1 < maxx)
+				*cursor++ = ',';
+		}
+		*cursor++ = '\n';
+	}
+
+	out.size = (u32)(cursor - out.data);
+	WriteFileS(out);
+	Free(a, out.data, MB(1));
+}

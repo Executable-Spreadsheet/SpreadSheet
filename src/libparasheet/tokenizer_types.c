@@ -12,7 +12,7 @@ TokenList* CreateTokenList(Allocator allocator) {
 	tokenList->size = 0;
 
 	tokenList->head = 0;
-
+  
 	tokenList->capacity = 2;
 	tokenList->tokens = Alloc(allocator, tokenList->capacity * sizeof(Token));
 	return tokenList;
