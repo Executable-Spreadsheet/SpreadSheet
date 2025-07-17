@@ -159,6 +159,15 @@ void readConfig(RenderHandler* handler){
             strcpy((char*)handler->preferred_text_editor, info);
             log("te: %n", handler->preferred_text_editor);
         }
+        else if (!strcmp(configLine, "keypreset")) {
+            log("key preset");
+            if (!strcmp(info, "wasd")) {
+                handler->keybinds = keybinds_wasd;
+            } 
+            else if (!strcmp(info, "hjkl")) {
+                handler->keybinds = keybinds_hjkl;
+            }
+        }
         else {
             err("Invalid identifier in config file: %n", configLine);
         }
@@ -213,7 +222,13 @@ void handleKey(RenderHandler* handler){
             break;
     }
 
-    // Clamp Cursor
+    // Set Cursor and Spread Sheet View
+
+    //INFO(ELI): The 1 and 2 are derived from the values to
+    //garuntee the cursor never goes partially offscreen.
+    //
+    //1 is essentially like a floor
+    //2 comes from preventing partial off screen and 1 from the statusline
     i32 maxwidth = ((COLS - MARGIN_LEFT) / CELL_WIDTH) - 1;
     i32 maxheight = ((LINES - MARGIN_TOP) / CELL_HEIGHT) - 2;
 
@@ -262,7 +277,7 @@ int main(int argc, char* argv[]) {
         .cursor = {0, 0},
         .state = NORMAL,
         .sheet = &sheet,
-        .keybinds = keybinds_wasd,
+        .keybinds = keybinds_hjkl,
         //These are zero initialized if not mentioned,
         //This works for fixed sized structs
         //
@@ -328,7 +343,6 @@ int main(int argc, char* argv[]) {
         handler.ch = getch();
         handleKey(&handler);
         if (handler.state == SHUTDOWN) break;
-
     }
 
 
