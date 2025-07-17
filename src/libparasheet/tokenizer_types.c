@@ -1,3 +1,4 @@
+#include "util/util.h"
 #include <libparasheet/tokenizer_types.h>
 
 void PushToken(TokenList* tokenList, TokenType type, SString string) {
@@ -17,9 +18,8 @@ TokenList* CreateTokenList(Allocator allocator) {
 }
 
 void PushTokenID(TokenList* tokenList, TokenType type, SString string,
-				 u32 symbolTableIndex) {
+				 u32 lineNumber, u32 symbolTableIndex) {
 	if (tokenList->size == tokenList->capacity) {
-		// FIXED: Pass sizes in bytes, not counts
 		tokenList->tokens = Realloc(tokenList->mem, tokenList->tokens,
 									tokenList->capacity * sizeof(Token),
 									tokenList->capacity * 2 * sizeof(Token));
@@ -30,6 +30,7 @@ void PushTokenID(TokenList* tokenList, TokenType type, SString string,
 	tokenList->tokens[tokenList->size].type = type;
 	tokenList->tokens[tokenList->size].string = string;
 	tokenList->tokens[tokenList->size].symbolTableIndex = symbolTableIndex;
+	tokenList->tokens[tokenList->size].lineNumber = lineNumber;
 	tokenList->size += 1;
 }
 
@@ -51,12 +52,28 @@ Token* ConsumeToken(TokenList* tokenList) {
 	tokenList->head += 1;
 	return consumed;
 }
+
 void UnconsumeToken(TokenList* tokenList) {
 	if (tokenList->head == 0) {
 		return;
 	}
 	tokenList->head -= 1;
 }
+
+SString tokenErrorStrings[] = {
+	sstring("INVALID"),		sstring("variable name"), sstring("\"if\""),
+	sstring("\"else\""),	sstring("\"return\""),	  sstring("\"let\""),
+	sstring("\"while\""),	sstring("\"for\""),		  sstring("\"int\""),
+	sstring("\"float\""),	sstring("\"string\""),	  sstring("\"cell\""),
+	sstring("int literal"), sstring("float literal"), sstring("\"string\""),
+	sstring("\"+\""),		sstring("\"-\""),		  sstring("\"*\""),
+	sstring("\"/\""),		sstring("\"#\""),		  sstring("\"#\""),
+	sstring("\"(\""),		sstring("\")\""),		  sstring("\"[\""),
+	sstring("\"]\""),		sstring("\"{\""),		  sstring("\"}\""),
+	sstring("\"=\""),		sstring("\",\""),		  sstring("\";\""),
+	sstring("INVALID")};
+
+SString getTokenErrorString(TokenType type) { return tokenErrorStrings[type]; }
 
 void DestroyTokenList(TokenList** tokenListPtr) {
 	Free((*tokenListPtr)->mem, (*tokenListPtr)->tokens,

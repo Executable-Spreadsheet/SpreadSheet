@@ -60,7 +60,7 @@ persistant information use the `data` member
 on the ASTNode.
 
 To set the children of the ASTNode use
-the `lchild` and `rchild` nodes. 
+the `lchild` and `rchild` nodes.
 
 
 ## Internal
@@ -85,3 +85,109 @@ SString nodeops[];
 This is a table of strings corresponding to each Node Operation.
 It is used for converting Node types to Strings for printing.
 
+## AST Node Types
+```c
+AST_INVALID
+```
+This indicates that there was some issue in creating the AST, and this node is invalid
+
+I'll finish this later my laptop is dying
+
+```c
+AST_INT_LITERAL,
+```
+
+```c
+AST_FLOAT_LITERAL,
+```
+
+```c
+AST_INT_TYPE,
+```
+
+```c
+AST_FLOAT_TYPE,
+```
+
+```c
+AST_ID,
+```
+
+```c
+AST_DECLARE_VARIABLE,
+```
+
+```c
+AST_GET_CELL_REF,
+```
+
+```c
+AST_ASSIGN_VALUE,
+```
+
+```c
+AST_ADD
+```
+
+```c
+AST_SUB
+```
+
+```c
+AST_MUL
+```
+
+```c
+AST_DIV
+```
+
+```c
+AST_FLOAT_TO_INT
+```
+
+```c
+AST_INT_TO_FLOAT
+```
+
+```c
+AST_COORD_TRANSFORM
+```
+
+```c
+AST_RANGE
+```
+
+```c
+AST_SEQ
+```
+
+```c
+AST_IF_ELSE
+```
+
+```c
+AST_WHILE
+```
+```c
+AST_FOR
+```
+
+```c
+AST_RETURN
+```
+
+```c
+AST_HEADER
+```
+
+```c
+AST_HEADER_ARGS
+```
+
+```c
+AST_CALL
+```
+
+```c
+AST_FUNC_ARGS
+```
