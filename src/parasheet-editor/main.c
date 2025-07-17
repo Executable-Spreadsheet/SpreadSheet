@@ -22,6 +22,9 @@
 #define CELL_WIDTH 10
 #define CELL_HEIGHT 2
 
+#define MARGIN_TOP 1
+#define MARGIN_LEFT 2
+
 // ASCII VALUES
 #define KEY_ESCAPE 27
 #define KEY_ENTER_REAL 10
@@ -211,8 +214,20 @@ void handleKey(RenderHandler* handler){
     }
 
     // Clamp Cursor
-    handler->cursor.x = MAX(handler->cursor.x, 0);
-    handler->cursor.y = MAX(handler->cursor.y, 0);
+    i32 maxwidth = ((COLS - MARGIN_LEFT) / CELL_WIDTH) - 1;
+    i32 maxheight = ((LINES - MARGIN_TOP) / CELL_HEIGHT) - 2;
+
+    if (handler->cursor.x > maxwidth) handler->base.x++;
+    if (handler->cursor.y > maxheight) handler->base.y++;
+    if (handler->cursor.x < 0) handler->base.x--;
+    if (handler->cursor.y < 0) handler->base.y--;
+
+    
+    handler->base.x = MAX(handler->base.x, 0);
+    handler->base.y = MAX(handler->base.y, 0);
+
+    handler->cursor.x = CLAMP(handler->cursor.x, 0, maxwidth);
+    handler->cursor.y = CLAMP(handler->cursor.y, 0, maxheight);
 }
 
 
@@ -266,8 +281,22 @@ int main(int argc, char* argv[]) {
         erase();
         //rendering
 
-        for (u32 i = 0; i < COLS/CELL_WIDTH + 1; i++) {
-            for (u32 j = 0; j < LINES/CELL_HEIGHT + 1; j++) {
+        //Top numbering
+        for (u32 i = 0; i < (COLS - MARGIN_LEFT)/CELL_WIDTH + 1; i++) {
+            mvprintw(0, (i * CELL_WIDTH) + (CELL_WIDTH/2) + MARGIN_LEFT, "%d", handler.base.x + i);
+        }
+
+        //Left Numbering
+        for (u32 i = 0; i < (LINES - MARGIN_TOP)/CELL_HEIGHT + 1; i++) {
+            mvprintw( (i * CELL_HEIGHT) + (CELL_HEIGHT/2 + MARGIN_TOP), 0, "%d", handler.base.y + i);
+        }
+
+        //Sheet
+
+        //NOTE(ELI): +1 ensures that the spreadsheet goes off the edge of the screen
+        //rather than leaving a blank row/column
+        for (u32 i = 0; i < (COLS - MARGIN_LEFT)/CELL_WIDTH + 1; i++) {
+            for (u32 j = 0; j < (LINES - MARGIN_TOP)/CELL_HEIGHT + 1; j++) {
                 if (i == handler.cursor.x && j == handler.cursor.y) {
                     continue;
                 }
@@ -276,7 +305,7 @@ int main(int argc, char* argv[]) {
                                            (v2u){handler.base.x + i, handler.base.y + j},
                                            CELL_WIDTH - 2);
 
-                drawBox((v2u){i * CELL_WIDTH, j * CELL_HEIGHT}, 
+                drawBox((v2u){(i * CELL_WIDTH) + MARGIN_LEFT, (j * CELL_HEIGHT) + MARGIN_TOP}, 
                         (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
 
             }
@@ -285,13 +314,14 @@ int main(int argc, char* argv[]) {
         // currently selected cell
         attron(A_REVERSE);
         SString info = cellDisplay(&sheet, (v2u)
-                {handler.cursor.x, handler.cursor.y}, CELL_WIDTH - 2);
-        drawBox((v2u){handler.cursor.x * CELL_WIDTH, handler.cursor.y * CELL_HEIGHT},
+                {handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y}, CELL_WIDTH - 2);
+
+        drawBox((v2u){(handler.cursor.x) * CELL_WIDTH + MARGIN_LEFT, (handler.cursor.y) * CELL_HEIGHT + MARGIN_TOP},
                 (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
 
 
         mvprintw(LINES - 2, 0, "Cursor (%d %d)  ch: %d State: %s", 
-                handler.cursor.x, handler.cursor.y, handler.ch, stateToString(handler.state).data);
+                handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y, handler.ch, stateToString(handler.state).data);
         refresh();
 
         //updating
