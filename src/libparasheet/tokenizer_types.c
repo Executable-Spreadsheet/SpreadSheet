@@ -1,8 +1,9 @@
 #include "util/util.h"
 #include <libparasheet/tokenizer_types.h>
 
-void PushToken(TokenList* tokenList, TokenType type, SString string) {
-	PushTokenID(tokenList, type, string, 0);
+void PushToken(TokenList* tokenList, TokenType type, SString string,
+			   u32 lineNumber) {
+	PushTokenID(tokenList, type, string, 0, lineNumber);
 }
 
 TokenList* CreateTokenList(Allocator allocator) {
