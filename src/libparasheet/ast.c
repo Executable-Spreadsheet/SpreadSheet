@@ -20,18 +20,56 @@ u32 ASTPush(AST* tree) {
 	return tree->size++;
 }
 
-SString nodeops[] = {
-	sstring("Invalid"),		 // Invalid
-	sstring("INT"),			 // INT
-	sstring("FLOAT"),		 // FLOAT
-	sstring("ADD"),			 // ADD
-	sstring("SUB"),			 // SUB
-	sstring("MUL"),			 // MUL
-	sstring("DIV"),			 // DIV
-	sstring("FLOAT to INT"), // FLOAT TO INT
-	sstring("INT to FLOAT"), // INT TO FLOAT
+u32 ASTCreateNode(AST* tree, ASTNodeOp op, u32 lchild, u32 mchild, u32 rchild) {
+	u32 new_node_index = ASTPush(tree);
+	tree->nodes[new_node_index].op = op;
 
-	sstring("CALL"), // CALL
+	tree->nodes[new_node_index].lchild = lchild;
+	tree->nodes[new_node_index].mchild = mchild;
+	tree->nodes[new_node_index].rchild = rchild;
+
+	return new_node_index;
+}
+
+SString nodeops[] = {
+	sstring("Invalid"),
+
+	// Literals
+	sstring("int"),
+	sstring("float"),
+
+	// Types
+	sstring("INT"),
+	sstring("FLOAT"),
+
+	// Variables
+	sstring("ID"),
+	sstring("LET"),
+	sstring("[x,y]"),
+	sstring("x=y"),
+
+	// Ops
+	sstring("+"),
+	sstring("-"),
+	sstring("*"),
+	sstring("/"),
+	sstring("FLOAT -> INT"),
+	sstring("INT -> FLOAT"),
+	sstring("#"),
+	sstring(":"),
+
+	// Control Flow
+	sstring("SEQ"),
+	sstring("IF () {} ELSE {}"),
+	sstring("WHILE () {}"),
+	sstring("FOR (,) {}"),
+	sstring("RETURN ()"),
+
+	// Function Things
+	sstring("=(...)"),
+	sstring("(...)"),
+	sstring("ID(...)"),
+	sstring("(...)"),
 };
 
 static void ASTPrintNode(FILE* fd, AST* tree, ASTNode* node, u32 indent) {
@@ -43,27 +81,20 @@ static void ASTPrintNode(FILE* fd, AST* tree, ASTNode* node, u32 indent) {
 		else
 			print(fd, "  ");
 	}
+	if (node->op == AST_INVALID) {
+		err("AST node operation invalid!");
+		panic();
+	}
 	print(fd, "%s\n", nodeops[node->op]);
 
-	switch (node->op) {
-	case AST_INT:
-	case AST_FLOAT:
-		break;
-
-	case AST_ADD:
-	case AST_SUB:
-	case AST_MUL:
-	case AST_DIV: {
+	if (node->lchild != UINT32_MAX) {
 		ASTPrintNode(fd, tree, &tree->nodes[node->lchild], indent + 1);
+	}
+	if (node->mchild != UINT32_MAX) {
+		ASTPrintNode(fd, tree, &tree->nodes[node->mchild], indent + 1);
+	}
+	if (node->rchild != UINT32_MAX) {
 		ASTPrintNode(fd, tree, &tree->nodes[node->rchild], indent + 1);
-	} break;
-	case AST_CALL: {
-		todo();
-	} break;
-
-	case AST_INVALID:
-	default:
-		panic();
 	}
 }
 

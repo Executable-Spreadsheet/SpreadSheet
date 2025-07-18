@@ -27,43 +27,58 @@ typedef enum TokenType : u32 {
 	TOKEN_LITERAL_FLOAT,
 	TOKEN_LITERAL_STRING,
 
-	// Operator Tokens
-	TOKEN_OP_PLUS,
-	TOKEN_OP_MINUS,
-	TOKEN_OP_TIMES,
-	TOKEN_OP_DIVIDE,
-	TOKEN_OP_OCTOTHORPE,
-	TOKEN_OP_COLON,
+	// Character Tokens
+	TOKEN_CHAR_PLUS,
+	TOKEN_CHAR_MINUS,
+	TOKEN_CHAR_ASTERISK,
+	TOKEN_CHAR_SLASH,
+	TOKEN_CHAR_OCTOTHORPE,
+	TOKEN_CHAR_COLON,
 
 	// Grouping Tokens
-	TOKEN_GROUPING_OPEN_PAREN,
-	TOKEN_GROUPING_CLOSE_PAREN,
-	TOKEN_GROUPING_OPEN_BRACKET,
-	TOKEN_GROUPING_CLOSE_BRACKET,
-	TOKEN_GROUPING_OPEN_BRACE,
-	TOKEN_GROUPING_CLOSE_BRACE,
+	TOKEN_CHAR_OPEN_PAREN,
+	TOKEN_CHAR_CLOSE_PAREN,
+	TOKEN_CHAR_OPEN_BRACKET,
+	TOKEN_CHAR_CLOSE_BRACKET,
+	TOKEN_CHAR_OPEN_BRACE,
+	TOKEN_CHAR_CLOSE_BRACE,
+
+	// Other Special Characters
+	TOKEN_CHAR_EQUALS,
+	TOKEN_CHAR_COMMMA,
+	TOKEN_CHAR_SEMICOLON,
+
+	// Enum Size
+	TOKEN_TYPE_ENUM_SIZE
 } TokenType;
 
 typedef struct Token {
 	TokenType type;
 	SString string;
 	u32 symbolTableIndex;
+	u32 lineNumber;
 } Token;
 
 typedef struct TokenList {
 	Allocator mem;
 	Token* tokens;
+	u32 head;
 	u32 size;
 	u32 capacity;
 } TokenList;
 
 TokenList* CreateTokenList(Allocator allocator);
 
-void PushToken(TokenList* tokenList, TokenType type, SString string);
+void PushToken(TokenList* tokenList, TokenType type, SString string, u32 lineNumber);
 
-void PushTokenID(TokenList* tokenList, TokenType type, SString string, u32 symbolTableIndex);
+void PushTokenID(TokenList* tokenList, TokenType type, SString string, u32 lineNumber, u32 symbolTableIndex);
 
 Token* PopTokenDangerous(TokenList* tokenList);
+
+Token* ConsumeToken(TokenList* tokenList);
+void UnconsumeToken(TokenList* tokenList);
+
+SString getTokenErrorString(TokenType type);
 
 void DestroyTokenList(TokenList** tokenList);
 

@@ -62,15 +62,13 @@ for := FOR ( ID, expr ) statement
 
 
 expr := unit
-      | unit op expr 
-      | ID ( )
-      | bucket        
+      | unit op expr
       | bucket = expr
       | op expr
 
 
 Precedence Tiers:
-1. \# 
+1. \#
 2. :
 3. \* /
 4. \+ \-
@@ -90,6 +88,6 @@ So All we need are precedence table
 unit := FLOAT
       | INT
       | STRING
+      | ID ( )
+      | ID
       | ( expr )
-
-
