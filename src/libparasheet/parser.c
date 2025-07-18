@@ -120,6 +120,8 @@ u32 ParseHeader(TokenList* tokens, AST* ast, u8* syntaxError) {
 	}
 }
 
+// This doesn't expect an open parenthesis token because the caller already
+// consumed it before calling
 u32 ParseHeaderArgs(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* nextToken = ConsumeToken(tokens);
 	CheckNull(nextToken);
@@ -201,12 +203,16 @@ u32 ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError) {
 	}
 }
 
+// This doesn't expect a return token because the caller already consumed it
+// before calling
 u32 ParseReturn(TokenList* tokens, AST* ast, u8* syntaxError) {
 	u32 returnValue = ParseExpression(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	return ASTCreateNode(ast, AST_RETURN, returnValue, EPS, EPS);
 }
 
+// This doesn't expect an if token because the caller already consumed it before
+// calling
 u32 ParseIf(TokenList* tokens, AST* ast, u8* syntaxError) {
 	ExpectToken(tokens, TOKEN_CHAR_OPEN_PAREN);
 	u32 condition = ParseExpression(tokens, ast, syntaxError);
@@ -233,6 +239,8 @@ u32 ParseIf(TokenList* tokens, AST* ast, u8* syntaxError) {
 	return ASTCreateNode(ast, AST_IF_ELSE, condition, body, elseBody);
 }
 
+// This doesn't expect a while token because the caller already consumed it
+// before calling
 u32 ParseWhile(TokenList* tokens, AST* ast, u8* syntaxError) {
 	ExpectToken(tokens, TOKEN_CHAR_OPEN_PAREN);
 	u32 condition = ParseExpression(tokens, ast, syntaxError);
@@ -244,6 +252,8 @@ u32 ParseWhile(TokenList* tokens, AST* ast, u8* syntaxError) {
 	return ASTCreateNode(ast, AST_WHILE, condition, body, EPS);
 }
 
+// This doesn't expect a for token because the caller already consumed it before
+// calling
 u32 ParseFor(TokenList* tokens, AST* ast, u8* syntaxError) {
 	ExpectToken(tokens, TOKEN_CHAR_OPEN_PAREN);
 	u32 iterator = ParseID(tokens, ast, syntaxError);
@@ -404,6 +414,8 @@ u32 ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
 	}
 }
 
+// This doesn't expect an open bracket token because the caller already consumed
+// it before calling
 u32 ParseCellRef(TokenList* tokens, AST* ast, u8* syntaxError) {
 	u32 x = ParseExpression(tokens, ast, syntaxError);
 	CheckSyntaxError();
@@ -427,6 +439,8 @@ u32 ParseID(TokenList* tokens, AST* ast, u8* syntaxError) {
 	return new_node_index;
 }
 
+// TODO: Actually get literal values from token string (this should probably be
+// a function in the tokenizer that is called here)
 u32 ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* literal = ConsumeToken(tokens);
 	CheckNull(literal);
@@ -505,12 +519,17 @@ u32 ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError) {
 	}
 }
 
+// The function should have already been consumed because of how expression
+// parsing currently works
 u32 ParseFunctionCall(u32 cellRef, TokenList* tokens, AST* ast,
 					  u8* syntaxError) {
 	u32 args = ParseFunctionArgs(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	return ASTCreateNode(ast, AST_CALL, cellRef, args, EPS);
 }
+
+// This doesn't expect an open parenthesis token because the caller already
+// consumed it before calling
 u32 ParseFunctionArgs(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* nextToken = ConsumeToken(tokens);
 	CheckNull(nextToken);
