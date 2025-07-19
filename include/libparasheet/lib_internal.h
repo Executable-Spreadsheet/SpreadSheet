@@ -94,7 +94,7 @@ typedef struct CellValue {
 	union {
 		u32 i;
 		f32 f;
-		u32 index; // index into external buffer
+		StrID index; // index into external buffer
 	} d;
 } CellValue;
 

@@ -1,12 +1,18 @@
 #include "libparasheet/lib_internal.h"
 #include "libparasheet/csv.h"
+#include <linux/limits.h>
+#include <util/util.h>
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <util/util.h>
-#include <ncurses.h>
 #include <stdlib.h>
+
+#include <ncurses.h>
+
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/inotify.h>
 
 
 /*
@@ -33,12 +39,12 @@
 //NOTE(ELI): I would recommend using PATH_MAX for this
 //rather than a custom macro. PATH_MAX is the maximum length of a path in
 //the filesystem so it garuntees any executable is at most that size.
-#define STRING_SIZE 2048
+#define STRING_SIZE PATH_MAX + 1
 #define CONFIG_FILEPATH "config.txt"
 
 
 void drawBox(v2u pos, v2u size, SString str);
-SString cellDisplay(SpreadSheet* sheet, v2u pos, u32 maxlen);
+SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen);
 
 // supplies the currently selected keybinds
 typedef struct KeyBinds {
@@ -51,6 +57,16 @@ typedef struct KeyBinds {
     u8 edit; // open a cell for editing
     u8 nav;  // go back to normal mode
 } KeyBinds;
+
+
+// store a file reference with position of data
+typedef struct EditHandles {
+    u32 notify; //inotify context handle
+    u32* fd;    //specific file watches
+    v2u* idx;   //associate files with cells
+    u32 size;
+    u32 cap;
+} EditHandles;
 
 // keybinds are currently hard set but that can change later
 KeyBinds keybinds_hjkl = {
@@ -85,8 +101,11 @@ typedef struct RenderHandler {
     u8 ch;
     v2i base;
     v2i cursor;
+    EditHandles edit;
     EditorState state;
-    SpreadSheet * sheet;
+    SpreadSheet* sheet;
+    SpreadSheet* files;
+    StringTable* str;
     KeyBinds keybinds;
     u8 preferred_terminal[STRING_SIZE];
     u8 preferred_text_editor[STRING_SIZE];
@@ -112,10 +131,46 @@ void editCell(RenderHandler * handler){
 
     log("wasd: %n, %n", handler->preferred_text_editor, handler->preferred_terminal);
     //You can run this as system, however I suspect it would be better to run as a fork-execl style instead.
+
+    v2u pos = {handler->base.x + handler->cursor.x, handler->base.y + handler->cursor.y};
+
+    CellValue* data = SpreadSheetGetCell(handler->sheet, pos);
+    CellValue* file = SpreadSheetGetCell(handler->files, pos);
+
+    char filename[PATH_MAX + 1] = {0};
+    snprintf(filename, PATH_MAX, "cell%d%d", pos.x, pos.y);
+    //snprintf(filename, PATH_MAX, "test");
+
+    if (!file || file->t == CT_EMPTY) {
+        CellValue val = {0};
+        val.d.i = open(filename, O_CREAT | O_RDWR | O_TRUNC, 0666);
+        val.t = CT_INT;
+        SpreadSheetSetCell(handler->files, pos, val);
+
+        //inotify_add_watch(handler->notify, filename, IN_MODIFY);
+
+        file = SpreadSheetGetCell(handler->files, pos);
+    }
+
+    if (data) {
+        FILE* stream = fdopen(file->d.i, "w");
+        switch (data->t) {
+            case CT_INT: { print(stream, "%d", data->d.i); } break;
+            case CT_FLOAT: { print(stream, "%f", data->d.f); } break;
+            case CT_TEXT: { 
+                SString text = StringGet(handler->str, data->d.index);
+                warn("text: %s", text);
+                print(stream, "%s", text); 
+            } break;
+            default: break;
+        }
+        fclose(stream);
+    }
+
     if (fork()) {
         return;
     }
-    
+
     //INFO(ELI): We have to close both stdout and stdin to prevent the
     //terminal window from being polluted by garbage.
 
@@ -123,7 +178,8 @@ void editCell(RenderHandler * handler){
     close(STDERR_FILENO);
 
     //Equivalent to the command: Terminal texteditor filename
-    execlp((char*)handler->preferred_terminal, (char*)handler->preferred_terminal, handler->preferred_text_editor, "cellname", 0);
+    execlp((char*)handler->preferred_terminal, (char*)handler->preferred_terminal, handler->preferred_text_editor, filename, 0);
+    err("Failed to Execute Terminal");
 
     //crash if somehow the exec call fails
     panic();
@@ -263,19 +319,26 @@ int main(int argc, char* argv[]) {
     logfile = fopen("log.out", "w+");
     errfile = fopen("err.out", "w+");
 
+    StringTable str = (StringTable) {
+        .mem = GlobalAllocatorCreate(),
+    };
+
+    //actual spreadsheet
     SpreadSheet sheet = (SpreadSheet){
+        .mem = GlobalAllocatorCreate(),
+    };
+
+    //file descriptor table
+    SpreadSheet files = (SpreadSheet){
         .mem = GlobalAllocatorCreate(),
     };
 
     if (argc >= 2) {
         FILE* csv = fopen(argv[1], "r"); 
         if (csv) {
-            csv_load_file(csv, &sheet);
+            csv_load_file(csv, &str, &sheet);
         }
     }
-    
-
-    //SpreadSheetSetCell(&sheet, (v2u){0,0}, (CellValue){.t = CT_INT, .d = {1}});
 
     // if you want different keybinds u change that here
     RenderHandler handler = {
@@ -284,6 +347,8 @@ int main(int argc, char* argv[]) {
         .cursor = {0, 0},
         .state = NORMAL,
         .sheet = &sheet,
+        .files = &files,
+        .str = &str,
         .keybinds = keybinds_hjkl,
         //These are zero initialized if not mentioned,
         //This works for fixed sized structs
@@ -297,6 +362,9 @@ int main(int argc, char* argv[]) {
     readConfig(&handler);
     log("term: %n", handler.preferred_terminal);
     log("edit: %n", handler.preferred_text_editor);
+
+    
+
 
     // rendering loop
     while (1) {
@@ -323,7 +391,7 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                SString info = cellDisplay(&sheet, 
+                SString info = cellDisplay(&sheet, &str,
                                            (v2u){handler.base.x + i, handler.base.y + j},
                                            CELL_WIDTH - 2);
 
@@ -335,7 +403,7 @@ int main(int argc, char* argv[]) {
 
         // currently selected cell
         attron(A_REVERSE);
-        SString info = cellDisplay(&sheet, (v2u)
+        SString info = cellDisplay(&sheet, &str, (v2u)
                 {handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y}, CELL_WIDTH - 2);
 
         drawBox((v2u){(handler.cursor.x) * CELL_WIDTH + MARGIN_LEFT, (handler.cursor.y) * CELL_HEIGHT + MARGIN_TOP},
@@ -350,6 +418,7 @@ int main(int argc, char* argv[]) {
         handler.ch = getch();
         handleKey(&handler);
         if (handler.state == SHUTDOWN) break;
+
     }
 
 
@@ -357,7 +426,7 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-SString cellDisplay(SpreadSheet* sheet, v2u pos, u32 maxlen) {
+SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen) {
     static i8 buf[CELL_WIDTH + 1] = {0};
     CellValue* cell = SpreadSheetGetCell(sheet, pos);
 
@@ -374,7 +443,11 @@ SString cellDisplay(SpreadSheet* sheet, v2u pos, u32 maxlen) {
         case CT_EMPTY: break;
         case CT_FLOAT: { fmt = "%f"; } break;
         case CT_INT: { fmt = "%d"; } break;
-        case CT_TEXT: { err("Failure"); } break;
+        case CT_TEXT: {  
+            SString data = StringGet(str, cell->d.index);
+            value.size = snprintf((char*)value.data, maxlen, "%.*s", data.size, data.data);
+            return value;
+        } break;
 
         default: { 
             endwin();

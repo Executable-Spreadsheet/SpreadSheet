@@ -37,7 +37,7 @@ static bool is_float(const char* s) {
 
 // === Parse One Line of CSV ===
 
-int csv_parse_line(const char* line, u32 linesize, CellValue* out_values, size_t max_values) {
+int csv_parse_line(StringTable* str, const char* line, u32 linesize, CellValue* out_values, size_t max_values) {
     char buf[1024];
     strncpy(buf, line, sizeof(buf));
     buf[sizeof(buf) - 1] = '\0';
@@ -48,7 +48,6 @@ int csv_parse_line(const char* line, u32 linesize, CellValue* out_values, size_t
     while (token && count < max_values) {
         token = trim(token);
         CellValue v;
-        log("token: \"%n\"", token);
 
         if (is_integer(token)) {
             v.t = CT_INT;
@@ -57,9 +56,10 @@ int csv_parse_line(const char* line, u32 linesize, CellValue* out_values, size_t
             v.t = CT_FLOAT;
             v.d.f = (float)atof(token);
         } else {
-            log("Text: \"%n\"", token);
             v.t = CT_TEXT;
-            v.d.index = 0;  // string table index
+            i8* copy = Alloc(str->mem, strlen(token));
+            strcpy((char*)copy, token);
+            v.d.index = StringAdd(str, copy);  // string table index
         }
 
         out_values[count++] = v;
@@ -71,7 +71,7 @@ int csv_parse_line(const char* line, u32 linesize, CellValue* out_values, size_t
 
 // === Load Entire CSV File ===
 
-bool csv_load_file(FILE* csv, SpreadSheet* sheet) {
+bool csv_load_file(FILE* csv, StringTable* str, SpreadSheet* sheet) {
     Allocator a = GlobalAllocatorCreate();
 
     struct stat info;
@@ -94,7 +94,7 @@ bool csv_load_file(FILE* csv, SpreadSheet* sheet) {
             *cursor = '\0';
 
             CellValue values[256];
-            int count = csv_parse_line(line_start, strlen(line_start), values, 256);
+            int count = csv_parse_line(str, line_start, strlen(line_start), values, 256);
 
             for (int col = 0; col < count; col++) {
                 v2u p = { .x = (u32)col, .y = row };
@@ -113,7 +113,7 @@ bool csv_load_file(FILE* csv, SpreadSheet* sheet) {
     // Final line (in case no newline at EOF)
     if (cursor != line_start) {
         CellValue values[256];
-        int count = csv_parse_line(line_start, strlen(line_start), values, 256);
+        int count = csv_parse_line(str, line_start, strlen(line_start), values, 256);
         for (int col = 0; col < count; col++) {
             v2u p = { .x = (u32)col, .y = row };
             SpreadSheetSetCell(sheet, p, values[col]);

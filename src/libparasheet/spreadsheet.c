@@ -169,13 +169,13 @@ void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue val) {
 	// NOTE(ELI): Block Insert forces the block to exist if it doesn't already
 	// So this is always safe
 	if (val.t == CT_EMPTY) {
-		if (block->cells[index].t != CT_EMPTY)
-			block->nonempty--;
-		if (block->nonempty <= 0)
-			SheetBlockDelete(sheet, blockpos);
+		if (block->cells[index].t != CT_EMPTY) block->nonempty--;
+		if (block->nonempty <= 0) SheetBlockDelete(sheet, blockpos);
 		return;
-	} else if (block->cells[index].t == CT_EMPTY)
-		block->nonempty++;
+	} else if (block->cells[index].t == CT_EMPTY) {
+        block->nonempty++;
+    }
+
 	block->cells[index] = val;
 }
 
@@ -194,7 +194,7 @@ CellValue* SpreadSheetGetCell(SpreadSheet* sheet, v2u pos) {
 
 	Block* block = &sheet->blockpool[blockid];
 	v2u offset = CELL_TO_OFFSET(pos);
-	u32 index = offset.x + offset.y * BLOCK_SIZE;
+    u32 index = CELL_TO_INDEX(offset);
 	return &block->cells[index];
 }
 
