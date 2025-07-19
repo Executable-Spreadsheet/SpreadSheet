@@ -58,6 +58,10 @@ typedef struct KeyBinds {
     u8 nav;  // go back to normal mode
 } KeyBinds;
 
+typedef struct TypeBuffer {
+    u32 top;
+    u8 buf[CELL_WIDTH * 10];
+} TypeBuffer;
 
 // store a file reference with position of data
 typedef struct EditHandles {
@@ -107,6 +111,7 @@ typedef struct RenderHandler {
     SpreadSheet* files;
     StringTable* str;
     KeyBinds keybinds;
+    TypeBuffer type;
     u8 preferred_terminal[STRING_SIZE];
     u8 preferred_text_editor[STRING_SIZE];
 } RenderHandler;
@@ -185,6 +190,25 @@ void editCell(RenderHandler * handler){
     panic();
 }
 
+void runCommand(RenderHandler* hand) {
+    SString trimmed = {.data = hand->type.buf, .size = hand->type.top};
+
+    while (trimmed.data[0] == ' ') {
+        trimmed.data++;
+        trimmed.size--;
+    }
+
+    while (trimmed.data[trimmed.size - 1] == ' ') {
+        trimmed.size--;
+    }
+    
+
+    if (SStrCmp(trimmed, sstring("save")) == 0) {
+        log("command: \"%s\"", trimmed);
+    }
+
+}
+
 void readConfig(RenderHandler* handler){
     FILE * configFile = fopen(CONFIG_FILEPATH, "r");
     if (!configFile){
@@ -234,6 +258,7 @@ void readConfig(RenderHandler* handler){
 }
 
 void handleKey(RenderHandler* handler){
+
     char keyIn = handler->ch;
     switch (handler->state){
         case NORMAL:
@@ -254,6 +279,7 @@ void handleKey(RenderHandler* handler){
             }
             else if (keyIn == handler->keybinds.terminal) {
                 handler->state = TERMINAL;
+                handler->type.top = 0;
             }
             else if (keyIn == handler->keybinds.edit) {
                 handler->state = EDIT;
@@ -272,6 +298,12 @@ void handleKey(RenderHandler* handler){
         case TERMINAL:
             if (keyIn == handler->keybinds.nav) {
                 handler->state = NORMAL;
+            } else if (keyIn == KEY_ENTER_REAL) {
+                runCommand(handler);
+                handler->state = NORMAL;
+            } else {
+                if (handler->type.top > CELL_WIDTH * 2) break;
+                handler->type.buf[handler->type.top++] = keyIn;
             }
             break;
         case SHUTDOWN:
@@ -412,6 +444,7 @@ int main(int argc, char* argv[]) {
 
         mvprintw(LINES - 2, 0, "Cursor (%d %d)  ch: %d State: %s", 
                 handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y, handler.ch, stateToString(handler.state).data);
+        if (handler.state == TERMINAL) mvprintw(LINES - 3, 0, ":%.*s", handler.type.top, handler.type.buf);
         refresh();
 
         //updating
