@@ -394,10 +394,11 @@ static alloc_func_def(StackAllocate) {
 		return out;
 	}
 
-    // realloc works via an alloc + memcpy
+  // realloc works via an alloc + memcpy
     if (ptr && oldsize && newsize) {
         if (s->size + newsize > s->cap)
             return ptr; // error
+
         void* dst = &s->data[s->size];
         s->size += newsize;
 
@@ -405,12 +406,11 @@ static alloc_func_def(StackAllocate) {
 		return dst;
 	}
 
-  if (ptr) {
-    // free
-    return 0;
-  }
-
-	panic();
+    if (ptr) {
+        // free
+        return 0;
+    }
+    panic();
 }
 
 // requires additional allocator.
