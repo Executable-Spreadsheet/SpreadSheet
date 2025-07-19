@@ -274,6 +274,114 @@ ASTNodeIndex ParseFor(TokenList* tokens, AST* ast, u8* syntaxError) {
 // follow operator precedence. Eli has said that he wanted to write proper
 // expression parsing.
 // clarise TODO: replace this
+ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+    if (*peek == TOKEN_LITERAL_INT || *peek == TOKEN_LITERAL_FLOAT || *peek == TOKEN_LITERAL_STRING || *peek == TOKEN_CHAR_OPEN_PAREN){
+        ParseSummation(tokens, ast, syntaxError);
+        ParseExpression2(tokens, ast, syntaxError);
+        return;
+    }
+}
+ASTNodeIndex ParseExpression2(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+        if (*peek == TOKEN_CHAR_EQUALS){
+        ExpectToken(TOKEN_CHAR_EQUALS);
+        ParseSummation(tokens, ast, syntaxError);
+        ParseExpression2(tokens, ast, syntaxError);
+        return;
+    }
+}
+        if (*peek == TOKEN_CHAR_SEMICOLON || *peek == TOKEN_CHAR_CLOSE_PAREN){
+        return;
+    }
+}
+ASTNodeIndex ParseSummation(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+        if (*peek == TOKEN_LITERAL_INT || *peek == TOKEN_LITERAL_FLOAT || *peek == TOKEN_LITERAL_STRING || *peek == TOKEN_CHAR_OPEN_PAREN){
+        ParseSummation(tokens, ast, syntaxError);
+        ParseSummation2(tokens, ast, syntaxError);
+        return;
+    }
+}
+ASTNodeIndex ParseSummation2(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+        if (*peek == TOKEN_CHAR_PLUS){
+        ExpectToken(TOKEN_CHAR_PLUS);
+        ParseSummation(tokens, ast, syntaxError);
+        ParseSummation2(tokens, ast, syntaxError);
+        return;
+    }
+}
+        if (*peek == TOKEN_CHAR_MINUS){
+        ExpectToken(TOKEN_CHAR_MINUS);
+        ParseTerm(tokens, ast, syntaxError);
+        ParseSummation2(tokens, ast, syntaxError);
+        return;
+    }
+}
+        if (*peek == TOKEN_CHAR_SEMICOLON || *peek == TOKEN_CHAR_CLOSE_PAREN || *peek == TOKEN_CHAR_EQUALS){
+        return;
+    }
+}
+ASTNodeIndex ParseTerm(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+        if (*peek == TOKEN_LITERAL_INT || *peek == TOKEN_LITERAL_FLOAT || *peek == TOKEN_LITERAL_STRING || *peek == TOKEN_CHAR_OPEN_PAREN){
+        ParseTerm(tokens, ast, syntaxError);
+        ParseTerm2(tokens, ast, syntaxError);
+        return;
+    }
+}
+ASTNodeIndex ParseTerm2(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+        if (*peek == TOKEN_CHAR_ASTERISK){
+        ExpectToken(TOKEN_CHAR_ASTERISK);
+        ParseTerm(tokens, ast, syntaxError);
+        ParseTerm2(tokens, ast, syntaxError);
+        return;
+    }
+}
+        if (*peek == TOKEN_CHAR_SLASH){
+        ExpectToken(TOKEN_CHAR_SLASH);
+        ParseReference(tokens, ast, syntaxError);
+        ParseTerm2(tokens, ast, syntaxError);
+        return;
+    }
+}
+        if (*peek == TOKEN_CHAR_SEMICOLON || *peek == TOKEN_CHAR_CLOSE_PAREN || *peek == TOKEN_CHAR_EQUALS || *peek == TOKEN_CHAR_PLUS || *peek == TOKEN_CHAR_MINUS){
+        return;
+    }
+}
+ASTNodeIndex ParseReference(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+        if (*peek == TOKEN_LITERAL_INT || *peek == TOKEN_LITERAL_FLOAT || *peek == TOKEN_LITERAL_STRING || *peek == TOKEN_CHAR_OPEN_PAREN){
+        ParseAbsolute(tokens, ast, syntaxError);
+        ParseReference2(tokens, ast, syntaxError);
+        return;
+    }
+}
+ASTNodeIndex ParseReference2(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+        if (*peek == TOKEN_CHAR_COLON){
+        ExpectToken(TOKEN_CHAR_COLON);
+        ParseAbsolute(tokens, ast, syntaxError);
+        ParseReference2(tokens, ast, syntaxError);
+        return;
+    }
+}
+        if (*peek == TOKEN_CHAR_SEMICOLON || *peek == TOKEN_CHAR_CLOSE_PAREN || *peek == TOKEN_CHAR_EQUALS || *peek == TOKEN_CHAR_PLUS || *peek == TOKEN_CHAR_MINUS || *peek == TOKEN_CHAR_ASTERISK || *peek == TOKEN_CHAR_SLASH){
+        return;
+    }
+}
+ASTNodeIndex ParseAbsolute(TokenList* tokens, AST* ast, u8* syntaxError){
+    Token* peek = PeekToken();
+        if (*peek == TOKEN_LITERAL_INT || *peek == TOKEN_LITERAL_FLOAT || *peek == TOKEN_LITERAL_STRING || *peek == TOKEN_CHAR_OPEN_PAREN){
+        ParseUnit(tokens, ast, syntaxError);
+        ParseAbsolute2(tokens, ast, syntaxError);
+        return;
+    }
+}
+
+/*
 ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
 	enum ExpressionType {
 		UNKNOWN,
@@ -417,6 +525,7 @@ ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
 		return ASTCreateNode(ast, operation, operand1, operand2, EPS);
 	}
 }
+END EXPR PARSE*/
 
 // This doesn't expect an open bracket token because the caller already consumed
 // it before calling
