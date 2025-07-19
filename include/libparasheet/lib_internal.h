@@ -152,6 +152,8 @@ void SheetBlockDelete(SpreadSheet* sheet, v2u pos);
 +-------------------------------------------------------------------+
 */
 
+typedef u32 ASTNodeIndex;
+
 typedef enum ASTNodeType : u32 {
 	AST_INVALID = 0, // mark unintialized Node as invalid
 

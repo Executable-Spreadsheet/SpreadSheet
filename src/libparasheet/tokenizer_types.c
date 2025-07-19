@@ -61,6 +61,10 @@ void UnconsumeToken(TokenList* tokenList) {
 	tokenList->head -= 1;
 }
 
+Token* PeekToken(TokenList* tokenList){
+	return &(tokenList->tokens[tokenList->head]);
+}
+
 SString tokenErrorStrings[] = {
 	sstring("INVALID"),		sstring("variable name"), sstring("\"if\""),
 	sstring("\"else\""),	sstring("\"return\""),	  sstring("\"let\""),

@@ -60,29 +60,31 @@ void CheckToken(TokenList* tokens, TokenType expected, u8* syntaxError) {
 		*syntaxError = 1;
 	}
 }
-
+/*
 void ConsumeUntilToken(TokenList* tokens, TokenType expected) {
 	while (ConsumeToken(tokens)->type != expected)
 		;
 }
+*/
 
-u32 ParseHeader(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseHeaderArgs(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseBlock(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseReturn(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseIf(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseWhile(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseFor(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseCellRef(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseID(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseDatatype(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError);
-u32 ParseFunctionCall(u32 cellRef, TokenList* tokens, AST* ast,
+// u32 is index into ast array
+ASTNodeIndex ParseHeader(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseHeaderArgs(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseBlock(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseReturn(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseIf(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseWhile(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseFor(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseCellRef(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseID(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseDatatype(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseFunctionCall(u32 cellRef, TokenList* tokens, AST* ast,
 					  u8* syntaxError);
-u32 ParseFunctionArgs(TokenList* tokens, AST* ast, u8* syntaxError);
+ASTNodeIndex ParseFunctionArgs(TokenList* tokens, AST* ast, u8* syntaxError);
 
 AST* BuildASTFromTokens(TokenList* tokens, Allocator allocator) {
 	AST* ast = Alloc(allocator, sizeof(AST));
@@ -104,14 +106,14 @@ AST* BuildASTFromTokens(TokenList* tokens, Allocator allocator) {
 	return ast;
 }
 
-u32 ParseHeader(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseHeader(TokenList* tokens, AST* ast, u8* syntaxError) {
 	ExpectToken(tokens, TOKEN_CHAR_EQUALS);
 	Token* nextToken = ConsumeToken(tokens);
 	CheckNull(nextToken);
 	if (nextToken->type == TOKEN_CHAR_OPEN_PAREN) {
-		u32 headerArgs = ParseHeaderArgs(tokens, ast, syntaxError);
+		ASTNodeIndex headerArgs = ParseHeaderArgs(tokens, ast, syntaxError);
 		CheckSyntaxError();
-		u32 mainBlock = ParseBlock(tokens, ast, syntaxError);
+		ASTNodeIndex mainBlock = ParseBlock(tokens, ast, syntaxError);
 		CheckSyntaxError();
 
 		return ASTCreateNode(ast, AST_HEADER, headerArgs, mainBlock, EPS);
@@ -122,21 +124,21 @@ u32 ParseHeader(TokenList* tokens, AST* ast, u8* syntaxError) {
 
 // This doesn't expect an open parenthesis token because the caller already
 // consumed it before calling
-u32 ParseHeaderArgs(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseHeaderArgs(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* nextToken = ConsumeToken(tokens);
 	CheckNull(nextToken);
 	if (nextToken->type == TOKEN_CHAR_CLOSE_PAREN) {
 		return EPS;
 	}
 	UnconsumeToken(tokens);
-	u32 identifier = ParseID(tokens, ast, syntaxError);
+	ASTNodeIndex identifier = ParseID(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	ExpectToken(tokens, TOKEN_CHAR_COLON);
-	u32 type = ParseDatatype(tokens, ast, syntaxError);
+	ASTNodeIndex type = ParseDatatype(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	nextToken = ConsumeToken(tokens);
 	CheckNull(nextToken);
-	u32 nextArgs;
+	ASTNodeIndex nextArgs;
 	if (nextToken->type == TOKEN_CHAR_COMMMA) {
 		nextArgs = ParseHeaderArgs(tokens, ast, syntaxError);
 		CheckSyntaxError();
@@ -149,13 +151,13 @@ u32 ParseHeaderArgs(TokenList* tokens, AST* ast, u8* syntaxError) {
 	return ASTCreateNode(ast, AST_HEADER_ARGS, identifier, type, nextArgs);
 }
 
-u32 ParseBlock(TokenList* tokens, AST* ast, u8* syntaxError) {
-	u32 statement = ParseStatement(tokens, ast, syntaxError);
+ASTNodeIndex ParseBlock(TokenList* tokens, AST* ast, u8* syntaxError) {
+	ASTNodeIndex statement = ParseStatement(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	if (statement == EPS) {
 		return EPS;
 	}
-	u32 continueBlock = ParseBlock(tokens, ast, syntaxError);
+	ASTNodeIndex continueBlock = ParseBlock(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	if (continueBlock == EPS) {
 		return statement;
@@ -164,12 +166,12 @@ u32 ParseBlock(TokenList* tokens, AST* ast, u8* syntaxError) {
 	return ASTCreateNode(ast, AST_SEQ, statement, continueBlock, EPS);
 }
 
-u32 ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* nextToken = ConsumeToken(tokens);
 	if (nextToken == NULL) {
 		return EPS;
 	}
-	u32 tmp;
+	ASTNodeIndex tmp;
 	switch (nextToken->type) {
 	case TOKEN_CHAR_SEMICOLON:
 		return EPS;
@@ -195,7 +197,7 @@ u32 ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError) {
 		break;
 	default:
 		UnconsumeToken(tokens);
-		u32 expression = ParseExpression(tokens, ast, syntaxError);
+		ASTNodeIndex expression = ParseExpression(tokens, ast, syntaxError);
 		CheckSyntaxError();
 		ExpectToken(tokens, TOKEN_CHAR_SEMICOLON);
 		return expression;
@@ -205,25 +207,25 @@ u32 ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError) {
 
 // This doesn't expect a return token because the caller already consumed it
 // before calling
-u32 ParseReturn(TokenList* tokens, AST* ast, u8* syntaxError) {
-	u32 returnValue = ParseExpression(tokens, ast, syntaxError);
+ASTNodeIndex ParseReturn(TokenList* tokens, AST* ast, u8* syntaxError) {
+	ASTNodeIndex returnValue = ParseExpression(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	return ASTCreateNode(ast, AST_RETURN, returnValue, EPS, EPS);
 }
 
 // This doesn't expect an if token because the caller already consumed it before
 // calling
-u32 ParseIf(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseIf(TokenList* tokens, AST* ast, u8* syntaxError) {
 	ExpectToken(tokens, TOKEN_CHAR_OPEN_PAREN);
-	u32 condition = ParseExpression(tokens, ast, syntaxError);
+	ASTNodeIndex condition = ParseExpression(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	ExpectToken(tokens, TOKEN_CHAR_CLOSE_PAREN);
-	u32 body = ParseStatement(tokens, ast, syntaxError);
+	ASTNodeIndex body = ParseStatement(tokens, ast, syntaxError);
 	CheckSyntaxError();
 
 	Token* nextToken = ConsumeToken(tokens);
 	CheckNull(nextToken);
-	u32 elseBody;
+	ASTNodeIndex elseBody;
 	if (nextToken != NULL) {
 		if (nextToken->type == TOKEN_KEYWORD_ELSE) {
 			elseBody = ParseStatement(tokens, ast, syntaxError);
@@ -241,12 +243,12 @@ u32 ParseIf(TokenList* tokens, AST* ast, u8* syntaxError) {
 
 // This doesn't expect a while token because the caller already consumed it
 // before calling
-u32 ParseWhile(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseWhile(TokenList* tokens, AST* ast, u8* syntaxError) {
 	ExpectToken(tokens, TOKEN_CHAR_OPEN_PAREN);
-	u32 condition = ParseExpression(tokens, ast, syntaxError);
+	ASTNodeIndex condition = ParseExpression(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	ExpectToken(tokens, TOKEN_CHAR_CLOSE_PAREN);
-	u32 body = ParseStatement(tokens, ast, syntaxError);
+	ASTNodeIndex body = ParseStatement(tokens, ast, syntaxError);
 	CheckSyntaxError();
 
 	return ASTCreateNode(ast, AST_WHILE, condition, body, EPS);
@@ -254,15 +256,15 @@ u32 ParseWhile(TokenList* tokens, AST* ast, u8* syntaxError) {
 
 // This doesn't expect a for token because the caller already consumed it before
 // calling
-u32 ParseFor(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseFor(TokenList* tokens, AST* ast, u8* syntaxError) {
 	ExpectToken(tokens, TOKEN_CHAR_OPEN_PAREN);
-	u32 iterator = ParseID(tokens, ast, syntaxError);
+	ASTNodeIndex iterator = ParseID(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	ExpectToken(tokens, TOKEN_CHAR_COMMMA);
-	u32 range = ParseExpression(tokens, ast, syntaxError);
+	ASTNodeIndex range = ParseExpression(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	ExpectToken(tokens, TOKEN_CHAR_CLOSE_PAREN);
-	u32 body = ParseStatement(tokens, ast, syntaxError);
+	ASTNodeIndex body = ParseStatement(tokens, ast, syntaxError);
 	CheckSyntaxError();
 
 	return ASTCreateNode(ast, AST_FOR, iterator, range, body);
@@ -271,7 +273,8 @@ u32 ParseFor(TokenList* tokens, AST* ast, u8* syntaxError) {
 // This is temporary expression parsing. It's not very elegant and it doesn't
 // follow operator precedence. Eli has said that he wanted to write proper
 // expression parsing.
-u32 ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
+// clarise TODO: replace this
+ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
 	enum ExpressionType {
 		UNKNOWN,
 		UNIT,
@@ -287,8 +290,8 @@ u32 ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* token2;
 	CheckNull(token1);
 
-	u32 operand1;
-	u32 operand2;
+	ASTNodeIndex operand1;
+	ASTNodeIndex operand2;
 
 	switch (token1->type) {
 	case TOKEN_CHAR_OPEN_PAREN:
@@ -340,6 +343,7 @@ u32 ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
 			UnconsumeToken(tokens);
 		}
 		break;
+	// octothorpe = #
 	case TOKEN_CHAR_OCTOTHORPE:
 		type = UNARY_OPERATION;
 		break;
@@ -375,7 +379,7 @@ u32 ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
 			CheckSyntaxError();
 			ExpectToken(tokens, TOKEN_CHAR_EQUALS);
 		}
-		u32 assignmentValue = ParseExpression(tokens, ast, syntaxError);
+		ASTNodeIndex assignmentValue = ParseExpression(tokens, ast, syntaxError);
 		CheckSyntaxError();
 
 		return ASTCreateNode(ast, AST_DECLARE_VARIABLE, operand1, operand2,
@@ -416,22 +420,22 @@ u32 ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError) {
 
 // This doesn't expect an open bracket token because the caller already consumed
 // it before calling
-u32 ParseCellRef(TokenList* tokens, AST* ast, u8* syntaxError) {
-	u32 x = ParseExpression(tokens, ast, syntaxError);
+ASTNodeIndex ParseCellRef(TokenList* tokens, AST* ast, u8* syntaxError) {
+	ASTNodeIndex x = ParseExpression(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	ExpectToken(tokens, TOKEN_CHAR_COMMMA);
-	u32 y = ParseExpression(tokens, ast, syntaxError);
+	ASTNodeIndex y = ParseExpression(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	ExpectToken(tokens, TOKEN_CHAR_CLOSE_BRACKET);
 
 	return ASTCreateNode(ast, AST_GET_CELL_REF, x, y, EPS);
 }
 
-u32 ParseID(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseID(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* id = ConsumeToken(tokens);
 	CheckNull(id);
 
-	u32 new_node_index = ASTCreateNode(ast, AST_ID, EPS, EPS, EPS);
+	ASTNodeIndex new_node_index = ASTCreateNode(ast, AST_ID, EPS, EPS, EPS);
 
 	ast->nodes[new_node_index].vt = V_INT;
 	ast->nodes[new_node_index].data.i = id->symbolTableIndex;
@@ -441,11 +445,11 @@ u32 ParseID(TokenList* tokens, AST* ast, u8* syntaxError) {
 
 // TODO: Actually get literal values from token string (this should probably be
 // a function in the tokenizer that is called here)
-u32 ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* literal = ConsumeToken(tokens);
 	CheckNull(literal);
 
-	u32 new_node_index = ASTCreateNode(ast, AST_INVALID, EPS, EPS, EPS);
+	ASTNodeIndex new_node_index = ASTCreateNode(ast, AST_INVALID, EPS, EPS, EPS);
 
 	switch (literal->type) {
 	case (TOKEN_LITERAL_INT):
@@ -470,11 +474,11 @@ u32 ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError) {
 	return new_node_index;
 }
 
-u32 ParseDatatype(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseDatatype(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* dataType = ConsumeToken(tokens);
 	CheckNull(dataType);
 
-	u32 new_node_index = ASTCreateNode(ast, AST_INVALID, EPS, EPS, EPS);
+	ASTNodeIndex new_node_index = ASTCreateNode(ast, AST_INVALID, EPS, EPS, EPS);
 
 	switch (dataType->type) {
 	case (TOKEN_KEYWORD_INT):
@@ -493,11 +497,11 @@ u32 ParseDatatype(TokenList* tokens, AST* ast, u8* syntaxError) {
 	return new_node_index;
 }
 
-u32 ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* unit = ConsumeToken(tokens);
 	CheckNull(unit);
 
-	u32 tmp;
+	ASTNodeIndex tmp;
 	switch (unit->type) {
 	case TOKEN_LITERAL_INT:
 		UnconsumeToken(tokens);
@@ -521,27 +525,27 @@ u32 ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError) {
 
 // The function should have already been consumed because of how expression
 // parsing currently works
-u32 ParseFunctionCall(u32 cellRef, TokenList* tokens, AST* ast,
+ASTNodeIndex ParseFunctionCall(ASTNodeIndex cellRef, TokenList* tokens, AST* ast,
 					  u8* syntaxError) {
-	u32 args = ParseFunctionArgs(tokens, ast, syntaxError);
+	ASTNodeIndex args = ParseFunctionArgs(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	return ASTCreateNode(ast, AST_CALL, cellRef, args, EPS);
 }
 
 // This doesn't expect an open parenthesis token because the caller already
 // consumed it before calling
-u32 ParseFunctionArgs(TokenList* tokens, AST* ast, u8* syntaxError) {
+ASTNodeIndex ParseFunctionArgs(TokenList* tokens, AST* ast, u8* syntaxError) {
 	Token* nextToken = ConsumeToken(tokens);
 	CheckNull(nextToken);
 	if (nextToken->type == TOKEN_CHAR_CLOSE_PAREN) {
 		return EPS;
 	}
 	UnconsumeToken(tokens);
-	u32 arg = ParseID(tokens, ast, syntaxError);
+	ASTNodeIndex arg = ParseID(tokens, ast, syntaxError);
 	CheckSyntaxError();
 	nextToken = ConsumeToken(tokens);
 	CheckNull(nextToken);
-	u32 nextArgs;
+	ASTNodeIndex nextArgs;
 	if (nextToken->type == TOKEN_CHAR_COMMMA) {
 		nextArgs = ParseFunctionArgs(tokens, ast, syntaxError);
 		CheckSyntaxError();
