@@ -105,9 +105,10 @@ typedef struct Block {
 	CellValue cells[BLOCK_SIZE * BLOCK_SIZE];
 } Block;
 
-// TODO(ELI): In future organize to minimize padding
-// rn things are split based on usage but this should be
-// improved in the future.
+
+//TODO(ELI): In future organize to minimize padding
+//rn things are split based on usage but this should be
+//improved in the future.
 typedef struct SpreadSheet {
 	Allocator mem; // probably should be global allocator but
 				   //  might as well give ourselves options
@@ -125,6 +126,9 @@ typedef struct SpreadSheet {
     u32 fsize;
     u32 bcap;
 
+    SString* stringbuf;
+    u32 ssize;
+    u32 scap;
 
 } SpreadSheet;
 
