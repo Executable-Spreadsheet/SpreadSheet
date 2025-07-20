@@ -15,7 +15,11 @@ RELEASE_CFLAGS:=-O3
 SRC_DIR:=src
 INCLUDE_DIRS:=include
 TEST_SRC_DIR:=tests
+
 BUILD_DIR:=build
+DEBUG_BUILD_DIR:=$(BUILD_DIR)/debug
+RELEASE_BUILD_DIR:=$(BUILD_DIR)/release
+TEST_BUILD_DIR:=$(BUILD_DIR)/tests
 
 # Platform specific things go here
 # Detection of platform and archetecture are from https://stackoverflow.com/a/12099167
@@ -73,26 +77,22 @@ endif
 EDITOR_SRC_DIR:=$(SRC_DIR)/parasheet-editor
 EDITOR_INCLUDE_DIRS:=$(INCLUDE_DIRS)
 EDITOR_TEST_SRC_DIR:=$(TEST_SRC_DIR)/parasheet-editor
-EDITOR_BUILD_DIR:=$(BUILD_DIR)/parasheet-editor
 EDITOR_CFLAGS:=$(CFLAGS)
-
-#Edited to link to ncurses
 EDITOR_LDFLAGS:=$(LDFLAGS) -lparasheet -lncurses
-
-EDITOR_RELEASE_DIR:=$(EDITOR_BUILD_DIR)/release
+EDITOR_RELEASE_DIR:=$(RELEASE_BUILD_DIR)/parasheet-editor
 EDITOR_RELEASE_OBJ_DIR:=$(EDITOR_RELEASE_DIR)/objs
 EDITOR_RELEASE_DEP_DIR:=$(EDITOR_RELEASE_DIR)/deps
 EDITOR_RELEASE_EXE:=$(EDITOR_RELEASE_DIR)/$(call osexefiles,parasheet-editor)
 EDITOR_RELEASE_CFLAGS:=$(EDITOR_CFLAGS) $(RELEASE_CFLAGS)
 EDITOR_RELEASE_LDFLAGS=$(EDITOR_LDFLAGS) -L$(LIBRARY_RELEASE_DIR)
-EDITOR_DEBUG_DIR:=$(EDITOR_BUILD_DIR)/debug
+EDITOR_DEBUG_DIR:=$(DEBUG_BUILD_DIR)/parasheet-editor
 EDITOR_DEBUG_OBJ_DIR:=$(EDITOR_DEBUG_DIR)/objs
 EDITOR_DEBUG_DEP_DIR:=$(EDITOR_DEBUG_DIR)/deps
 EDITOR_DEBUG_EXE:=$(EDITOR_DEBUG_DIR)/$(call osexefiles,parasheet-editor)
 EDITOR_DEBUG_CFLAGS:=$(EDITOR_CFLAGS) $(DEBUG_CFLAGS)
 EDITOR_DEBUG_LDFLAGS=$(EDITOR_LDFLAGS) -L$(LIBRARY_DEBUG_DIR)
-EDITOR_TEST_DIR:=$(EDITOR_DEBUG_DIR)/tests
-EDITOR_TEST_EXE_DIR:=$(EDITOR_TEST_DIR)/exes
+EDITOR_TEST_DIR:=$(TEST_BUILD_DIR)/parasheet-editor
+EDITOR_TEST_EXE_DIR:=$(EDITOR_TEST_DIR)
 EDITOR_TEST_DEP_DIR:=$(EDITOR_TEST_DIR)/deps
 EDITOR_TEST_CFLAGS:=$(EDITOR_CFLAGS) $(DEBUG_CFLAGS)
 EDITOR_TEST_LDFLAGS=$(EDITOR_LDFLAGS) -L$(LIBRARY_DEBUG_DIR)
@@ -101,23 +101,22 @@ EDITOR_TEST_LDFLAGS=$(EDITOR_LDFLAGS) -L$(LIBRARY_DEBUG_DIR)
 CLI_SRC_DIR:=$(SRC_DIR)/parasheet-cli
 CLI_INCLUDE_DIRS:=$(INCLUDE_DIRS)
 CLI_TEST_SRC_DIR:=$(TEST_SRC_DIR)/parasheet-cli
-CLI_BUILD_DIR:=$(BUILD_DIR)/parasheet-cli
 CLI_CFLAGS:=$(CFLAGS)
 CLI_LDFLAGS:=$(LDFLAGS) -lparasheet
-CLI_RELEASE_DIR:=$(CLI_BUILD_DIR)/release
+CLI_RELEASE_DIR:=$(RELEASE_BUILD_DIR)/parasheet-cli
 CLI_RELEASE_OBJ_DIR:=$(CLI_RELEASE_DIR)/objs
 CLI_RELEASE_DEP_DIR:=$(CLI_RELEASE_DIR)/deps
 CLI_RELEASE_EXE:=$(CLI_RELEASE_DIR)/$(call osexefiles,parasheet-cli)
 CLI_RELEASE_CFLAGS:=$(CLI_CFLAGS) $(RELEASE_CFLAGS)
 CLI_RELEASE_LDFLAGS=$(CLI_LDFLAGS) -L$(LIBRARY_RELEASE_DIR)
-CLI_DEBUG_DIR:=$(CLI_BUILD_DIR)/debug
+CLI_DEBUG_DIR:=$(DEBUG_BUILD_DIR)/parasheet-cli
 CLI_DEBUG_OBJ_DIR:=$(CLI_DEBUG_DIR)/objs
 CLI_DEBUG_DEP_DIR:=$(CLI_DEBUG_DIR)/deps
 CLI_DEBUG_EXE:=$(CLI_DEBUG_DIR)/$(call osexefiles,parasheet-cli)
 CLI_DEBUG_CFLAGS:=$(CLI_CFLAGS) $(DEBUG_CFLAGS)
 CLI_DEBUG_LDFLAGS=$(CLI_LDFLAGS) -L$(LIBRARY_DEBUG_DIR)
-CLI_TEST_DIR:=$(CLI_DEBUG_DIR)/tests
-CLI_TEST_EXE_DIR:=$(CLI_TEST_DIR)/exes
+CLI_TEST_DIR:=$(TEST_BUILD_DIR)/parasheet-cli
+CLI_TEST_EXE_DIR:=$(CLI_TEST_DIR)
 CLI_TEST_DEP_DIR:=$(CLI_TEST_DIR)/deps
 CLI_TEST_CFLAGS:=$(CLI_CFLAGS) $(DEBUG_CFLAGS)
 CLI_TEST_LDFLAGS=$(CLI_LDFLAGS) -L$(LIBRARY_DEBUG_DIR)
@@ -126,23 +125,22 @@ CLI_TEST_LDFLAGS=$(CLI_LDFLAGS) -L$(LIBRARY_DEBUG_DIR)
 LIBRARY_SRC_DIR:=$(SRC_DIR)/libparasheet
 LIBRARY_INCLUDE_DIRS:=$(INCLUDE_DIRS)
 LIBRARY_TEST_SRC_DIR:=$(TEST_SRC_DIR)/libparasheet
-LIBRARY_BUILD_DIR:=$(BUILD_DIR)/libparasheet
 LIBRARY_CFLAGS:=$(CFLAGS) -fPIC
 LIBRARY_LDFLAGS:=$(LDFLAGS)
-LIBRARY_RELEASE_DIR:=$(LIBRARY_BUILD_DIR)/release
+LIBRARY_RELEASE_DIR:=$(RELEASE_BUILD_DIR)/libparasheet
 LIBRARY_RELEASE_OBJ_DIR:=$(LIBRARY_RELEASE_DIR)/objs
 LIBRARY_RELEASE_DEP_DIR:=$(LIBRARY_RELEASE_DIR)/deps
 LIBRARY_RELEASE_LIB:=$(LIBRARY_RELEASE_DIR)/$(call ossharedlibfiles,parasheet)
 LIBRARY_RELEASE_CFLAGS:=$(LIBRARY_CFLAGS) $(RELEASE_CFLAGS)
 LIBRARY_RELEASE_LDFLAGS:=$(LIBRARY_LDFLAGS)
-LIBRARY_DEBUG_DIR:=$(LIBRARY_BUILD_DIR)/debug
+LIBRARY_DEBUG_DIR:=$(DEBUG_BUILD_DIR)/libparasheet
 LIBRARY_DEBUG_OBJ_DIR:=$(LIBRARY_DEBUG_DIR)/objs
 LIBRARY_DEBUG_DEP_DIR:=$(LIBRARY_DEBUG_DIR)/deps
 LIBRARY_DEBUG_LIB:=$(LIBRARY_DEBUG_DIR)/$(call ossharedlibfiles,parasheet)
 LIBRARY_DEBUG_CFLAGS:=$(LIBRARY_CFLAGS) $(DEBUG_CFLAGS)
 LIBRARY_DEBUG_LDFLAGS:=$(LIBRARY_LDFLAGS)
-LIBRARY_TEST_DIR:=$(LIBRARY_DEBUG_DIR)/tests
-LIBRARY_TEST_EXE_DIR:=$(LIBRARY_TEST_DIR)/exes
+LIBRARY_TEST_DIR:=$(TEST_BUILD_DIR)/libparasheet
+LIBRARY_TEST_EXE_DIR:=$(LIBRARY_TEST_DIR)
 LIBRARY_TEST_DEP_DIR:=$(LIBRARY_TEST_DIR)/deps
 LIBRARY_TEST_CFLAGS:=$(LIBRARY_CFLAGS) $(DEBUG_CFLAGS)
 LIBRARY_TEST_LDFLAGS=$(LIBRARY_LDFLAGS)
@@ -151,24 +149,31 @@ LIBRARY_TEST_LDFLAGS=$(LIBRARY_LDFLAGS)
 UTIL_SRC_DIR:=$(SRC_DIR)/util
 UTIL_INCLUDE_DIRS:=$(INCLUDE_DIRS)
 UTIL_TEST_SRC_DIR:=$(TEST_DIR)/util
-UTIL_BUILD_DIR:=$(BUILD_DIR)/util
 UTIL_CFLAGS:=$(CFLAGS) -fPIC
 UTIL_LDFLAGS:=$(LDFLAGS)
-UTIL_RELEASE_DIR:=$(UTIL_BUILD_DIR)/release
+UTIL_RELEASE_DIR:=$(RELEASE_BUILD_DIR)/util
 UTIL_RELEASE_OBJ_DIR:=$(UTIL_RELEASE_DIR)/objs
 UTIL_RELEASE_DEP_DIR:=$(UTIL_RELEASE_DIR)/deps
 UTIL_RELEASE_CFLAGS:=$(UTIL_CFLAGS) $(RELEASE_CFLAGS)
 UTIL_RELEASE_LDFLAGS:=$(UTIL_LDFLAGS)
-UTIL_DEBUG_DIR:=$(UTIL_BUILD_DIR)/debug
+UTIL_DEBUG_DIR:=$(DEBUG_BUILD_DIR)/util
 UTIL_DEBUG_OBJ_DIR:=$(UTIL_DEBUG_DIR)/objs
 UTIL_DEBUG_DEP_DIR:=$(UTIL_DEBUG_DIR)/deps
 UTIL_DEBUG_CFLAGS:=$(UTIL_CFLAGS) $(DEBUG_CFLAGS)
 UTIL_DEBUG_LDFLAGS:=$(UTIL_LDFLAGS)
-UTIL_TEST_DIR:=$(UTIL_DEBUG_DIR)/tests
-UTIL_TEST_EXE_DIR:=$(UTIL_TEST_DIR)/exes
+UTIL_TEST_DIR:=$(TEST_BUILD_DIR)/util
+UTIL_TEST_EXE_DIR:=$(UTIL_TEST_DIR)
 UTIL_TEST_DEP_DIR:=$(UTIL_TEST_DIR)/deps
 UTIL_TEST_CFLAGS:=$(UTIL_CFLAGS) $(DEBUG_CFLAGS)
 UTIL_TEST_LDFLAGS=$(UTIL_LDFLAGS)
+
+# test runner
+TEST_RUNNER_SRC:=$(TEST_SRC_DIR)/test-runner.c
+TEST_RUNNER_EXE:=$(TEST_BUILD_DIR)/test-runner
+TEST_LIBRARIES:=$(LIBRARY_DEBUG_DIR)
+TEST_EXECUTABLES=$(EDITOR_TEST_EXES) $(CLI_TEST_EXES) $(LIBRARY_TEST_EXES) $(UTIL_TEST_EXES)
+TEST_RUNNER_CFLAGS=$(CFLAGS) -D TEST_LIBRARIES="\"$(LIBRARY_DEBUG_DIR)\"" -D TEST_FILES="{$(foreach file,$(TEST_EXECUTABLES),\"$(file)\",)}"
+TEST_RUNNER_LDFLAGS=
 
 # Define a recursive wildcard function to search for source files
 # I got this function from https://stackoverflow.com/a/18258352
@@ -221,16 +226,17 @@ UTIL_DEBUG_SUBDIRECTORES:=$(sort $(patsubst %/,%,$(dir $(addprefix $(UTIL_DEBUG_
 UTIL_TEST_SUBDIRECTORES:=$(sort $(patsubst %/,%,$(dir $(addprefix $(UTIL_TEST_EXE_DIR)/,$(UTIL_TEST_SRCS))))) $(sort $(patsubst %/,%,$(dir $(addprefix $(UTIL_TEST_DEP_DIR)/,$(UTIL_TEST_SRCS)))))
 
 # Declare phony targets (targets without a corresponding file)
-.PHONY: all clean help all-debug all-debug-notests all-release all-build-tests all-test editor-all editor-debug editor-debug-notests editor-release editor-build-tests editor-test editor-run editor-run-release cli-all cli-debug cli-debug-notests cli-release cli-build-tests cli-test cli-run cli-run-release library-all library-debug library-debug-notests library-release library-build-tests library-test util-all util-debug util-debug-notests util-release util-build-tests util-test
+.PHONY: all clean help all-debug all-debug-notests all-release all-build-tests all-test editor-all editor-debug editor-debug-notests editor-release editor-build-tests editor-test editor-run editor-run-valgrind editor-run-release cli-all cli-debug cli-debug-notests cli-release cli-build-tests cli-test cli-run cli-run-valgrind cli-run-release library-all library-debug library-debug-notests library-release library-build-tests library-test util-all util-debug util-debug-notests util-release util-build-tests util-test test-runner
 
 # Define Phony Targets
 
 all: all-debug all-release
-all-debug: editor-debug cli-debug library-debug util-debug
+all-debug: editor-debug cli-debug library-debug util-debug test-runner
 all-debug-notests: editor-debug-notests cli-debug-notests library-debug-notests util-debug-notests
 all-release: editor-release cli-release library-release util-release
 all-build-tests: editor-build-tests cli-build-tests library-build-tests util-build-tests
-all-test: editor-test cli-test library-test util-test
+all-test: all-build-tests test-runner
+	$(TEST_RUNNER_EXE) $(ARGS) $(TEST_EXECUTABLES)
 editor-all: editor-debug editor-release
 cli-all: cli-debug cli-release
 library-all: library-debug library-release
@@ -240,10 +246,12 @@ editor-debug: editor-debug-notests editor-build-tests
 editor-debug-notests: $(EDITOR_DEBUG_EXE)
 editor-release: $(EDITOR_RELEASE_EXE)
 editor-build-tests: $(EDITOR_TEST_EXES)
-editor-test: editor-build-tests
-	@echo "Not yet implemented, please run tests manually for now."
+editor-test: editor-build-tests test-runner
+	$(TEST_RUNNER_EXE) $(ARGS) $(EDITOR_TEST_EXES)
 editor-run: $(EDITOR_DEBUG_EXE)
-	LD_LIBRARY_PATH=$(LIBRARY_DEBUG_DIR) $(EDITOR_DEBUG_EXE)
+	LD_LIBRARY_PATH=$(LIBRARY_DEBUG_DIR) $(EDITOR_DEBUG_EXE) $(ARGS)
+editor-run-valgrind: $(EDITOR_DEBUG_EXE)
+	LD_LIBRARY_PATH=$(LIBRARY_DEBUG_DIR) valgrind $(VALGRIND_ARGS) -- $(EDITOR_DEBUG_EXE) $(ARGS)
 editor-run-release: $(EDITOR_RELEASE_EXE)
 	LD_LIBRARY_PATH=$(LIBRARY_RELEASE_DIR) $(EDITOR_RELEASE_EXE)
 
@@ -251,10 +259,12 @@ cli-debug: cli-debug-notests cli-build-tests
 cli-debug-notests: $(CLI_DEBUG_EXE)
 cli-release: $(CLI_RELEASE_EXE)
 cli-build-tests: $(CLI_TEST_EXES)
-cli-test: cli-build-tests
-	@echo "Not yet implemented, please run tests manually for now."
+cli-test: cli-build-tests test-runner
+	$(TEST_RUNNER_EXE) $(ARGS) $(CLI_TEST_EXES)
 cli-run: $(EDITOR_DEBUG_EXE)
-	LD_LIBRARY_PATH=$(LIBRARY_DEBUG_DIR) $(CLI_DEBUG_EXE)
+	LD_LIBRARY_PATH=$(LIBRARY_DEBUG_DIR) $(CLI_DEBUG_EXE) $(ARGS)
+cli-run-valgrind: $(CLI_DEBUG_EXE)
+	LD_LIBRARY_PATH=$(LIBRARY_DEBUG_DIR) valgrind $(VALGRIND_ARGS) -- $(CLI_DEBUG_EXE) $(ARGS)
 cli-run-release: $(EDITOR_RELEASE_EXE)
 	LD_LIBRARY_PATH=$(LIBRARY_RELEASE_DIR) $(CLI_RELEASE_EXE)
 
@@ -262,15 +272,17 @@ library-debug: library-debug-notests library-build-tests
 library-debug-notests: $(LIBRARY_DEBUG_LIB)
 library-release: $(LIBRARY_RELEASE_LIB)
 library-build-tests: $(LIBRARY_TEST_EXES)
-library-test: library-build-tests
-	@echo "Not yet implemented, please run tests manually for now."
+library-test: library-build-tests test-runner
+	$(TEST_RUNNER_EXE) $(ARGS) $(LIBRARY_TEST_EXES)
 
 util-debug: util-debug-notests util-build-tests
 util-debug-notests: $(UTIL_DEBUG_OBJS)
 util-release: $(UTIL_RELEASE_OBJS)
 util-build-tests: $(UTIL_TEST_EXES)
-util-test: util-build-tests
-	@echo "Not yet implemented, please run tests manually for now."
+util-test: util-build-tests test-runner
+	$(TEST_RUNNER_EXE) $(ARGS) $(UTIL_TEST_EXES)
+
+test-runner: $(TEST_RUNNER_EXE)
 
 # Delete all build files
 clean:
@@ -295,6 +307,7 @@ help:
 	@echo "editor-build-tests - Build parasheet-editor tests without running them"
 	@echo "editor-test - Build and run all parasheet-editor tests"
 	@echo "editor-run - Build and run the debug version of parasheet-editor"
+	@echo "editor-run-valgrind - Build and run the debug version of parasheet-editor with valgrind"
 	@echo "editor-run-release - Build and run the debug version of parasheet-editor"
 	@echo "cli-all - Build all parasheet-cli targets"
 	@echo "cli-debug - Build all parasheet-cli debug targets"
@@ -303,6 +316,7 @@ help:
 	@echo "cli-build-tests - Build parasheet-cli tests without running them"
 	@echo "cli-test - Build and run all parasheet-cli tests"
 	@echo "cli-run - Build and run the debug version of parasheet-cli"
+	@echo "cli-run-valgrind - Build and run the debug version of parasheet-cli with valgrind"
 	@echo "cli-run-release - Build and run the debug version of parasheet-cli"
 	@echo "library-all - Build all libparasheet targets"
 	@echo "library-debug - Build all libparasheet debug targets"
@@ -316,6 +330,8 @@ help:
 	@echo "util-release - Build all util release targets"
 	@echo "util-build-tests - Build util tests without running them"
 	@echo "util-test - Build and run all util tests"
+	@echo ""
+	@echo "For any of the run or test targets, you cat set the ARGS environment variable to pass in arguments. When using valgrind, you can set the VALGRIND_ARGS environment variable to pass in arguments to valgrind."
 
 # Create all neccessary directories
 $(EDITOR_RELEASE_SUBDIRECTORES):
@@ -377,6 +393,10 @@ $(LIBRARY_TEST_EXE_DIR)/%: $(LIBRARY_TEST_SRC_DIR)/%$(SOURCE_FILE_EXTENSION) $(f
 
 $(UTIL_TEST_EXE_DIR)/%: $(UTIL_TEST_SRC_DIR)/%$(SOURCE_FILE_EXTENSION) $(filter-out main.o,$(UTIL_DEBUG_OBJS)) $(UTIL_DEBUG_OBJS) | $(UTIL_TEST_SUBDIRECTORES)
 	$(CC) -MT $(call ospath,$@) -MMD -MP -MF $(call ospath,$(UTIL_TEST_DEP_DIR)/$*.d) $(UTIL_TEST_CFLAGS) $(call ospath,$(addprefix -I,$(UTIL_INCLUDE_DIRS))) $(call ospath,$< $(UTIL_DEBUG_OBJS)) -o $(call ospath,$@) $(UTIL_TEST_LDFLAGS)
+
+# Compile test runner
+$(TEST_RUNNER_EXE): $(TEST_RUNNER_SRC) | $(BUILD_DIR)
+	$(CC) $(TEST_RUNNER_CFLAGS) $(call ospath, $<) -o $(call ospath, $@) $(TEST_RUNNER_LDFLAGS)
 
 # Compile all object files
 $(EDITOR_RELEASE_OBJ_DIR)/%.o: $(EDITOR_SRC_DIR)/%$(SOURCE_FILE_EXTENSION) $(EDITOR_RELEASE_DEP_DIR)/%.d $(EDITOR_INCLUDE_DIRS) | $(EDITOR_RELEASE_SUBDIRECTORES)
