@@ -85,9 +85,9 @@ typedef struct TokenList {
 
 TokenList* CreateTokenList(Allocator allocator);
 
-void PushToken(TokenList* tokenList, TokenType type, StrID sourceString);
+void PushToken(TokenList* tokenList, TokenType type, StrID sourceString, u32 lineNumber);
 
-void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID string, union TokenData data);
+void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID string, u32 lineNumber, union TokenData data);
 
 Token* PopTokenDangerous(TokenList* tokenList);
 

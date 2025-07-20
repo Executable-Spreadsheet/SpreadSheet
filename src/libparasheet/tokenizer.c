@@ -49,7 +49,8 @@ void stringPushCharacter(i8** string, u32* size, u32* capacity,
 }
 
 void tokenizeStringLiteral(const char* source, Allocator allocator, u32* i,
-						   TokenList* tokens, StringTable* table) {
+						   TokenList* tokens, StringTable* table,
+						   u32* lineNumber) {
 	u32 start = *i;
 
 	u32 newStringSize = 0;
@@ -83,6 +84,9 @@ void tokenizeStringLiteral(const char* source, Allocator allocator, u32* i,
 				stringPushCharacter(&newString, &newStringSize,
 									&newStringCapacity, allocator, '\'');
 				break;
+			case '\n':
+				*lineNumber += 1;
+				break;
 			default:
 				stringPushCharacter(&newString, &newStringSize,
 									&newStringCapacity, allocator, '\\');
@@ -96,6 +100,9 @@ void tokenizeStringLiteral(const char* source, Allocator allocator, u32* i,
 			} else if (c == '\\') {
 				escaped = true;
 			} else {
+				if (c == '\n') {
+					lineNumber += 1;
+				}
 				stringPushCharacter(&newString, &newStringSize,
 									&newStringCapacity, allocator, c);
 			}
@@ -113,11 +120,12 @@ void tokenizeStringLiteral(const char* source, Allocator allocator, u32* i,
 	union TokenData data = {.s = StringAddS(table, literalValue)};
 
 	PushTokenLiteral(tokens, TOKEN_LITERAL_STRING,
-					 StringAddS(table, substr(source, start, *i)), data);
+					 StringAddS(table, substr(source, start, *i)), *lineNumber,
+					 data);
 }
 
 void tokenizeNumberLiteral(const char* source, u32* i, TokenList* tokens,
-						   StringTable* table) {
+						   StringTable* table, u32 lineNumber) {
 	TokenType type = TOKEN_LITERAL_INT;
 	i32 number = 0;
 	f32 floatNum = 0;
@@ -142,7 +150,7 @@ void tokenizeNumberLiteral(const char* source, u32* i, TokenList* tokens,
 		data.f = floatNum;
 	}
 	PushTokenLiteral(tokens, type, StringAddS(table, substr(source, start, *i)),
-					 data);
+					 lineNumber, data);
 }
 
 // Create a one-char SString
@@ -181,125 +189,138 @@ static TokenType lookup_keyword(const SString* s) {
 }
 
 static void handle_single_char_token(TokenList* tokens, StringTable* table,
-									 const char* source, u32* i) {
+									 const char* source, u32* i,
+									 u32 lineNumber) {
 	switch (source[*i]) {
 	case '+':
 		PushToken(tokens, TOKEN_CHAR_PLUS,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '-':
 		PushToken(tokens, TOKEN_CHAR_MINUS,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '*':
 		PushToken(tokens, TOKEN_CHAR_ASTERISK,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '/':
 		PushToken(tokens, TOKEN_CHAR_SLASH,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '#':
 		PushToken(tokens, TOKEN_CHAR_OCTOTHORPE,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case ':':
 		PushToken(tokens, TOKEN_CHAR_COLON,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '(':
 		PushToken(tokens, TOKEN_CHAR_OPEN_PAREN,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case ')':
 		PushToken(tokens, TOKEN_CHAR_CLOSE_PAREN,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '[':
 		PushToken(tokens, TOKEN_CHAR_OPEN_BRACKET,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case ']':
 		PushToken(tokens, TOKEN_CHAR_CLOSE_BRACKET,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '{':
 		PushToken(tokens, TOKEN_CHAR_OPEN_BRACE,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '}':
 		PushToken(tokens, TOKEN_CHAR_CLOSE_BRACE,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '=':
 		if (source[*i + 1] == '=') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_EQUALS_EQUALS,
-					  StringAddS(table, substr(source, *i, *i + 2)));
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
 			*i += 1;
 		} else {
 			PushToken(tokens, TOKEN_CHAR_EQUALS,
-					  StringAddS(table, substr(source, *i, *i + 1)));
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
 		}
 		break;
 	case ',':
 		PushToken(tokens, TOKEN_CHAR_COMMMA,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case ';':
 		PushToken(tokens, TOKEN_CHAR_SEMICOLON,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '>':
 		if (source[*i + 1] == '=') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_GREATER_EQUALS,
-					  StringAddS(table, substr(source, *i, *i + 2)));
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
 			*i += 1;
 		} else {
 			PushToken(tokens, TOKEN_CHAR_GREATER_THAN,
-					  StringAddS(table, substr(source, *i, *i + 1)));
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
 		}
 	case '<':
 		if (source[*i + 1] == '=') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_LESS_EQUALS,
-					  StringAddS(table, substr(source, *i, *i + 2)));
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
 			*i += 1;
 		} else {
 			PushToken(tokens, TOKEN_CHAR_LESS_THAN,
-					  StringAddS(table, substr(source, *i, *i + 1)));
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
 		}
 	case '!':
 		if (source[*i + 1] == '=') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_EXCLAMATION_EQUALS,
-					  StringAddS(table, substr(source, *i, *i + 2)));
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
 			*i += 1;
 		} else {
 			PushToken(tokens, TOKEN_CHAR_EXCLAMATION,
-					  StringAddS(table, substr(source, *i, *i + 1)));
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
 		}
 	case '&':
 		if (source[*i + 1] == '&') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_AMPERSAND_AMPERSAND,
-					  StringAddS(table, substr(source, *i, *i + 2)));
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
 			*i += 1;
 		} else {
 			log("Unknown char token: '%c'", source[*i]);
 			PushToken(tokens, TOKEN_INVALID,
-					  StringAddS(table, substr(source, *i, *i + 1)));
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
 		}
 	case '|':
 		if (source[*i + 1] == '|') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_PIPE_PIPE,
-					  StringAddS(table, substr(source, *i, *i + 2)));
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
 			*i += 1;
 		} else {
 			log("Unknown char token: '%c'", source[*i]);
 			PushToken(tokens, TOKEN_INVALID,
-					  StringAddS(table, substr(source, *i, *i + 1)));
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
 		}
 	default:
 		log("Unknown char token: '%c'", source[*i]);
 		PushToken(tokens, TOKEN_INVALID,
-				  StringAddS(table, substr(source, *i, *i + 1)));
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	}
 }
@@ -313,11 +334,15 @@ TokenList* Tokenize(const char* source, StringTable* table,
 
 	TokenList* tokens = CreateTokenList(allocator);
 	u32 i = 0;
+	u32 lineNumber = 0;
 
 	while (source[i] != '\0') {
 		char c = source[i];
 
 		if (is_whitespace(c)) {
+			if (c == '\n') {
+				lineNumber += 1;
+			}
 			i++;
 			continue;
 		}
@@ -330,27 +355,28 @@ TokenList* Tokenize(const char* source, StringTable* table,
 			TokenType type = lookup_keyword(&s);
 			if (type == TOKEN_INVALID) {
 				log("Parsed identifier: %s", s);
-				PushToken(tokens, TOKEN_ID, StringAddS(table, s));
+				PushToken(tokens, TOKEN_ID, StringAddS(table, s), lineNumber);
 			} else {
 				log("Parsed keyword: %s", s);
-				PushToken(tokens, type, StringAddS(table, s));
+				PushToken(tokens, type, StringAddS(table, s), lineNumber);
 			}
 			continue;
 		}
 
 		if (isdigit(c)) {
-			tokenizeNumberLiteral(source, &i, tokens, table);
+			tokenizeNumberLiteral(source, &i, tokens, table, lineNumber);
 			continue;
 		}
 
-		if (c == '"') {
-			tokenizeStringLiteral(source, allocator, &i, tokens, table);
+		if (c == '\"') {
+			tokenizeStringLiteral(source, allocator, &i, tokens, table,
+								  &lineNumber);
 			continue;
 		}
 
 		// Operators & symbols
 		log("Parsed single-char token: '%c'\n", c);
-		handle_single_char_token(tokens, table, source, &i);
+		handle_single_char_token(tokens, table, source, &i, lineNumber);
 
 		i++;
 	}

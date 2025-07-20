@@ -12,9 +12,10 @@
 // 	return tokenList;
 // }
 
-void PushToken(TokenList* tokenList, TokenType type, StrID sourceString) {
+void PushToken(TokenList* tokenList, TokenType type, StrID sourceString,
+			   u32 lineNumber) {
 	union TokenData noData = {.i = 0};
-	PushTokenLiteral(tokenList, type, sourceString, noData);
+	PushTokenLiteral(tokenList, type, sourceString, lineNumber, noData);
 }
 
 // void PushTokenID(TokenList* tokenList, TokenType type, SString string,
@@ -43,7 +44,7 @@ TokenList* CreateTokenList(Allocator allocator) {
 }
 
 void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID sourceString,
-					  union TokenData data) {
+					  u32 lineNumber, union TokenData data) {
 	if (tokenList->size == tokenList->capacity) {
 		tokenList->tokens = Realloc(tokenList->mem, tokenList->tokens,
 									tokenList->capacity * sizeof(Token),
@@ -54,6 +55,7 @@ void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID sourceString,
 
 	tokenList->tokens[tokenList->size].type = type;
 	tokenList->tokens[tokenList->size].sourceString = sourceString;
+	tokenList->tokens[tokenList->size].lineNumber = lineNumber;
 	tokenList->tokens[tokenList->size].data = data;
 	tokenList->size += 1;
 }
