@@ -55,7 +55,7 @@ SString StringDel(StringTable* table, StrID index);
 const SString StringGet(StringTable* table, StrID index);
 
 #define StringCmp(a, b) \
-    (a == b)
+    (a.idx == b.idx) && (a.gen == b.gen)
 
 void StringFree(StringTable* table);
 
@@ -231,7 +231,7 @@ typedef enum SymbolType : u32 {
 } SymbolType;
 
 typedef struct SymbolEntry {
-    SymbolType type; 
+    SymbolType type;
     u32 idx;
 } SymbolEntry;
 
@@ -239,7 +239,7 @@ typedef struct SymbolEntry {
 typedef struct SymbolMap {
     Allocator mem;
 
-    u32* keys;
+    StrID* keys;
     SymbolEntry* entries;
     u32 size;
     u32 cap;
