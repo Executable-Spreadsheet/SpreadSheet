@@ -16,7 +16,7 @@ int main() {
 		u32 l = ASTCreateNode(&tree, AST_INT_LITERAL, EPS, EPS, EPS);
 		u32 m = ASTCreateNode(&tree, AST_INT_LITERAL, EPS, EPS, EPS);
 		u32 r = ASTCreateNode(&tree, AST_INT_LITERAL, EPS, EPS, EPS);
-		a1 = ASTCreateNode(&tree, AST_ADD, l, m, r);
+		a1 = ASTCreateNode(&tree, AST_DIV, l, m, r);
 	}
 	{
 		u32 l = ASTCreateNode(&tree, AST_INT_LITERAL, EPS, EPS, EPS);
@@ -30,4 +30,5 @@ int main() {
 	u32 s = ASTCreateNode(&tree, AST_ADD, y, q, y);
 
 	ASTPrint(stdout, &tree);
+	log("size: %d", sizeof(tree));
 }
