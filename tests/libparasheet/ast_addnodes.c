@@ -31,4 +31,6 @@ int main() {
 
 	ASTPrint(stdout, &tree);
 	log("size: %d", sizeof(tree));
+
+    ASTFree(&tree);
 }

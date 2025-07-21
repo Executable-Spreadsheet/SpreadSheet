@@ -98,6 +98,8 @@ void UnconsumeToken(TokenList* tokenList);
 SString getTokenErrorString(TokenType type);
 
 void DestroyTokenList(TokenList** tokenList);
-AST* BuildASTFromTokens(TokenList* tokens, Allocator allocator);
+AST BuildASTFromTokens(TokenList* tokens, Allocator allocator);
+
+Token* PeekToken(TokenList* tokenList);
 
 #endif

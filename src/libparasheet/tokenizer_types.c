@@ -32,7 +32,7 @@ TokenList* CreateTokenList(Allocator allocator) {
 
 void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID sourceString,
 					  u32 lineNumber, union TokenData data) {
-	if (tokenList->size == tokenList->capacity) {
+	if (tokenList->size >= tokenList->capacity) {
 		tokenList->tokens = Realloc(tokenList->mem, tokenList->tokens,
 									tokenList->capacity * sizeof(Token),
 									tokenList->capacity * 2 * sizeof(Token));

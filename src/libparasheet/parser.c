@@ -33,19 +33,19 @@ void PrintFoundDifferentError(TokenType expected, Token* found) {
 	// We probably want to have a better way to handle errors (so the user can
 	// see errors in the ncurses TUI)
 	warn("Syntax error on line %d: Expected %s but found \"%s\"",
-		 found->lineNumber, getTokenErrorString(expected), found->string);
+		 found->lineNumber, getTokenErrorString(expected), found->sourceString);
 }
 
 void PrintNullTokenErrror(Token* prev) {
 	warn("Syntax error on line %d: Expected token after \"%s\"",
-		 prev->lineNumber, prev->string);
+		 prev->lineNumber, prev->sourceString);
 }
 
 void PrintUnexpectedTokenError(Token* unexpected) {
 	// We probably want to have a better way to handle errors (so the user can
 	// see errors in the ncurses TUI)
 	warn("Syntax error on line %d: Unexpected token \"%s\"",
-		 unexpected->lineNumber, unexpected->string);
+		 unexpected->lineNumber, unexpected->sourceString);
 }
 
 void CheckToken(TokenList* tokens, TokenType expected, u8* syntaxError) {
@@ -99,21 +99,19 @@ ASTNodeIndex ParseAbsolute(TokenList* tokens, AST* ast, u8* syntaxError);
 ASTNodeIndex ParseAbsolute2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeIndex inNode);
 
 
-AST* BuildASTFromTokens(TokenList* tokens, Allocator allocator) {
-	AST* ast = Alloc(allocator, sizeof(AST));
-	ast->mem = allocator;
-//	ast->nodes = NULL;
-//	ast->size = 0;
-//	ast->cap = 0;
+AST BuildASTFromTokens(TokenList* tokens, Allocator allocator) {
+	AST ast = {
+        .mem = allocator
+    };
 
 	u8 syntaxError = 0;
-	(void)!ParseHeader(tokens, ast, &syntaxError);
+	(void)!ParseHeader(tokens, &ast, &syntaxError);
 
 	if (syntaxError) {
-		ASTFree(ast);
-		Free(allocator, ast, sizeof(AST));
+		ASTFree(&ast);
+		Free(allocator, &ast, sizeof(AST));
 
-		return NULL;
+		return (AST){0};
 	}
 	
 	return ast;
@@ -427,7 +425,7 @@ ASTNodeIndex ParseID(TokenList* tokens, AST* ast, u8* syntaxError) {
 	ASTNodeIndex new_node_index = ASTCreateNode(ast, AST_ID, EPS, EPS, EPS);
 
 	ast->nodes[new_node_index].vt = V_INT;
-	ast->nodes[new_node_index].data.i = id->symbolTableIndex;
+	ast->nodes[new_node_index].data.i = id->data.i;
 
 	return new_node_index;
 }

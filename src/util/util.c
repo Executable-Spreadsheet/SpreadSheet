@@ -43,7 +43,7 @@ u32 lstou(LString s) {
 		i++;
 	}
 
-	return out;
+    return out;
 }
 
 //------------- String Functions ---------------
@@ -55,235 +55,235 @@ i32 SStrCmp(SString a, SString b) {
 //------------- Custom Printf ------------------
 
 static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
-							 va_list args) {
+                             va_list args) {
 
-	switch (fmt[1]) {
-	case '%': {
-		putc('%', fd);
-	} break;
-	case 'n': {
-		i8* c = va_arg(args, i8*);
+    switch (fmt[1]) {
+        case '%': {
+            putc('%', fd);
+        } break;
+        case 'n': {
+            i8* c = va_arg(args, i8*);
 
-		while (c[0]) {
-			putc(c[0], fd);
-			c++;
-		}
-	} break;
-	case 'c': { //Added case c, can be modified
-		char ch = va_arg(args, int);
-		putc(ch, fd);
-	} break;
-	case 's': {
-		SString v = va_arg(args, SString);
+            while (c[0]) {
+                putc(c[0], fd);
+                c++;
+            }
+        } break;
+        case 'c': { //Added case c, can be modified
+            char ch = va_arg(args, int);
+            putc(ch, fd);
+        } break;
+        case 's': {
+            SString v = va_arg(args, SString);
 
-		for (u32 i = 0; i < v.size; i++) {
-			putc(v.data[i], fd);
-		}
+            for (u32 i = 0; i < v.size; i++) {
+                putc(v.data[i], fd);
+            }
 
-	} break;
-	case 'p': {
-		u64 p = va_arg(args, u64);
+        } break;
+        case 'p': {
+            u64 p = va_arg(args, u64);
 
-		if (!p) {
-			putc('(', fd);
-			putc('n', fd);
-			putc('i', fd);
-			putc('l', fd);
-			putc(')', fd);
-			break;
-		}
+            if (!p) {
+                putc('(', fd);
+                putc('n', fd);
+                putc('i', fd);
+                putc('l', fd);
+                putc(')', fd);
+                break;
+            }
 
-		putc('0', fd);
-		putc('x', fd);
+            putc('0', fd);
+            putc('x', fd);
 
-		u32 num_digits = 0;
-		u64 temp = p;
-		while (temp) {
-			num_digits += 1;
-			temp >>= 4;
-		}
+            u32 num_digits = 0;
+            u64 temp = p;
+            while (temp) {
+                num_digits += 1;
+                temp >>= 4;
+            }
 
-		for (i32 i = num_digits - 1; i >= 0; i--) {
-			u8 v = (p >> (4 * i)) & 0xF;
-			if (v < 10)
-				putc(v + '0', fd);
-			else
-				putc(v + ('a' - 10), fd);
-		}
-	} break;
-	case 'd': {
-		u32 num_digits = 1;
-		i32 n = va_arg(args, i32);
-		if (n < 0) {
-			n *= -1;
-			putc('-', fd);
-		}
-		u32 val = n;
+            for (i32 i = num_digits - 1; i >= 0; i--) {
+                u8 v = (p >> (4 * i)) & 0xF;
+                if (v < 10)
+                    putc(v + '0', fd);
+                else
+                    putc(v + ('a' - 10), fd);
+            }
+        } break;
+        case 'd': {
+            u32 num_digits = 1;
+            i32 n = va_arg(args, i32);
+            if (n < 0) {
+                n *= -1;
+                putc('-', fd);
+            }
+            u32 val = n;
 
-		u32 temp = val / 10;
-		while (temp) {
-			temp /= 10;
-			num_digits *= 10;
-		}
+            u32 temp = val / 10;
+            while (temp) {
+                temp /= 10;
+                num_digits *= 10;
+            }
 
-		while (num_digits) {
-			i8 digit = ((val % (num_digits * 10)) / num_digits) + '0';
-			num_digits /= 10;
-			putc(digit, fd);
-		}
-	} break;
-	case 'l': {
-		switch (fmt[2]) {
-		case 'X': {
-			fmt++;
-			u64 p = va_arg(args, u64);
+            while (num_digits) {
+                i8 digit = ((val % (num_digits * 10)) / num_digits) + '0';
+                num_digits /= 10;
+                putc(digit, fd);
+            }
+        } break;
+        case 'l': {
+            switch (fmt[2]) {
+                case 'X': {
+                    fmt++;
+                    u64 p = va_arg(args, u64);
 
-			u32 num_digits = 0;
-			u64 temp = p;
-			while (temp) {
-				num_digits += 1;
-				temp >>= 4;
-			}
+                    u32 num_digits = 0;
+                    u64 temp = p;
+                    while (temp) {
+                        num_digits += 1;
+                        temp >>= 4;
+                    }
 
-			for (i32 i = num_digits - 1; i >= 0; i--) {
-				u8 v = (p >> (4 * i)) & 0xF;
-				if (v < 10)
-					putc(v + '0', fd);
-				else
-					putc(v + ('A' - 10), fd);
-			}
-		} break;
-		case 'x': {
-			fmt++;
-			u64 p = va_arg(args, u64);
+                    for (i32 i = num_digits - 1; i >= 0; i--) {
+                        u8 v = (p >> (4 * i)) & 0xF;
+                        if (v < 10)
+                            putc(v + '0', fd);
+                        else
+                            putc(v + ('A' - 10), fd);
+                    }
+                } break;
+                case 'x': {
+                    fmt++;
+                    u64 p = va_arg(args, u64);
 
-			u32 num_digits = 0;
-			u64 temp = p;
-			while (temp) {
-				num_digits += 1;
-				temp >>= 4;
-			}
+                    u32 num_digits = 0;
+                    u64 temp = p;
+                    while (temp) {
+                        num_digits += 1;
+                        temp >>= 4;
+                    }
 
-			for (i32 i = num_digits - 1; i >= 0; i--) {
-				u8 v = (p >> (4 * i)) & 0xF;
-				if (v < 10)
-					putc(v + '0', fd);
-				else
-					putc(v + ('a' - 10), fd);
-			}
-		} break;
-		case 'd':
-			fmt++;
-		default: {
-			u32 num_digits = 1;
-			i64 n = va_arg(args, i64);
-			if (n < 0) {
-				n *= -1;
-				putc('-', fd);
-			}
-			u32 val = n;
+                    for (i32 i = num_digits - 1; i >= 0; i--) {
+                        u8 v = (p >> (4 * i)) & 0xF;
+                        if (v < 10)
+                            putc(v + '0', fd);
+                        else
+                            putc(v + ('a' - 10), fd);
+                    }
+                } break;
+                case 'd':
+                    fmt++;
+                default: {
+                    u32 num_digits = 1;
+                    i64 n = va_arg(args, i64);
+                    if (n < 0) {
+                        n *= -1;
+                        putc('-', fd);
+                    }
+                    u32 val = n;
 
-			u32 temp = val / 10;
-			while (temp) {
-				temp /= 10;
-				num_digits *= 10;
-			}
+                    u32 temp = val / 10;
+                    while (temp) {
+                        temp /= 10;
+                        num_digits *= 10;
+                    }
 
-			while (num_digits) {
-				i8 digit = ((val % (num_digits * 10)) / num_digits) + '0';
-				num_digits /= 10;
-				putc(digit, fd);
-			}
-		} break;
-		}
-	} break;
-	case 'x': {
-		u32 p = va_arg(args, u32);
+                    while (num_digits) {
+                        i8 digit = ((val % (num_digits * 10)) / num_digits) + '0';
+                        num_digits /= 10;
+                        putc(digit, fd);
+                    }
+                } break;
+            }
+        } break;
+        case 'x': {
+            u32 p = va_arg(args, u32);
 
-		u32 num_digits = 0;
-		u64 temp = p;
-		while (temp) {
-			num_digits += 1;
-			temp >>= 4;
-		}
+            u32 num_digits = 0;
+            u64 temp = p;
+            while (temp) {
+                num_digits += 1;
+                temp >>= 4;
+            }
 
-		for (i32 i = num_digits - 1; i >= 0; i--) {
-			u8 v = (p >> (4 * i)) & 0xF;
-			if (v < 10)
-				putc(v + '0', fd);
-			else
-				putc(v + ('a' - 10), fd);
-		}
-	} break;
-	case 'X': {
-		u32 p = va_arg(args, u32);
+            for (i32 i = num_digits - 1; i >= 0; i--) {
+                u8 v = (p >> (4 * i)) & 0xF;
+                if (v < 10)
+                    putc(v + '0', fd);
+                else
+                    putc(v + ('a' - 10), fd);
+            }
+        } break;
+        case 'X': {
+            u32 p = va_arg(args, u32);
 
-		u32 num_digits = 0;
-		u64 temp = p;
-		while (temp) {
-			num_digits += 1;
-			temp >>= 4;
-		}
+            u32 num_digits = 0;
+            u64 temp = p;
+            while (temp) {
+                num_digits += 1;
+                temp >>= 4;
+            }
 
-		for (i32 i = num_digits - 1; i >= 0; i--) {
-			u8 v = (p >> (4 * i)) & 0xF;
-			if (v < 10)
-				putc(v + '0', fd);
-			else
-				putc(v + ('A' - 10), fd);
-		}
-	} break;
-	case 'f': {
-		u64 num_digits = 1;
-		f64 val = va_arg(args, f64);
+            for (i32 i = num_digits - 1; i >= 0; i--) {
+                u8 v = (p >> (4 * i)) & 0xF;
+                if (v < 10)
+                    putc(v + '0', fd);
+                else
+                    putc(v + ('A' - 10), fd);
+            }
+        } break;
+        case 'f': {
+            u64 num_digits = 1;
+            f64 val = va_arg(args, f64);
 
-		if (val < 0) {
-			putc('-', fd);
-			val *= -1;
-		}
+            if (val < 0) {
+                putc('-', fd);
+                val *= -1;
+            }
 
-		// print integer part
-		u32 integer = val;
-		val -= integer;
-		u32 temp = integer / 10;
-		while (temp) {
-			temp /= 10;
-			num_digits *= 10;
-		}
+            // print integer part
+            u32 integer = val;
+            val -= integer;
+            u32 temp = integer / 10;
+            while (temp) {
+                temp /= 10;
+                num_digits *= 10;
+            }
 
-		while (num_digits) {
-			i8 digit = ((integer % (num_digits * 10)) / num_digits) + '0';
-			num_digits /= 10;
-			putc(digit, fd);
-		}
+            while (num_digits) {
+                i8 digit = ((integer % (num_digits * 10)) / num_digits) + '0';
+                num_digits /= 10;
+                putc(digit, fd);
+            }
 
-		// print fractional part
-		if (precision)
-			putc('.', fd);
+            // print fractional part
+            if (precision)
+                putc('.', fd);
 
-		num_digits = 1;
-		for (u32 i = 0; i < precision; i++) {
-			val *= 10;
-			num_digits *= 10;
-		}
-		num_digits /= 10;
-		u32 frac = (u32)val;
-		val -= frac;
-		frac += val >= 0.5 ? 1 : 0;
+            num_digits = 1;
+            for (u32 i = 0; i < precision; i++) {
+                val *= 10;
+                num_digits *= 10;
+            }
+            num_digits /= 10;
+            u32 frac = (u32)val;
+            val -= frac;
+            frac += val >= 0.5 ? 1 : 0;
 
-		while (num_digits) {
-			i8 digit = ((frac % (num_digits * 10)) / num_digits) + '0';
-			num_digits /= 10;
-			putc(digit, fd);
-		}
+            while (num_digits) {
+                i8 digit = ((frac % (num_digits * 10)) / num_digits) + '0';
+                num_digits /= 10;
+                putc(digit, fd);
+            }
 
-	} break;
-	default: {
-		todo();
-	} break;
-	}
-	fmt += 2;
-	return fmt;
+        } break;
+        default: {
+            todo();
+        } break;
+    }
+    fmt += 2;
+    return fmt;
 }
 
 static void vprint(FILE *fd, const char *fmt, va_list args) {

@@ -29,26 +29,32 @@ static const char* TokenTypeToString(TokenType t) {
 
 int main() {
 	Allocator allocator = GlobalAllocatorCreate();
+    StringTable s = {
+        .mem = allocator,
+    };
 
 	const char* input = "=1 + 2 / 3 * 4;";
 
 
 	printf("input string is: %s\n", input);
 
-	TokenList* tokens = Tokenize(input, allocator);
+	TokenList* tokens = Tokenize(input, &s, allocator);
 
 	for (u32 i = 0; i < tokens->size; i++) {
 		Token* t = &tokens->tokens[i];
+        SString val = StringGet(&s, t->sourceString);
 		printf("Token %2d: %-20s | Value: %.*s\n", i,
-			   TokenTypeToString(t->type), t->string.size, t->string.data);
+			   TokenTypeToString(t->type), val.size, val.data);
 	}
 
-	AST* ast = BuildASTFromTokens(tokens, allocator);
-	if (ast && ast->size > 0) {
+	AST ast = BuildASTFromTokens(tokens, allocator);
+	if (ast.size > 0) {
 		log("AST:");
-		ASTPrint(stdout, ast);
+		ASTPrint(stdout, &ast);
 	}
 
 	DestroyTokenList(&tokens);
+    ASTFree(&ast);
+    StringFree(&s);
 	return 0;
 }
