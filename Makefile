@@ -8,7 +8,7 @@ CFLAGS:=-Wall
 LDFLAGS:=
 
 # Define compiler flags used in debug & release builds
-DEBUG_CFLAGS:=-g -D DEBUG
+DEBUG_CFLAGS:=-g -fdebug-default-version=4 -D DEBUG
 RELEASE_CFLAGS:=-O3
 
 # Define base directories
