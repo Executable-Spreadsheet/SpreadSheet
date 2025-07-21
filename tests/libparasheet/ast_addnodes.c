@@ -27,10 +27,10 @@ int main() {
 	u32 x = ASTCreateNode(&tree, AST_FLOAT_LITERAL, EPS, EPS, EPS);
 	u32 y = ASTCreateNode(&tree, AST_FLOAT_LITERAL, EPS, EPS, EPS);
 	u32 q = ASTCreateNode(&tree, AST_ADD, p, x, EPS);
-	u32 s = ASTCreateNode(&tree, AST_ADD, y, q, y);
+	/*u32 s = */ (void)ASTCreateNode(&tree, AST_ADD, y, q, y);
 
 	ASTPrint(stdout, &tree);
 	log("size: %d", sizeof(tree));
 
-    ASTFree(&tree);
+	ASTFree(&tree);
 }
