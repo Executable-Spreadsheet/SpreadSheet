@@ -31,7 +31,7 @@ typedef double f64;
 
 
 
-/* 
+/*
 +---------------------------------------------------------+
 |  INFO:                                                  |
 |                                                         |
@@ -124,7 +124,7 @@ Print formatting options
 #define warn(x, ...) errprint("\033[38;2;255;255;0m[WARN] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
 #define err(x, ...)  errprint("\033[38;2;255;0;0m[ERROR] %n:%d]:\t" x "\033[0m\n", __FILE__, __LINE__,##__VA_ARGS__)
 
-//Fun fact, the popular spdlog library is actually the same speed as 
+//Fun fact, the popular spdlog library is actually the same speed as
 //printf so it provides no perf benefit
 
 /*
@@ -230,6 +230,9 @@ typedef struct v2u {
 
 u64 hash(u8* buf, u64 size);
 
+#define ABS(x) \
+  (x < 0 ? -x : x)
+
 #define MAX(a, b) \
     (a > b ? a : b)
 
@@ -237,7 +240,7 @@ u64 hash(u8* buf, u64 size);
     (a < b ? a : b)
 
 #define CLAMP(t, min, max) \
-    MAX(MIN(t, max), min) 
+    MAX(MIN(t, max), min)
 
 #define KB(x) (x * 1024)
 #define MB(x) (x * 1024 * 1024)

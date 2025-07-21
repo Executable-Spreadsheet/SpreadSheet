@@ -65,7 +65,7 @@ typedef enum TokenType : u32 {
 
 union TokenData {
 	StrID s;
-	u32 i;
+	i32 i;
 	f32 f;
 };
 
