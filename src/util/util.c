@@ -462,9 +462,17 @@ SString DumpFile(Allocator a, const char* filename) {
 void DumpFileS(SString* dst, SString filename) { todo(); }
 
 // Write full contents of buffer into file
-void WriteFile(const char* data) { todo(); }
+void WriteFile(const char* filename, const char* data) { 
+    WriteFileS(filename, (SString){.data = (i8*)data, .size = strlen(data)}); 
+}
 
-void WriteFileS(SString data) { todo(); }
+void WriteFileS(const char* filename, SString data) { 
+    
+    FILE* output = fopen(filename, "w+");
+    fwrite(data.data, data.size, 1, output);
+    fclose(output);
+
+}
 
 // INFO(ELI): Going to go with FNV-1a since its fast
 // and easy to implement.

@@ -34,4 +34,6 @@ int csv_parse_line(StringTable* str, const char* line, u32 linesize, CellValue* 
  */
 bool csv_load_file(FILE* csv, StringTable* str, SpreadSheet* sheet);
 
+void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet, StringTable* str);
+
 #endif // CSV_H

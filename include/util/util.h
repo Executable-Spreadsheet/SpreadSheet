@@ -198,8 +198,8 @@ SString DumpFile(Allocator a, const char* filename);
 void DumpFileS(SString* dst, SString filename);
 
 // Write full contents of buffer into file
-void WriteFile(const char* data);
-void WriteFileS(SString data);
+void WriteFile(const char* filename, const char* data);
+void WriteFileS(const char* filename, SString data);
 
 /*
 +------------------------------------------------------+

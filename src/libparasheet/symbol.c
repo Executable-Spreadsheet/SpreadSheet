@@ -14,16 +14,14 @@ static void SymbolMapResize(SymbolMap* map) {
 		map->cap = map->cap ? map->cap * 2 : 2;
 	}
 
-	StrID* okeys = map->keys;
-	SymbolEntry* oentries = map->entries;
+    StrID* okeys = map->keys; 
+    SymbolEntry* oentries = map->entries;
 
-	map->keys = Alloc(map->mem, map->cap * sizeof(u32));
-	map->entries = Alloc(map->mem, map->cap * sizeof(SymbolEntry));
+    map->keys = Alloc(map->mem, map->cap * sizeof(StrID));
+    map->entries = Alloc(map->mem, map->cap * sizeof(SymbolEntry));
 
-	memset(map->keys, -1, map->cap * sizeof(u32));
-	memset(map->entries, 0,
-		   map->cap *
-			   sizeof(SymbolEntry)); // Technically not necessary but whatever
+    memset(map->keys, -1, map->cap * sizeof(StrID));
+    memset(map->entries, 0, map->cap * sizeof(SymbolEntry)); //Technically not necessary but whatever
 
 	map->size = 0;
 
@@ -45,8 +43,8 @@ static u32 MapInsertInternal(SymbolMap* map, StrID key, SymbolEntry entry) {
 
 	u32 idx = hash((u8*)&key, sizeof(u32)) % map->cap;
 
-	for (u32 i = 0; i < map->cap; i++) {
-		StrID curr = map->keys[idx];
+    for (u32 i = 0; i < map->cap; i++) {
+        StrID curr = map->keys[idx]; 
 
 		if (StringCmp(key, curr)) {
 			return idx;
@@ -75,8 +73,8 @@ u32 SymbolMapGet(SymbolMap* map, StrID key) {
 
 	u32 idx = hash((u8*)&key, sizeof(u32)) % map->cap;
 
-	for (u32 i = 0; i < map->cap; i++) {
-		StrID curr = map->keys[idx];
+    for (u32 i = 0; i < map->cap; i++) {
+        StrID curr = map->keys[idx]; 
 
 		if (StringCmp(key, curr)) {
 			return idx;

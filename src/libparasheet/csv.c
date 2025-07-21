@@ -127,7 +127,7 @@ bool csv_load_file(FILE* csv, StringTable* str, SpreadSheet* sheet) {
 
 // === Export CSV File ===
 
-void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet) {
+void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet, StringTable* str) {
 	SString out = {.data = Alloc(a, MB(1)), .size = 0};
 	i8* cursor = out.data;
 
@@ -158,9 +158,10 @@ void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet) {
 					case CT_FLOAT:
 						cursor += sprintf((char *)cursor, "%f", val->d.f);
 						break;
-					case CT_TEXT:
-						cursor += sprintf((char *)cursor, "%u", val->d.index);
-						break;
+                    case CT_TEXT: {
+                        SString text = StringGet(str, val->d.index);
+                        cursor += sprintf((char *)cursor, "%.*s", text.size, text.data);
+                    } break;
 					default:
 						break;
 				}
@@ -173,6 +174,6 @@ void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet) {
 	}
 
 	out.size = (u32)(cursor - out.data);
-	WriteFileS(out);
+	WriteFileS(filename, out);
 	Free(a, out.data, MB(1));
 }

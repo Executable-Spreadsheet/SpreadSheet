@@ -60,7 +60,7 @@ typedef struct KeyBinds {
 
 typedef struct TypeBuffer {
     u32 top;
-    u8 buf[CELL_WIDTH * 10];
+    i8 buf[CELL_WIDTH * 10 + 1];
 } TypeBuffer;
 
 // store a file reference with position of data
@@ -102,9 +102,10 @@ typedef enum EditorState {
 } EditorState;
 
 typedef struct RenderHandler {
-    u8 ch;
+    u32 ch;
     v2i base;
     v2i cursor;
+    SString sheetname;
     EditHandles edit;
     EditorState state;
     SpreadSheet* sheet;
@@ -201,10 +202,28 @@ void runCommand(RenderHandler* hand) {
     while (trimmed.data[trimmed.size - 1] == ' ') {
         trimmed.size--;
     }
-    
 
+    
+    log("command: \"%s\"", trimmed);
     if (SStrCmp(trimmed, sstring("save")) == 0) {
-        log("command: \"%s\"", trimmed);
+        static Allocator a = {0};
+        if (a.a == NULL) {
+            a = StackAllocatorCreate(GlobalAllocatorCreate(), MB(1));
+        }
+        csv_export_file(a, (char*)hand->sheetname.data, hand->sheet, hand->str);
+        StackAllocatorReset(&a);
+    }
+
+    SString rename = sstring("rename");
+    if ((trimmed.size > rename.size + 1) && (memcmp(trimmed.data, rename.data, rename.size) == 0)) {
+        
+        SString name = (SString){.data = trimmed.data, .size = trimmed.size};
+        while (name.data - trimmed.data < trimmed.size && name.data[0] != ' '){
+            name.data++;
+            name.size--;
+        }
+        log("rename %s", name);
+        hand->sheetname = name;
     }
 
 }
@@ -259,7 +278,7 @@ void readConfig(RenderHandler* handler){
 
 void handleKey(RenderHandler* handler){
 
-    char keyIn = handler->ch;
+    u32 keyIn = handler->ch;
     switch (handler->state){
         case NORMAL:
             if (keyIn == handler->keybinds.cursor_up) {
@@ -298,6 +317,8 @@ void handleKey(RenderHandler* handler){
         case TERMINAL:
             if (keyIn == handler->keybinds.nav) {
                 handler->state = NORMAL;
+            } else if (keyIn == KEY_BACKSPACE) {
+                handler->type.top--;
             } else if (keyIn == KEY_ENTER_REAL) {
                 runCommand(handler);
                 handler->state = NORMAL;
@@ -340,6 +361,7 @@ int main(int argc, char* argv[]) {
     initscr();
     noecho();               //prevent echoing output
     raw();                  //remove buffering
+    nl();                   //disable newline
     keypad(stdscr, TRUE);   //enable extended keys
     set_escdelay(0);        //remove delay when processing esc
     curs_set(0);            //set cursor to be invisible
@@ -365,12 +387,6 @@ int main(int argc, char* argv[]) {
         .mem = GlobalAllocatorCreate(),
     };
 
-    if (argc >= 2) {
-        FILE* csv = fopen(argv[1], "r"); 
-        if (csv) {
-            csv_load_file(csv, &str, &sheet);
-        }
-    }
 
     // if you want different keybinds u change that here
     RenderHandler handler = {
@@ -391,6 +407,14 @@ int main(int argc, char* argv[]) {
         //at program startup rather than dynamically on the stack
     };
     
+    if (argc >= 2) {
+        FILE* csv = fopen(argv[1], "r"); 
+        if (csv) {
+            csv_load_file(csv, &str, &sheet);
+            handler.sheetname = (SString){.data = (i8*)argv[1], .size = strlen(argv[1])};
+        }
+    }
+
     readConfig(&handler);
     log("term: %n", handler.preferred_terminal);
     log("edit: %n", handler.preferred_text_editor);
@@ -442,9 +466,9 @@ int main(int argc, char* argv[]) {
                 (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
 
 
-        mvprintw(LINES - 2, 0, "Cursor (%d %d)  ch: %d State: %s", 
+        mvprintw(LINES - 2, MARGIN_LEFT + 2, "%.*s Cursor (%d %d)  ch: %d State: %s", handler.sheetname.size, handler.sheetname.data, 
                 handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y, handler.ch, stateToString(handler.state).data);
-        if (handler.state == TERMINAL) mvprintw(LINES - 3, 0, ":%.*s", handler.type.top, handler.type.buf);
+        if (handler.state == TERMINAL) mvprintw(LINES - 3, MARGIN_LEFT + 2, ":%.*s", handler.type.top, handler.type.buf);
         refresh();
 
         //updating
