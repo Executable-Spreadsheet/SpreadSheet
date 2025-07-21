@@ -153,23 +153,47 @@ void SheetBlockDelete(SpreadSheet* sheet, v2u pos);
 +-------------------------------------------------------------------+
 */
 
+typedef u32 ASTNodeIndex;
+
 typedef enum ASTNodeType : u32 {
 	AST_INVALID = 0, // mark unintialized Node as invalid
 
-	// literals
-	AST_INT,
-	AST_FLOAT,
+	// Literals
+	AST_INT_LITERAL,
+	AST_FLOAT_LITERAL,
+
+	// Types
+	AST_INT_TYPE,
+	AST_FLOAT_TYPE,
+
+	// Variables
+	AST_ID,
+	AST_DECLARE_VARIABLE,
+	AST_GET_CELL_REF,
+	AST_ASSIGN_VALUE,
 
 	// Ops
-	AST_ADD,
-	AST_SUB,
-	AST_MUL,
-	AST_DIV,
-	AST_FLOAT_TO_INT,
-	AST_INT_TO_FLOAT,
+	AST_ADD, // +
+	AST_SUB, // -
+	AST_MUL, // *
+	AST_DIV, // /
+	AST_FLOAT_TO_INT, // implicit
+	AST_INT_TO_FLOAT, // implicit
+	AST_COORD_TRANSFORM, // #
+	AST_RANGE, // :
 
-	// Probably want this
+	// Control Flow
+	AST_SEQ,
+	AST_IF_ELSE,
+	AST_WHILE,
+	AST_FOR,
+	AST_RETURN,
+
+	// Function Things
+	AST_HEADER,
+	AST_HEADER_ARGS,
 	AST_CALL,
+	AST_FUNC_ARGS,
 } ASTNodeOp;
 
 typedef enum ASTValueType : u32 {
@@ -199,6 +223,7 @@ typedef struct ASTNode {
 	} data;
 
 	u32 lchild;
+	u32 mchild;
 	u32 rchild;
 } ASTNode;
 
@@ -212,6 +237,7 @@ typedef struct AST {
 #define ASTGet(tree, idx) ((tree)->nodes[idx])
 
 u32 ASTPush(AST* tree);
+u32 ASTCreateNode(AST* tree, ASTNodeOp op, u32 lchild, u32 mchild, u32 rchild);
 
 void ASTPrint(FILE* fd, AST* tree);
 void ASTFree(AST* tree);
@@ -224,6 +250,7 @@ void ASTFree(AST* tree);
 |   Here is the section for the Symbol table.   |
 +-----------------------------------------------+
 */
+
 
 typedef enum SymbolType : u32 {
     S_INVALID = 0,
@@ -263,7 +290,6 @@ SymbolEntry SymbolGet(SymbolTable* table, StrID key);
 
 void SymbolPushScope(SymbolTable* table);
 void SymbolPopScope(SymbolTable* table);
-
 
 
 #endif

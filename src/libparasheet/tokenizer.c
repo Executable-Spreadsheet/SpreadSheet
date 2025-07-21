@@ -60,9 +60,16 @@ void tokenizeStringLiteral(const char* source, Allocator allocator, u32* i,
 	bool escaped = false;
 	bool endString = false;
 	while (!endString) {
+		if (source[*i] == '\0') {
+			PushToken(tokens, TOKEN_INVALID,
+					  StringAddS(table, substr(source, start, *i)),
+					  *lineNumber);
+			return;
+		}
 		*i += 1;
 		char c = source[*i];
 		if (escaped) {
+			escaped = false;
 			switch (c) {
 			case '\\':
 				stringPushCharacter(&newString, &newStringSize,
@@ -97,6 +104,7 @@ void tokenizeStringLiteral(const char* source, Allocator allocator, u32* i,
 		} else {
 			if (c == '\"') {
 				endString = true;
+				*i += 1;
 			} else if (c == '\\') {
 				escaped = true;
 			} else {
@@ -108,8 +116,6 @@ void tokenizeStringLiteral(const char* source, Allocator allocator, u32* i,
 			}
 		}
 	}
-	stringPushCharacter(&newString, &newStringSize, &newStringCapacity,
-						allocator, '\0');
 
 	newString =
 		Realloc(allocator, newString, sizeof(newString[0]) * newStringCapacity,
@@ -341,7 +347,7 @@ TokenList* Tokenize(const char* source, StringTable* table,
 
 		if (is_whitespace(c)) {
 			if (c == '\n') {
-				lineNumber += 1;
+				lineNumber++;
 			}
 			i++;
 			continue;

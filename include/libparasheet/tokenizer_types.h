@@ -65,7 +65,7 @@ typedef enum TokenType : u32 {
 
 union TokenData {
 	StrID s;
-	u32 i;
+	i32 i;
 	f32 f;
 };
 
@@ -79,6 +79,7 @@ typedef struct Token {
 typedef struct TokenList {
 	Allocator mem;
 	Token* tokens;
+	u32 head;
 	u32 size;
 	u32 capacity;
 } TokenList;
@@ -91,6 +92,14 @@ void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID string, u32 li
 
 Token* PopTokenDangerous(TokenList* tokenList);
 
+Token* ConsumeToken(TokenList* tokenList);
+void UnconsumeToken(TokenList* tokenList);
+
+SString getTokenErrorString(TokenType type);
+
 void DestroyTokenList(TokenList** tokenList);
+AST BuildASTFromTokens(TokenList* tokens, Allocator allocator);
+
+Token* PeekToken(TokenList* tokenList);
 
 #endif

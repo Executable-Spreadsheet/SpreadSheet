@@ -196,4 +196,5 @@ void StringFree(StringTable* table) {
     Free(table->mem, table->strings, table->scap * sizeof(SString));
     Free(table->mem, table->freelist, table->scap * sizeof(u32));
     Free(table->mem, table->entry, table->scap * sizeof(u32));
+    Free(table->mem, table->gen, table->scap * sizeof(u32));
 }

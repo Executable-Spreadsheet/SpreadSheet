@@ -18,26 +18,13 @@ void PushToken(TokenList* tokenList, TokenType type, StrID sourceString,
 	PushTokenLiteral(tokenList, type, sourceString, lineNumber, noData);
 }
 
-// void PushTokenID(TokenList* tokenList, TokenType type, SString string,
-// 				 u32 symbolTableIndex) {
-// 	if (tokenList->size == tokenList->capacity) {
-// 		tokenList->tokens =
-// 			Realloc(tokenList->mem, tokenList->tokens, tokenList->capacity,
-// 					tokenList->capacity * 2);
-// 		tokenList->capacity = tokenList->capacity * 2;
-// 	}
-
-// 	tokenList->tokens[tokenList->size].type = type;
-// 	tokenList->tokens[tokenList->size].string = string;
-// 	tokenList->tokens[tokenList->size].symbolTableIndex = symbolTableIndex;
-
-// 	tokenList->size += 1;
-// }
-
 TokenList* CreateTokenList(Allocator allocator) {
 	TokenList* tokenList = Alloc(allocator, sizeof(TokenList));
 	tokenList->mem = allocator;
 	tokenList->size = 0;
+
+	tokenList->head = 0;
+  
 	tokenList->capacity = 2;
 	tokenList->tokens = Alloc(allocator, tokenList->capacity * sizeof(Token));
 	return tokenList;
@@ -45,7 +32,7 @@ TokenList* CreateTokenList(Allocator allocator) {
 
 void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID sourceString,
 					  u32 lineNumber, union TokenData data) {
-	if (tokenList->size == tokenList->capacity) {
+	if (tokenList->size >= tokenList->capacity) {
 		tokenList->tokens = Realloc(tokenList->mem, tokenList->tokens,
 									tokenList->capacity * sizeof(Token),
 									tokenList->capacity * 2 * sizeof(Token));
@@ -69,6 +56,41 @@ Token* PopTokenDangerous(TokenList* tokenList) {
 	Token* top = &(tokenList->tokens[tokenList->size]);
 	return top;
 }
+
+Token* ConsumeToken(TokenList* tokenList) {
+	if (tokenList->head == tokenList->size) {
+		return NULL;
+	}
+	Token* consumed = &(tokenList->tokens[tokenList->head]);
+	tokenList->head += 1;
+	return consumed;
+}
+
+void UnconsumeToken(TokenList* tokenList) {
+	if (tokenList->head == 0) {
+		return;
+	}
+	tokenList->head -= 1;
+}
+
+Token* PeekToken(TokenList* tokenList){
+	return &(tokenList->tokens[tokenList->head]);
+}
+
+SString tokenErrorStrings[] = {
+	sstring("INVALID"),		sstring("variable name"), sstring("\"if\""),
+	sstring("\"else\""),	sstring("\"return\""),	  sstring("\"let\""),
+	sstring("\"while\""),	sstring("\"for\""),		  sstring("\"int\""),
+	sstring("\"float\""),	sstring("\"string\""),	  sstring("\"cell\""),
+	sstring("int literal"), sstring("float literal"), sstring("\"string\""),
+	sstring("\"+\""),		sstring("\"-\""),		  sstring("\"*\""),
+	sstring("\"/\""),		sstring("\"#\""),		  sstring("\"#\""),
+	sstring("\"(\""),		sstring("\")\""),		  sstring("\"[\""),
+	sstring("\"]\""),		sstring("\"{\""),		  sstring("\"}\""),
+	sstring("\"=\""),		sstring("\",\""),		  sstring("\";\""),
+	sstring("INVALID")};
+
+SString getTokenErrorString(TokenType type) { return tokenErrorStrings[type]; }
 
 void DestroyTokenList(TokenList** tokenListPtr) {
 	Free((*tokenListPtr)->mem, (*tokenListPtr)->tokens,

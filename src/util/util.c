@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 //----- String Conversions ---------
 
 u32 stou(const char* s) {
@@ -49,7 +48,7 @@ u32 lstou(LString s) {
 //------------- String Functions ---------------
 
 i32 SStrCmp(SString a, SString b) {
-    return (a.size != b.size) || memcmp(a.data, b.data, a.size);
+	return (a.size != b.size) || memcmp(a.data, b.data, a.size);
 }
 
 //------------- Custom Printf ------------------
@@ -69,7 +68,7 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
 			c++;
 		}
 	} break;
-	case 'c': { //Added case c, can be modified
+	case 'c': { // Added case c, can be modified
 		char ch = va_arg(args, int);
 		putc(ch, fd);
 	} break;
@@ -286,8 +285,8 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
 	return fmt;
 }
 
-static void vprint(FILE *fd, const char *fmt, va_list args) {
-  while (fmt[0]) {
+static void vprint(FILE* fd, const char* fmt, va_list args) {
+	while (fmt[0]) {
 		switch (fmt[0]) {
 		case '%': {
 			u32 precision = 4;
@@ -295,54 +294,52 @@ static void vprint(FILE *fd, const char *fmt, va_list args) {
 				fmt += 1;
 				precision = 0;
 
-        while (fmt[1] && isdigit(fmt[1])) {
-          precision *= 10;
-          precision += fmt[1] - '0';
-          fmt++;
-        }
-      }
-      fmt = print_arg(fd, precision, fmt, args);
-    } break;
-    default: {
-      putc(fmt[0], fd);
-      fmt++;
-    } break;
-    }
-  }
+				while (fmt[1] && isdigit(fmt[1])) {
+					precision *= 10;
+					precision += fmt[1] - '0';
+					fmt++;
+				}
+			}
+			fmt = print_arg(fd, precision, fmt, args);
+		} break;
+		default: {
+			putc(fmt[0], fd);
+			fmt++;
+		} break;
+		}
+	}
 }
 
 FILE* errfile = NULL;
 FILE* logfile = NULL;
 
 void logprint(const char* fmt, ...) {
-    if (!logfile) {
-        logfile = stdout;
-    }
+	if (!logfile) {
+		logfile = stdout;
+	}
 
-    va_list args;
-    va_start(args, fmt);
-    vprint(logfile, fmt, args);
-    va_end(args);
-
+	va_list args;
+	va_start(args, fmt);
+	vprint(logfile, fmt, args);
+	va_end(args);
 }
 
 void errprint(const char* fmt, ...) {
-    if (!errfile) {
-        errfile = stderr;
-    }
+	if (!errfile) {
+		errfile = stderr;
+	}
 
-    va_list args;
-    va_start(args, fmt);
-    vprint(errfile, fmt, args);
-    va_end(args);
+	va_list args;
+	va_start(args, fmt);
+	vprint(errfile, fmt, args);
+	va_end(args);
 }
 
-
-void print(FILE *fd, const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    vprint(fd, fmt, args);
-    va_end(args);
+void print(FILE* fd, const char* fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	vprint(fd, fmt, args);
+	va_end(args);
 }
 
 //------------ Memory Allocators --------------
@@ -460,7 +457,7 @@ SString DumpFile(Allocator a, const char* filename) {
 
 	SString output = {.size = info.st_size, .data = Alloc(a, info.st_size)};
 
-	fread(output.data, 1, info.st_size, f);
+	(void)fread(output.data, 1, info.st_size, f);
 	fclose(f);
 
 	return output;
