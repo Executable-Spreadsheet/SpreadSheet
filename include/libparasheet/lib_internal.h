@@ -1,7 +1,6 @@
 #ifndef PS_INTERNAL_H
 #define PS_INTERNAL_H
 #include <util/util.h>
-#include <libparasheet/tokenizer_types.h>
 
 /*
 +---------------------------------------------------+
@@ -32,16 +31,18 @@ typedef struct StringTable {
 
     //String Storage
     SString* strings;
+    u32* gen; //generation to prevent invalid
     u32* entry; //back reference to hashtable
     u32* freelist; //free slots in string buffer
     u32 fsize;
     u32 ssize;
     u32 scap;
-
-
 } StringTable;
 
-typedef u32 StrID;
+typedef struct StrID {
+    u32 idx;
+    u32 gen;
+} StrID;
 
 StrID StringAdd(StringTable* table, i8* string);
 StrID StringAddS(StringTable* table, SString string);
@@ -54,7 +55,7 @@ SString StringDel(StringTable* table, StrID index);
 const SString StringGet(StringTable* table, StrID index);
 
 #define StringCmp(a, b) \
-    (a == b)
+    (a.idx == b.idx) && (a.gen == b.gen)
 
 void StringFree(StringTable* table);
 
@@ -115,16 +116,16 @@ typedef struct SpreadSheet {
 	v2u* keys;
 	u32 size;
     u32 tomb;
+    u32 cap;
 
 	// pool of reusable blocks
 	Block* blockpool;
+    i32* freestatus;
 	u32 bsize;
+    u32 fsize;
+    u32 bcap;
 
-	i32* freestatus;
-	u32 fsize;
 
-	u32 bcap;
-	u32 cap;
 } SpreadSheet;
 
 void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue value);
@@ -241,7 +242,6 @@ u32 ASTCreateNode(AST* tree, ASTNodeOp op, u32 lchild, u32 mchild, u32 rchild);
 void ASTPrint(FILE* fd, AST* tree);
 void ASTFree(AST* tree);
 
-AST* BuildASTFromTokens(TokenList* tokens, Allocator allocator);
 
 /*
 +-----------------------------------------------+
@@ -258,7 +258,7 @@ typedef enum SymbolType : u32 {
 } SymbolType;
 
 typedef struct SymbolEntry {
-    SymbolType type; 
+    SymbolType type;
     u32 idx;
 } SymbolEntry;
 
@@ -266,7 +266,7 @@ typedef struct SymbolEntry {
 typedef struct SymbolMap {
     Allocator mem;
 
-    u32* keys;
+    StrID* keys;
     SymbolEntry* entries;
     u32 size;
     u32 cap;

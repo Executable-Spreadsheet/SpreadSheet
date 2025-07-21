@@ -1,6 +1,7 @@
 #ifndef PS_TOKENIZER_TYPES_H
 #define PS_TOKENIZER_TYPES_H
 
+#include "libparasheet/lib_internal.h"
 #include <util/util.h>
 
 typedef enum TokenType : u32 {
@@ -47,16 +48,32 @@ typedef enum TokenType : u32 {
 	TOKEN_CHAR_EQUALS,
 	TOKEN_CHAR_COMMMA,
 	TOKEN_CHAR_SEMICOLON,
+	TOKEN_CHAR_GREATER_THAN,
+	TOKEN_CHAR_LESS_THAN,
+	TOKEN_CHAR_EXCLAMATION,
+
+	TOKEN_DOUBLECHAR_EQUALS_EQUALS,
+	TOKEN_DOUBLECHAR_LESS_EQUALS,
+	TOKEN_DOUBLECHAR_GREATER_EQUALS,
+	TOKEN_DOUBLECHAR_EXCLAMATION_EQUALS,
+	TOKEN_DOUBLECHAR_AMPERSAND_AMPERSAND,
+	TOKEN_DOUBLECHAR_PIPE_PIPE,
 
 	// Enum Size
 	TOKEN_TYPE_ENUM_SIZE
 } TokenType;
 
+union TokenData {
+	StrID s;
+	u32 i;
+	f32 f;
+};
+
 typedef struct Token {
-	TokenType type;
-	SString string;
-	u32 symbolTableIndex;
-	u32 lineNumber;
+  TokenType type;
+  StrID sourceString;
+  union TokenData data;
+  u32 lineNumber;
 } Token;
 
 typedef struct TokenList {
@@ -69,9 +86,9 @@ typedef struct TokenList {
 
 TokenList* CreateTokenList(Allocator allocator);
 
-void PushToken(TokenList* tokenList, TokenType type, SString string, u32 lineNumber);
+void PushToken(TokenList* tokenList, TokenType type, StrID sourceString, u32 lineNumber);
 
-void PushTokenID(TokenList* tokenList, TokenType type, SString string, u32 lineNumber, u32 symbolTableIndex);
+void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID string, u32 lineNumber, union TokenData data);
 
 Token* PopTokenDangerous(TokenList* tokenList);
 
@@ -81,5 +98,6 @@ void UnconsumeToken(TokenList* tokenList);
 SString getTokenErrorString(TokenType type);
 
 void DestroyTokenList(TokenList** tokenList);
+AST* BuildASTFromTokens(TokenList* tokens, Allocator allocator);
 
 #endif

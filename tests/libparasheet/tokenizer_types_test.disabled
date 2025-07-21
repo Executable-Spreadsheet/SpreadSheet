@@ -16,8 +16,8 @@ int main() {
 	SString example1 = sstring("hello");
 	SString example2 = sstring("world");
 
-	PushToken(list, TOKEN_ID, example1, 0);
-	PushTokenID(list, TOKEN_LITERAL_STRING, example2, 42, 0);
+	PushToken(list, TOKEN_ID, example1);
+	PushTokenID(list, TOKEN_LITERAL_STRING, example2, 42);
 
 	// Print tokens
 	printf("TokenList Size: %u\n", list->size);

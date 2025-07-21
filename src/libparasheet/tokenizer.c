@@ -1,3 +1,4 @@
+#include <libparasheet/lib_internal.h>
 #include <libparasheet/tokenizer_types.h>
 #include <stdbool.h>
 #include <string.h>
@@ -15,9 +16,7 @@ static bool is_alpha(char c) {
 // 	return c >= '0' && c <= '9';
 // }
 
-
 static bool is_alnum(char c) { return is_alpha(c) || isdigit(c); }
-
 
 // Internal string compare helper
 static bool SString_EqualsCString(const SString* s, const char* cstr) {
@@ -37,6 +36,122 @@ SString substr(const char* src, u32 start, u32 end) {
 	return result;
 }
 
+void stringPushCharacter(i8** string, u32* size, u32* capacity,
+						 Allocator allocator, char character) {
+	if (*size == *capacity) {
+		*string =
+			Realloc(allocator, *string, (*capacity) * sizeof((*string)[0]),
+					(*capacity) * sizeof((*string)[0]) * 2);
+		*capacity = (*capacity) * 2;
+	}
+	(*string)[(*size)] = character;
+	*size += 1;
+}
+
+void tokenizeStringLiteral(const char* source, Allocator allocator, u32* i,
+						   TokenList* tokens, StringTable* table,
+						   u32* lineNumber) {
+	u32 start = *i;
+
+	u32 newStringSize = 0;
+	u32 newStringCapacity = 2;
+	i8* newString = Alloc(allocator, sizeof(char) * newStringCapacity);
+
+	bool escaped = false;
+	bool endString = false;
+	while (!endString) {
+		*i += 1;
+		char c = source[*i];
+		if (escaped) {
+			switch (c) {
+			case '\\':
+				stringPushCharacter(&newString, &newStringSize,
+									&newStringCapacity, allocator, '\\');
+				break;
+			case 'n':
+				stringPushCharacter(&newString, &newStringSize,
+									&newStringCapacity, allocator, '\n');
+				break;
+			case 'r':
+				stringPushCharacter(&newString, &newStringSize,
+									&newStringCapacity, allocator, '\r');
+				break;
+			case '\"':
+				stringPushCharacter(&newString, &newStringSize,
+									&newStringCapacity, allocator, '\"');
+				break;
+			case '\'':
+				stringPushCharacter(&newString, &newStringSize,
+									&newStringCapacity, allocator, '\'');
+				break;
+			case '\n':
+				*lineNumber += 1;
+				break;
+			default:
+				stringPushCharacter(&newString, &newStringSize,
+									&newStringCapacity, allocator, '\\');
+				stringPushCharacter(&newString, &newStringSize,
+									&newStringCapacity, allocator, c);
+				break;
+			}
+		} else {
+			if (c == '\"') {
+				endString = true;
+			} else if (c == '\\') {
+				escaped = true;
+			} else {
+				if (c == '\n') {
+					lineNumber += 1;
+				}
+				stringPushCharacter(&newString, &newStringSize,
+									&newStringCapacity, allocator, c);
+			}
+		}
+	}
+	stringPushCharacter(&newString, &newStringSize, &newStringCapacity,
+						allocator, '\0');
+
+	newString =
+		Realloc(allocator, newString, sizeof(newString[0]) * newStringCapacity,
+				sizeof(newString[0]) * newStringSize);
+	newStringCapacity = newStringSize;
+	SString literalValue = {.data = newString, .size = newStringSize};
+
+	union TokenData data = {.s = StringAddS(table, literalValue)};
+
+	PushTokenLiteral(tokens, TOKEN_LITERAL_STRING,
+					 StringAddS(table, substr(source, start, *i)), *lineNumber,
+					 data);
+}
+
+void tokenizeNumberLiteral(const char* source, u32* i, TokenList* tokens,
+						   StringTable* table, u32 lineNumber) {
+	TokenType type = TOKEN_LITERAL_INT;
+	i32 number = 0;
+	f32 floatNum = 0;
+	f32 multiplier = 0.1;
+	union TokenData data;
+	u32 start = *i;
+	while (isdigit(source[*i])) {
+		number = number * 10;
+		number += (source[*i] - '0');
+		*i += 1;
+	}
+	data.i = number;
+	if (source[*i] == '.') {
+		type = TOKEN_LITERAL_FLOAT;
+		floatNum = (f32)number;
+		*i += 1;
+		while (isdigit(source[*i])) {
+			floatNum += (f32)(source[*i] - '0') * multiplier;
+			multiplier = multiplier * 0.1;
+			*i += 1;
+		}
+		data.f = floatNum;
+	}
+	PushTokenLiteral(tokens, type, StringAddS(table, substr(source, start, *i)),
+					 lineNumber, data);
+}
 
 // Create a one-char SString
 SString from_char(Allocator allocator, char c) {
@@ -47,10 +162,6 @@ SString from_char(Allocator allocator, char c) {
 	result.data[1] = '\0';
 	log("Mem Alloc: %d", 2);
 	return result;
-}
-
-static u32 fake_symbol_table_insert(SString id) {
-	return 0; // Placeholder
 }
 
 static TokenType lookup_keyword(const SString* s) {
@@ -77,76 +188,145 @@ static TokenType lookup_keyword(const SString* s) {
 	return TOKEN_INVALID;
 }
 
-static void handle_single_char_token(TokenList* tokens, Allocator allocator,
-									 char c, u32 lineNumber) {
-	switch (c) {
+static void handle_single_char_token(TokenList* tokens, StringTable* table,
+									 const char* source, u32* i,
+									 u32 lineNumber) {
+	switch (source[*i]) {
 	case '+':
-		PushToken(tokens, TOKEN_CHAR_PLUS, from_char(allocator, c), lineNumber);
+		PushToken(tokens, TOKEN_CHAR_PLUS,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '-':
-		PushToken(tokens, TOKEN_CHAR_MINUS, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_MINUS,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '*':
-		PushToken(tokens, TOKEN_CHAR_ASTERISK, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_ASTERISK,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '/':
-		PushToken(tokens, TOKEN_CHAR_SLASH, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_SLASH,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '#':
-		PushToken(tokens, TOKEN_CHAR_OCTOTHORPE, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_OCTOTHORPE,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case ':':
-		PushToken(tokens, TOKEN_CHAR_COLON, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_COLON,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '(':
-		PushToken(tokens, TOKEN_CHAR_OPEN_PAREN, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_OPEN_PAREN,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case ')':
-		PushToken(tokens, TOKEN_CHAR_CLOSE_PAREN, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_CLOSE_PAREN,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '[':
-		PushToken(tokens, TOKEN_CHAR_OPEN_BRACKET, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_OPEN_BRACKET,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case ']':
-		PushToken(tokens, TOKEN_CHAR_CLOSE_BRACKET, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_CLOSE_BRACKET,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '{':
-		PushToken(tokens, TOKEN_CHAR_OPEN_BRACE, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_OPEN_BRACE,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '}':
-		PushToken(tokens, TOKEN_CHAR_CLOSE_BRACE, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_CLOSE_BRACE,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case '=':
-		PushToken(tokens, TOKEN_CHAR_EQUALS, from_char(allocator, c),
-				  lineNumber);
+		if (source[*i + 1] == '=') {
+			PushToken(tokens, TOKEN_DOUBLECHAR_EQUALS_EQUALS,
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
+			*i += 1;
+		} else {
+			PushToken(tokens, TOKEN_CHAR_EQUALS,
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
+		}
 		break;
 	case ',':
-		PushToken(tokens, TOKEN_CHAR_COMMMA, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_COMMMA,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	case ';':
-		PushToken(tokens, TOKEN_CHAR_SEMICOLON, from_char(allocator, c),
-				  lineNumber);
+		PushToken(tokens, TOKEN_CHAR_SEMICOLON,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
+	case '>':
+		if (source[*i + 1] == '=') {
+			PushToken(tokens, TOKEN_DOUBLECHAR_GREATER_EQUALS,
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
+			*i += 1;
+		} else {
+			PushToken(tokens, TOKEN_CHAR_GREATER_THAN,
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
+		}
+	case '<':
+		if (source[*i + 1] == '=') {
+			PushToken(tokens, TOKEN_DOUBLECHAR_LESS_EQUALS,
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
+			*i += 1;
+		} else {
+			PushToken(tokens, TOKEN_CHAR_LESS_THAN,
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
+		}
+	case '!':
+		if (source[*i + 1] == '=') {
+			PushToken(tokens, TOKEN_DOUBLECHAR_EXCLAMATION_EQUALS,
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
+			*i += 1;
+		} else {
+			PushToken(tokens, TOKEN_CHAR_EXCLAMATION,
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
+		}
+	case '&':
+		if (source[*i + 1] == '&') {
+			PushToken(tokens, TOKEN_DOUBLECHAR_AMPERSAND_AMPERSAND,
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
+			*i += 1;
+		} else {
+			log("Unknown char token: '%c'", source[*i]);
+			PushToken(tokens, TOKEN_INVALID,
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
+		}
+	case '|':
+		if (source[*i + 1] == '|') {
+			PushToken(tokens, TOKEN_DOUBLECHAR_PIPE_PIPE,
+					  StringAddS(table, substr(source, *i, *i + 2)),
+					  lineNumber);
+			*i += 1;
+		} else {
+			log("Unknown char token: '%c'", source[*i]);
+			PushToken(tokens, TOKEN_INVALID,
+					  StringAddS(table, substr(source, *i, *i + 1)),
+					  lineNumber);
+		}
 	default:
-		log("Unknown char token: '%c'", c);
-		PushToken(tokens, TOKEN_INVALID, from_char(allocator, c), lineNumber);
+		log("Unknown char token: '%c'", source[*i]);
+		PushToken(tokens, TOKEN_INVALID,
+				  StringAddS(table, substr(source, *i, *i + 1)), lineNumber);
 		break;
 	}
 }
 
-TokenList* Tokenize(const char* source, Allocator allocator) {
+TokenList* Tokenize(const char* source, StringTable* table,
+					Allocator allocator) {
 	SString source_s;
 	source_s.data = (i8*)source;
 	source_s.size = strlen(source);
@@ -174,42 +354,29 @@ TokenList* Tokenize(const char* source, Allocator allocator) {
 			SString s = substr(source, start, i);
 			TokenType type = lookup_keyword(&s);
 			if (type == TOKEN_INVALID) {
-				u32 idx = fake_symbol_table_insert(s);
 				log("Parsed identifier: %s", s);
-				PushTokenID(tokens, TOKEN_ID, s, idx, lineNumber);
+				PushToken(tokens, TOKEN_ID, StringAddS(table, s), lineNumber);
 			} else {
 				log("Parsed keyword: %s", s);
-				PushToken(tokens, type, s, lineNumber);
+				PushToken(tokens, type, StringAddS(table, s), lineNumber);
 			}
 			continue;
 		}
 
 		if (isdigit(c)) {
-			u32 start = i;
-			while (isdigit(source[i]))
-				i++;
-			SString s = substr(source, start, i);
-			log("Parsed integer literal: %s", s);
-			PushToken(tokens, TOKEN_LITERAL_INT, s, lineNumber);
+			tokenizeNumberLiteral(source, &i, tokens, table, lineNumber);
 			continue;
 		}
 
-		if (c == '"') {
-			i++;
-			u32 start = i;
-			while (source[i] && source[i] != '"')
-				i++;
-			SString s = substr(source, start, i);
-			if (source[i] == '"')
-				i++;
-			log("Parsed string literal: %s", s);
-			PushToken(tokens, TOKEN_LITERAL_STRING, s, lineNumber);
+		if (c == '\"') {
+			tokenizeStringLiteral(source, allocator, &i, tokens, table,
+								  &lineNumber);
 			continue;
 		}
 
 		// Operators & symbols
 		log("Parsed single-char token: '%c'\n", c);
-		handle_single_char_token(tokens, allocator, c, lineNumber);
+		handle_single_char_token(tokens, table, source, &i, lineNumber);
 
 		i++;
 	}
