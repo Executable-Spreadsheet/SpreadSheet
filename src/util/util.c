@@ -285,29 +285,29 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
 	return fmt;
 }
 
-static void vprint(FILE* fd, const char* fmt, va_list args) {
-	while (fmt[0]) {
-		switch (fmt[0]) {
-		case '%': {
-			u32 precision = 4;
-			if (fmt[1] == '.') {
-				fmt += 1;
-				precision = 0;
+static void vprint(FILE *fd, const char *fmt, va_list args) {
+    while (fmt[0]) {
+        switch (fmt[0]) {
+            case '%': {
+                u32 precision = 4;
+                if (fmt[1] == '.') {
+                    fmt += 1;
+                    precision = 0;
 
-				while (fmt[1] && isdigit(fmt[1])) {
-					precision *= 10;
-					precision += fmt[1] - '0';
-					fmt++;
-				}
-			}
-			fmt = print_arg(fd, precision, fmt, args);
-		} break;
-		default: {
-			putc(fmt[0], fd);
-			fmt++;
-		} break;
-		}
-	}
+                    while (fmt[1] && isdigit(fmt[1])) {
+                        precision *= 10;
+                        precision += fmt[1] - '0';
+                        fmt++;
+                    }
+                }
+                fmt = print_arg(fd, precision, fmt, args);
+            } break;
+            default: {
+                putc(fmt[0], fd);
+                fmt++;
+            } break;
+        }
+    }
 }
 
 FILE* errfile = NULL;
