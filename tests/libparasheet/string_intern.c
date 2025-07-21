@@ -9,9 +9,9 @@ int main() {
         .mem = GlobalAllocatorCreate(),
     };
 
-    StrID test = StringAdd(&str, (i8*)"test");
+    u32 test = StringAdd(&str, (i8*)"test");
     StringAdd(&str, (i8*)"test2");
-    StrID e = StringAdd(&str, (i8*)"e");
+    u32 e = StringAdd(&str, (i8*)"e");
     StringAdd(&str, (i8*)"test3");
     StringAdd(&str, (i8*)"test4");
 

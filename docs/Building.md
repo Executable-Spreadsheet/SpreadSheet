@@ -20,7 +20,6 @@ editor-release - Build all parasheet-editor release targets
 editor-build-tests - Build parasheet-editor tests without running them
 editor-test - Build and run all parasheet-editor tests
 editor-run - Build and run the debug version of parasheet-editor
-editor-run-valgrind - Build and run the debug version of parasheet-editor with valgrind
 editor-run-release - Build and run the debug version of parasheet-editor
 cli-all - Build all parasheet-cli targets
 cli-debug - Build all parasheet-cli debug targets
@@ -29,7 +28,6 @@ cli-release - Build all parasheet-cli release targets
 cli-build-tests - Build parasheet-cli tests without running them
 cli-test - Build and run all parasheet-cli tests
 cli-run - Build and run the debug version of parasheet-cli
-cli-run-valgrind - Build and run the debug version of parasheet-cli with valgrind
 cli-run-release - Build and run the debug version of parasheet-cli
 library-all - Build all libparasheet targets
 library-debug - Build all libparasheet debug targets
@@ -43,6 +41,4 @@ util-debug-notests - Build all util debug object files without building tests
 util-release - Build all util release targets
 util-build-tests - Build util tests without running them
 util-test - Build and run all util tests
-
-For any of the run or test targets, you cat set the ARGS environment variable to pass in arguments. When using valgrind, you can set the VALGRIND_ARGS environment variable to pass in arguments to valgrind.
 ```

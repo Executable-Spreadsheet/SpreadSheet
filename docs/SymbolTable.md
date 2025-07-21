@@ -1,7 +1,7 @@
 
 ```c
 typedef struct SymbolEntry {
-    SymbolType t;
+    SymbolType t; 
     u32 idx;
 } SymbolEntry;
 ```
@@ -13,7 +13,7 @@ expected to point to an external buffer.
 typedef struct SymbolMap {
     Allocator mem;
 
-    StrID* keys;
+    u32* keys;
     SymbolEntry* entries;
     u32 size;
     u32 cap;

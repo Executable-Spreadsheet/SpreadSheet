@@ -1,4 +1,5 @@
 #include <libparasheet/tokenizer.h>
+#include <libparasheet/lib_internal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +30,10 @@ static const char* TokenTypeToString(TokenType t) {
 int main() {
 	Allocator allocator = GlobalAllocatorCreate();
 
-	const char* input = "if (x + 42)";
+	const char* input = "=1 + 2 / 3 * 4;";
+
+
+	printf("input string is: %s\n", input);
 
 	TokenList* tokens = Tokenize(input, allocator);
 
@@ -37,6 +41,12 @@ int main() {
 		Token* t = &tokens->tokens[i];
 		printf("Token %2d: %-20s | Value: %.*s\n", i,
 			   TokenTypeToString(t->type), t->string.size, t->string.data);
+	}
+
+	AST* ast = BuildASTFromTokens(tokens, allocator);
+	if (ast && ast->size > 0) {
+		log("AST:");
+		ASTPrint(stdout, ast);
 	}
 
 	DestroyTokenList(&tokens);

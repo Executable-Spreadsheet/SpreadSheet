@@ -32,14 +32,8 @@ static u32 AllocString(StringTable* table, SString s) {
                                table->entry, oldsize * sizeof(u32),
                                table->scap * sizeof(u32));
         
-
-        table->gen = Realloc(table->mem,
-                             table->gen, oldsize * sizeof(u32),
-                             table->scap * sizeof(u32));
-
         for (i32 i = table->scap - 1; i >= (i32)oldsize; i--) {
             table->freelist[table->fsize++] = i;
-            table->gen[i] = 0;
         }
     }
 
@@ -136,26 +130,19 @@ static u32 StringAddInternal(StringTable* table, SString string, u32 sidx) {
 }
 
 
-StrID StringAdd(StringTable* table, i8* string) {
+u32 StringAdd(StringTable* table, i8* string) {
     SString sized = {
         .data = string,
         .size = strlen((char*)string)
     };
-    StrID str = {0};
-    str.idx = StringAddInternal(table, sized, UINT32_MAX);
-    str.gen = table->gen[str.idx];
-    return str;
+    return StringAddInternal(table, sized, UINT32_MAX);
 }
 
-StrID StringAddS(StringTable* table, SString string) {
-    StrID str = {0};
-    str.idx = StringAddInternal(table, string, UINT32_MAX);
-    str.gen = table->gen[str.idx];
-    return str;
+u32 StringAddS(StringTable* table, SString string) {
+    return StringAddInternal(table, string, UINT32_MAX);
 }
 
-SString StringDel(StringTable* table, StrID sid) {
-    u32 index = sid.idx;
+SString StringDel(StringTable* table, u32 index) {
     u32 idx = table->entry[index];
 
     table->freelist[table->fsize++] = index;
@@ -164,14 +151,12 @@ SString StringDel(StringTable* table, StrID sid) {
     table->size--;
 
     SString output = table->strings[index];
-    table->gen[index]++;
 
     for (u32 i = 0; i < table->cap; i++) {
         u32 next = (idx + 1) % table->cap;
         
-        if (table->meta[next] == 0 || table->meta[next] == UINT32_MAX) {
-            return output;  
-        }
+        if (table->meta[next] == 0 ||
+            table->meta[next] == UINT32_MAX) return output;  
 
         table->meta[idx] = table->meta[next] - 1;
         table->vals[idx] = table->vals[next];
@@ -184,9 +169,8 @@ SString StringDel(StringTable* table, StrID sid) {
     panic(); 
 }
 
-const SString StringGet(StringTable* table, StrID sid) {
-    if (table->gen[sid.idx] == sid.gen) return table->strings[sid.idx];
-    else return (SString){.size = 0, .data = NULL};
+const SString StringGet(StringTable* table, u32 index) {
+    return table->strings[index];
 }
 
 void StringFree(StringTable* table) {

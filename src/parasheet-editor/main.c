@@ -105,8 +105,7 @@ void handleKey(RenderHandler* handler){
             }
             else if (keyIn == handler->keybinds.cursor_right) {
                 handler->cursor.x += 1;
-            } 
-            else if (keyIn == handler->keybinds.exit) {
+            } else if (keyIn == handler->keybinds.exit) {
                 handler->state = SHUTDOWN;
             }
             else if (keyIn == handler->keybinds.terminal) {

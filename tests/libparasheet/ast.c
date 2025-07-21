@@ -13,10 +13,10 @@ int main() {
 	{
 
 		u32 l = ASTPush(&tree);
-		ASTGet(&tree, l) = (ASTNode){.op = AST_INT};
+		ASTGet(&tree, l) = (ASTNode){.op = AST_INT_LITERAL};
 
 		u32 r = ASTPush(&tree);
-		ASTGet(&tree, r) = (ASTNode){.op = AST_INT};
+		ASTGet(&tree, r) = (ASTNode){.op = AST_INT_LITERAL};
 
 		a1 = ASTPush(&tree);
 		ASTGet(&tree, a1) = (ASTNode){.op = AST_ADD, .lchild = l, .rchild = r};
@@ -24,10 +24,10 @@ int main() {
 	{
 
 		u32 l = ASTPush(&tree);
-		ASTGet(&tree, l) = (ASTNode){.op = AST_INT};
+		ASTGet(&tree, l) = (ASTNode){.op = AST_INT_LITERAL};
 
 		u32 r = ASTPush(&tree);
-		ASTGet(&tree, r) = (ASTNode){.op = AST_INT};
+		ASTGet(&tree, r) = (ASTNode){.op = AST_INT_LITERAL};
 
 		a2 = ASTPush(&tree);
 		ASTGet(&tree, a2) = (ASTNode){.op = AST_ADD, .lchild = l, .rchild = r};
