@@ -1,6 +1,7 @@
 #ifndef PS_TOKENIZER_TYPES_H
 #define PS_TOKENIZER_TYPES_H
 
+#include "libparasheet/lib_internal.h"
 #include <util/util.h>
 
 typedef enum TokenType : u32 {
@@ -27,27 +28,52 @@ typedef enum TokenType : u32 {
 	TOKEN_LITERAL_FLOAT,
 	TOKEN_LITERAL_STRING,
 
-	// Operator Tokens
-	TOKEN_OP_PLUS,
-	TOKEN_OP_MINUS,
-	TOKEN_OP_TIMES,
-	TOKEN_OP_DIVIDE,
-	TOKEN_OP_OCTOTHORPE,
-	TOKEN_OP_COLON,
+	// Character Tokens
+	TOKEN_CHAR_PLUS,
+	TOKEN_CHAR_MINUS,
+	TOKEN_CHAR_ASTERISK,
+	TOKEN_CHAR_SLASH,
+	TOKEN_CHAR_OCTOTHORPE,
+	TOKEN_CHAR_COLON,
 
 	// Grouping Tokens
-	TOKEN_GROUPING_OPEN_PAREN,
-	TOKEN_GROUPING_CLOSE_PAREN,
-	TOKEN_GROUPING_OPEN_BRACKET,
-	TOKEN_GROUPING_CLOSE_BRACKET,
-	TOKEN_GROUPING_OPEN_BRACE,
-	TOKEN_GROUPING_CLOSE_BRACE,
+	TOKEN_CHAR_OPEN_PAREN,
+	TOKEN_CHAR_CLOSE_PAREN,
+	TOKEN_CHAR_OPEN_BRACKET,
+	TOKEN_CHAR_CLOSE_BRACKET,
+	TOKEN_CHAR_OPEN_BRACE,
+	TOKEN_CHAR_CLOSE_BRACE,
+
+	// Other Special Characters
+	TOKEN_CHAR_EQUALS,
+	TOKEN_CHAR_COMMMA,
+	TOKEN_CHAR_SEMICOLON,
+	TOKEN_CHAR_GREATER_THAN,
+	TOKEN_CHAR_LESS_THAN,
+	TOKEN_CHAR_EXCLAMATION,
+
+	TOKEN_DOUBLECHAR_EQUALS_EQUALS,
+	TOKEN_DOUBLECHAR_LESS_EQUALS,
+	TOKEN_DOUBLECHAR_GREATER_EQUALS,
+	TOKEN_DOUBLECHAR_EXCLAMATION_EQUALS,
+	TOKEN_DOUBLECHAR_AMPERSAND_AMPERSAND,
+	TOKEN_DOUBLECHAR_PIPE_PIPE,
+
+	// Enum Size
+	TOKEN_TYPE_ENUM_SIZE
 } TokenType;
 
+union TokenData {
+	StrID s;
+	u32 i;
+	f32 f;
+};
+
 typedef struct Token {
-	TokenType type;
-	SString string;
-	u32 symbolTableIndex;
+  TokenType type;
+  StrID sourceString;
+  union TokenData data;
+  u32 lineNumber;
 } Token;
 
 typedef struct TokenList {
@@ -59,9 +85,9 @@ typedef struct TokenList {
 
 TokenList* CreateTokenList(Allocator allocator);
 
-void PushToken(TokenList* tokenList, TokenType type, SString string);
+void PushToken(TokenList* tokenList, TokenType type, StrID sourceString, u32 lineNumber);
 
-void PushTokenID(TokenList* tokenList, TokenType type, SString string, u32 symbolTableIndex);
+void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID string, u32 lineNumber, union TokenData data);
 
 Token* PopTokenDangerous(TokenList* tokenList);
 

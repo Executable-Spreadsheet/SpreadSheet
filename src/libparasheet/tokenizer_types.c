@@ -1,3 +1,4 @@
+#include "libparasheet/lib_internal.h"
 #include <libparasheet/tokenizer_types.h>
 
 // TokenList* CreateTokenList(Allocator allocator) {
@@ -11,8 +12,10 @@
 // 	return tokenList;
 // }
 
-void PushToken(TokenList* tokenList, TokenType type, SString string) {
-	PushTokenID(tokenList, type, string, 0);
+void PushToken(TokenList* tokenList, TokenType type, StrID sourceString,
+			   u32 lineNumber) {
+	union TokenData noData = {.i = 0};
+	PushTokenLiteral(tokenList, type, sourceString, lineNumber, noData);
 }
 
 // void PushTokenID(TokenList* tokenList, TokenType type, SString string,
@@ -40,21 +43,20 @@ TokenList* CreateTokenList(Allocator allocator) {
 	return tokenList;
 }
 
-void PushTokenID(TokenList* tokenList, TokenType type, SString string, u32 symbolTableIndex) {
+void PushTokenLiteral(TokenList* tokenList, TokenType type, StrID sourceString,
+					  u32 lineNumber, union TokenData data) {
 	if (tokenList->size == tokenList->capacity) {
-		//FIXED: Pass sizes in bytes, not counts
-		tokenList->tokens = Realloc(
-			tokenList->mem,
-			tokenList->tokens,
-			tokenList->capacity * sizeof(Token),
-			tokenList->capacity * 2 * sizeof(Token));
+		tokenList->tokens = Realloc(tokenList->mem, tokenList->tokens,
+									tokenList->capacity * sizeof(Token),
+									tokenList->capacity * 2 * sizeof(Token));
 
 		tokenList->capacity *= 2;
 	}
 
 	tokenList->tokens[tokenList->size].type = type;
-	tokenList->tokens[tokenList->size].string = string;
-	tokenList->tokens[tokenList->size].symbolTableIndex = symbolTableIndex;
+	tokenList->tokens[tokenList->size].sourceString = sourceString;
+	tokenList->tokens[tokenList->size].lineNumber = lineNumber;
+	tokenList->tokens[tokenList->size].data = data;
 	tokenList->size += 1;
 }
 
@@ -64,7 +66,7 @@ Token* PopTokenDangerous(TokenList* tokenList) {
 		return NULL;
 	}
 	tokenList->size -= 1;
-	Token* top = &(tokenList->tokens[tokenList->size]);	
+	Token* top = &(tokenList->tokens[tokenList->size]);
 	return top;
 }
 
