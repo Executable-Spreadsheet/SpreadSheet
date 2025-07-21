@@ -78,8 +78,8 @@ void StringFree(StringTable* table);
 #define CELL_TO_INDEX(v) \
     (v.y + v.x * BLOCK_SIZE)
 
-//Gonna use a tagged union for spreadsheet values.
-//It just makes a lot of sense and it is fairly compact.
+// Gonna use a tagged union for spreadsheet values.
+// It just makes a lot of sense and it is fairly compact.
 
 typedef enum CellType : u32 {
 	CT_EMPTY = 0,

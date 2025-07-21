@@ -385,22 +385,21 @@ typedef struct StackAllocator {
 static alloc_func_def(StackAllocate) {
 	StackAllocator* s = ctx;
 
-  if (oldsize == 0) {
-    if (s->size + newsize > s->cap)
-      return 0; // error
-    void *out = &s->data[s->size];
-    s->size += newsize;
+    if (oldsize == 0) {
+        if (s->size + newsize > s->cap)
+            return 0; // error
+        void *out = &s->data[s->size];
+        s->size += newsize;
 
 		return out;
 	}
 
-  // realloc works via an alloc + memcpy
-  if (ptr && oldsize && newsize) {
-    if (s->size + newsize > s->cap)
-      return ptr; // error
-
-		void* dst = &s->data[s->size];
-		s->size += newsize;
+    // realloc works via an alloc + memcpy
+    if (ptr && oldsize && newsize) {
+        if (s->size + newsize > s->cap)
+            return ptr; // error
+        void* dst = &s->data[s->size];
+        s->size += newsize;
 
 		memcpy(dst, ptr, oldsize);
 		return dst;
