@@ -7,8 +7,8 @@
 
 #define EPS UINT32_MAX
 
-void testString(char** input, StringTable* table, Allocator allocator){
-	TokenList* tokens = Tokenize(*input, table, allocator);
+void testString(char* input, StringTable* table, Allocator allocator){
+	TokenList* tokens = Tokenize(input, table, allocator);
 	AST ast = BuildASTFromTokens(tokens, allocator);
 	if (ast.size > 0){
 		ASTPrint(stdout, &ast);
@@ -21,8 +21,7 @@ void testString(char** input, StringTable* table, Allocator allocator){
 	} else {
 		assert(0);
 	}
-	AST* astptr = &ast;
-    ASTFree(&astptr);
+    ASTFree(&ast);
 	DestroyTokenList(&tokens);
 }
 
@@ -52,8 +51,8 @@ int main() {
 //		log("AST:");
 //		ASTPrint(stdout, &ast);
 //	}
-	char* input1 = "=2+2";	
-	testString(&input1, &s, allocator);
+	char* input1 = "=2+2;";	
+	testString(input1, &s, allocator);
 
     StringFree(&s);
 	return 0;

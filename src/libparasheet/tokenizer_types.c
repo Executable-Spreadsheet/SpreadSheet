@@ -58,7 +58,7 @@ Token* PopTokenDangerous(TokenList* tokenList) {
 }
 
 Token* ConsumeToken(TokenList* tokenList) {
-	if (tokenList->head == tokenList->size) {
+	if (tokenList->head >= tokenList->size) {
 		return NULL;
 	}
 	Token* consumed = &(tokenList->tokens[tokenList->head]);
@@ -74,6 +74,9 @@ void UnconsumeToken(TokenList* tokenList) {
 }
 
 Token* PeekToken(TokenList* tokenList){
+	if (tokenList->head >= tokenList->size) {
+		return NULL;
+	}
 	return &(tokenList->tokens[tokenList->head]);
 }
 

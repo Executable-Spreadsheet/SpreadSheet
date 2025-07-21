@@ -109,7 +109,6 @@ AST BuildASTFromTokens(TokenList* tokens, Allocator allocator) {
 
 	if (syntaxError) {
 		ASTFree(&ast);
-		Free(allocator, &ast, sizeof(AST));
 
 		return (AST){0};
 	}
