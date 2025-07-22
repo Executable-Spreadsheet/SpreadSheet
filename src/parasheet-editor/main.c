@@ -282,9 +282,10 @@ void readConfig(RenderHandler* handler){
             log("key preset");
             if (!strcmp(info, "wasd")) {
                 handler->keybinds = keybinds_wasd;
-            } 
-            else if (!strcmp(info, "hjkl")) {
+            } else if (!strcmp(info, "hjkl")) {
                 handler->keybinds = keybinds_hjkl;
+            } else if (!strcmp(info, "arrow")) {
+                handler->keybinds = keybinds_arrows;
             }
         }
         else {
