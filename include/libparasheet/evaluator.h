@@ -18,4 +18,7 @@ typedef struct EvalContext {
 // outSheet: the destination to store computed values
 void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, u32 cellX, u32 cellY);
 
+CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx);
+
+
 #endif // EVALUATOR_H
