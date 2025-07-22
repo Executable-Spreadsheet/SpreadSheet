@@ -280,11 +280,7 @@ ASTNodeIndex ParseFor(TokenList* tokens, AST* ast, u8* syntaxError, StringTable*
 	return ASTCreateNode(ast, AST_FOR, iterator, range, body);
 }
 
-// This is temporary expression parsing. It's not very elegant and it doesn't
-// follow operator precedence. Eli has said that he wanted to write proper
-// expression parsing.
-// clarise TODO: replace this
-
+// Expression parsing. A little scuffed due to a change in primitives. We'll survive.
 ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
 	UnconsumeToken(tokens);
     Token* peek = PeekToken(tokens);
@@ -320,6 +316,7 @@ ASTNodeIndex ParseSummation(TokenList* tokens, AST* ast, u8* syntaxError, String
 		ASTNodeIndex node2 = ParseSummation2(tokens, ast, syntaxError, node, s);
 		return node2;
     }
+	return EPS;
 }
 ASTNodeIndex ParseSummation2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeIndex inNode, StringTable* s) {
     Token* peek = PeekToken(tokens);
@@ -348,6 +345,7 @@ ASTNodeIndex ParseTerm(TokenList* tokens, AST* ast, u8* syntaxError, StringTable
         ASTNodeIndex node2 = ParseTerm2(tokens, ast, syntaxError, node, s);
         return node2;
     }
+	return EPS;
 }
 ASTNodeIndex ParseTerm2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeIndex inNode, StringTable* s) {
     Token* peek = PeekToken(tokens);
@@ -368,6 +366,7 @@ ASTNodeIndex ParseTerm2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeInd
     if (peek->type == TOKEN_CHAR_SEMICOLON || peek->type == TOKEN_CHAR_CLOSE_PAREN || peek->type == TOKEN_CHAR_EQUALS || peek->type == TOKEN_CHAR_PLUS || peek->type == TOKEN_CHAR_MINUS){
         return inNode;
     }
+	return EPS;
 }
 ASTNodeIndex ParseReference(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
@@ -376,6 +375,7 @@ ASTNodeIndex ParseReference(TokenList* tokens, AST* ast, u8* syntaxError, String
         ASTNodeIndex node2 = ParseReference2(tokens, ast, syntaxError, node, s);
         return node2;
     }
+	return EPS;
 }
 ASTNodeIndex ParseReference2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeIndex inNode, StringTable* s) {
     Token* peek = PeekToken(tokens);
@@ -389,6 +389,7 @@ ASTNodeIndex ParseReference2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNo
     if (peek->type == TOKEN_CHAR_SEMICOLON || peek->type == TOKEN_CHAR_CLOSE_PAREN || peek->type == TOKEN_CHAR_EQUALS || peek->type == TOKEN_CHAR_PLUS || peek->type == TOKEN_CHAR_MINUS || peek->type == TOKEN_CHAR_ASTERISK || peek->type == TOKEN_CHAR_SLASH){
         return inNode;
     }
+	return EPS;
 }
 
 ASTNodeIndex ParseAbsolute(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
@@ -402,6 +403,7 @@ ASTNodeIndex ParseAbsolute(TokenList* tokens, AST* ast, u8* syntaxError, StringT
         ASTNodeIndex node = ParseUnit(tokens, ast, syntaxError, s);
         return ASTCreateNode(ast, AST_COORD_TRANSFORM, node, EPS, EPS);
     }
+	return EPS;
 }
 
 // This doesn't expect an open bracket token because the caller already consumed
@@ -442,12 +444,12 @@ ASTNodeIndex ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError, StringTa
 	case (TOKEN_LITERAL_INT):
 		ast->nodes[new_node_index].op = AST_INT_LITERAL;
 		ast->nodes[new_node_index].vt = V_INT;
-		ast->nodes[new_node_index].data.i = 4; // TODO: Get literal values
+		ast->nodes[new_node_index].data.i = literal->data.i; // TODO: Get literal values
 		break;
 	case (TOKEN_LITERAL_FLOAT):
 		ast->nodes[new_node_index].op = AST_FLOAT_LITERAL;
 		ast->nodes[new_node_index].vt = V_FLOAT;
-		ast->nodes[new_node_index].data.f = 4.2; // TODO: Get literal values
+		ast->nodes[new_node_index].data.f = literal->data.f; // TODO: Get literal values
 		break;
 	case (TOKEN_LITERAL_STRING):
 		ast->nodes[new_node_index].op = AST_INVALID; // TODO: Add strings
@@ -504,6 +506,9 @@ ASTNodeIndex ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError, StringTable
 		CheckSyntaxError();
 		ExpectToken(tokens, TOKEN_CHAR_CLOSE_PAREN, s);
 		return tmp;
+	case TOKEN_ID:
+		UnconsumeToken(tokens);
+		return ParseID(tokens, ast, syntaxError, s);
 	default:
 		ThrowUnexpectedTokenError(unit, s);
 		return EPS;

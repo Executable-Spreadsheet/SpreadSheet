@@ -10,6 +10,9 @@
 void testString(char* input, StringTable* table, Allocator allocator){
 	TokenList* tokens = Tokenize(input, table, allocator);
 	AST ast = BuildASTFromTokens(tokens, table, allocator);
+	for (int j = 0; j < tokens->size; j++){
+		printf("tok: %s\n", getTokenErrorString(tokens->tokens[j].type));
+	}
 	if (ast.size > 0){
 		ASTPrint(stdout, &ast);
 		for (int i = 0; i < ast.size - 1; i++){
