@@ -226,6 +226,7 @@ typedef struct ASTNode {
 	union {
 		u32 i; // Symbols use this as an index
 		f32 f;
+        StrID s;
 	} data;
 
 	u32 lchild;

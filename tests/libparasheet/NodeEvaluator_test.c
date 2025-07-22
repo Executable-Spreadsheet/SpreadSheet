@@ -35,7 +35,7 @@ void testEvaluateNode() {
     tree.nodes[add].lchild = lhs;
     tree.nodes[add].mchild = rhs;
 
-    result = evaluateNode(&tree, add, &dummyCtx);
+    result = evaluateNode(&tree, add, dummyCtx);
     printf("Test 1: 7 + 3 = %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 10);
 
@@ -53,7 +53,7 @@ void testEvaluateNode() {
     tree.nodes[mul].lchild = f;
     tree.nodes[mul].mchild = i;
 
-    result = evaluateNode(&tree, mul, &dummyCtx);
+    result = evaluateNode(&tree, mul, dummyCtx);
     float diff = result.d.f - 8.0f;
     if (diff < 0) diff = -diff;
     printf("Test 2: 4.0 * 2 = %.2f\n", result.d.f);
@@ -78,7 +78,7 @@ void testEvaluateNode() {
     tree.nodes[ifnode].mchild = tval;
     tree.nodes[ifnode].rchild = eval;
 
-    result = evaluateNode(&tree, ifnode, &dummyCtx);
+    result = evaluateNode(&tree, ifnode, dummyCtx);
     printf("Test 3: if (1) {10} else {20} = %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 10);
 
@@ -96,7 +96,7 @@ void testEvaluateNode() {
     tree.nodes[seq].lchild = s1;
     tree.nodes[seq].mchild = s2;
 
-    result = evaluateNode(&tree, seq, &dummyCtx);
+    result = evaluateNode(&tree, seq, dummyCtx);
     printf("Test 4: seq {5; 6} = %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 6);
 
@@ -119,7 +119,7 @@ void testEvaluateNode() {
     tree.nodes[if0].mchild = t100;
     tree.nodes[if0].rchild = e200;
 
-    result = evaluateNode(&tree, if0, &dummyCtx);
+    result = evaluateNode(&tree, if0, dummyCtx);
     printf("Test 5: if (0) {100} else {200} = %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 200);
 
@@ -180,7 +180,7 @@ void testEvaluateNode() {
     tree.nodes[if_f].mchild = seqt123;
     tree.nodes[if_f].rchild = seqe123;
 
-    result = evaluateNode(&tree, if_f, &dummyCtx);
+    result = evaluateNode(&tree, if_f, dummyCtx);
     printf("Test 6: if (1.0f) {1;2;3} else {9;9;9} = %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 3);
 
@@ -217,7 +217,7 @@ void testEvaluateNode() {
     tree.nodes[outerIf].mchild = innerIf;
     tree.nodes[outerIf].rchild = outerElse;
 
-    result = evaluateNode(&tree, outerIf, &dummyCtx);
+    result = evaluateNode(&tree, outerIf, dummyCtx);
     printf("Test 7: nested if = %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 6);
 
@@ -240,7 +240,7 @@ void testEvaluateNode() {
     tree.nodes[ifMixed].mchild = floatThen;
     tree.nodes[ifMixed].rchild = intElse;
 
-    result = evaluateNode(&tree, ifMixed, &dummyCtx);
+    result = evaluateNode(&tree, ifMixed, dummyCtx);
     printf("Test 8: if (1) float 3.5 else 2 = %.2f\n", result.d.f);
     assert(result.t == CT_FLOAT && result.d.f == 3.5f);
 

@@ -12,9 +12,8 @@
 
 // Forward declarations
 static CellValue evaluateLiteral(ASTNode* node);
-static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx);
-CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx);
-static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext* ctx);
+static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext ctx);
+static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext ctx);
 
 // Evaluator logic
 CellValue evaluateLiteral(ASTNode* node) {
@@ -33,7 +32,7 @@ CellValue evaluateLiteral(ASTNode* node) {
 }
 
 // Evaluates a binary operator node: +, -, *, /
-static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx) {
+static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext ctx) {
     CellValue lhs = evaluateNode(tree, node->lchild, ctx);
     CellValue rhs = evaluateNode(tree, node->mchild, ctx);
     CellValue result;
@@ -79,7 +78,7 @@ static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx) {
 
 
 // Core evaluator function that dispatches based on AST node type
-CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx) {
+CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
     ASTNode* node = &ASTGet(tree, index);
 
     switch (node->op) {
@@ -138,8 +137,16 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx) {
 // clarise TODO: add error checking, somehow?
 // maybe create a new cell value of "#ERROR!" lol
 // Evaluates a single cell in the spreadsheet, recursively if needed
-void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, 
-		u32 cellX, u32 cellY, StringTable* strTable, Allocator allocator) {
+void EvaluateCell(EvalContext ctx) {
+
+    SpreadSheet* srcSheet = ctx.srcSheet;
+    SpreadSheet* inSheet = ctx.inSheet;
+    SpreadSheet* outSheet = ctx.outSheet; 
+	u32 cellX = ctx.currentX; 
+    u32 cellY = ctx.currentY; 
+    StringTable* strTable = ctx.str;
+    Allocator allocator = ctx.mem;
+
     v2u pos = { cellX, cellY };
 	
 	CellValue* sourceCell = SpreadSheetGetCell(srcSheet, pos);
@@ -171,7 +178,7 @@ void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outS
                 // run the parser on the tokens
                 AST ast = BuildASTFromTokens(tokens, strTable, allocator);
                 // run the evaluator on the ast
-                CellValue result = evaluateNode(&ast, ast.size - 1, &evalContext);
+                CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
                 SpreadSheetSetCell(outSheet, pos, result);
                 // error checking
             } break;
@@ -213,13 +220,13 @@ void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outS
 
 
 
-static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext* ctx) {
-    u32 x = ASTGet(tree, node->lchild).data.i;
-    u32 y = ASTGet(tree, node->mchild).data.i;
+static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext ctx) {
+    ctx.currentX = ASTGet(tree, node->lchild).data.i;
+    ctx.currentY = ASTGet(tree, node->mchild).data.i;
 
     // Recursively evaluate the referenced cell
-    EvaluateCell(ctx->srcSheet, ctx->inSheet, ctx->outSheet, x, y, ctx->str, tree->mem);
+    EvaluateCell(ctx);
 
     // Return the already-computed result
-    return *SpreadSheetGetCell(ctx->outSheet, (v2u){x, y});
+    return *SpreadSheetGetCell(ctx.outSheet, (v2u){ctx.currentX, ctx.currentY});
 }

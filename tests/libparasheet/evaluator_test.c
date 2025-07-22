@@ -35,7 +35,7 @@ void testEvaluateNode() {
     tree.nodes[add].mchild = rhs;
 
     EvalContext dummyCtx = {0};
-    CellValue result = evaluateNode(&tree, add, &dummyCtx);
+    CellValue result = evaluateNode(&tree, add, dummyCtx);
 
     printf("Test 1 (7 + 3): %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 10);
@@ -54,7 +54,7 @@ void testEvaluateNode() {
     tree.nodes[mul].lchild = fl;
     tree.nodes[mul].mchild = i2;
 
-    result = evaluateNode(&tree, mul, &dummyCtx);
+    result = evaluateNode(&tree, mul, dummyCtx);
     printf("Test 2 (4.0 * 2): %.2f\n", result.d.f);
     float diff = result.d.f - 8.0f;
     if (diff < 0) diff = -diff;
@@ -79,7 +79,7 @@ void testEvaluateNode() {
     tree.nodes[ifNode].mchild = thenVal;
     tree.nodes[ifNode].rchild = elseVal;
 
-    result = evaluateNode(&tree, ifNode, &dummyCtx);
+    result = evaluateNode(&tree, ifNode, dummyCtx);
     printf("Test 3 (if 1 then 10 else 20): %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 10);
 
@@ -97,7 +97,7 @@ void testEvaluateNode() {
     tree.nodes[seq].lchild = seq1;
     tree.nodes[seq].mchild = seq2;
 
-    result = evaluateNode(&tree, seq, &dummyCtx);
+    result = evaluateNode(&tree, seq, dummyCtx);
     printf("Test 4 (seq 5; 6): %d\n", result.d.i);
     assert(result.t == CT_INT && result.d.i == 6);
 

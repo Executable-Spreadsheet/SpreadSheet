@@ -46,7 +46,7 @@ SString nodeops[] = {
 	sstring("ID"),
 	sstring("LET"),
 	sstring("[x,y]"),
-	sstring("x=y"),
+	sstring("Assign"),
 
 	// Ops
 	sstring("+"),
@@ -88,7 +88,7 @@ static void ASTPrintNode(FILE* fd, AST* tree, ASTNode* node, u32 indent) {
 		err("AST node operation invalid!");
 		panic();
 	}
-	print(fd, "%s (%d)\n", nodeops[node->op], node->data.i);
+	print(fd, "%s\n", nodeops[node->op]);
 
 	if (node->lchild != UINT32_MAX) {
 		ASTPrintNode(fd, tree, &tree->nodes[node->lchild], indent + 1);
