@@ -14,7 +14,6 @@
 static CellValue evaluateLiteral(ASTNode* node);
 static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx);
 CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx);
-void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, u32 cellX, u32 cellY);
 static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext* ctx);
 
 // Evaluator logic
@@ -146,23 +145,36 @@ void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outS
 	CellValue* sourceCell = SpreadSheetGetCell(srcSheet, pos);
 	// Eli's code checks for numbers at entry into sheet from file.
 	// cell knows if it is a number (int/float) or a string. parse string.
+
+    EvalContext evalContext = (EvalContext) {
+        .srcSheet = srcSheet,
+        .inSheet = inSheet,
+        .outSheet = outSheet,
+        .currentX = cellX,
+        .currentY = cellY
+    };
+
 	switch (sourceCell->t) {
 		case CT_INT: 
 		case CT_FLOAT:
-			SpreadSheetSetCell(outSheet, pos, sourceCell);
+			SpreadSheetSetCell(outSheet, pos, *sourceCell);
 			break;
 		default:
-			// is a string	
-			// invoke the tokenizer
-			TokenList* tokens = Tokenize(input, strTable, allocator);
-//			if (tokens)
-			// run the parser on the tokens
-			AST ast = BuildASTFromTokens(tokens, strTable, allocator);
-			// run the evaluator on the ast
-			CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
-			SpreadSheetSetCell(outSheet, pos, result);
-			// error checking
-			break;
+            {
+
+                SString input = StringGet(strTable, sourceCell->d.index);
+
+                // is a string	
+                // invoke the tokenizer
+                TokenList* tokens = Tokenize((const char*)input.data, strTable, allocator);
+                //			if (tokens)
+                // run the parser on the tokens
+                AST ast = BuildASTFromTokens(tokens, strTable, allocator);
+                // run the evaluator on the ast
+                CellValue result = evaluateNode(&ast, ast.size - 1, &evalContext);
+                SpreadSheetSetCell(outSheet, pos, result);
+                // error checking
+            } break;
 	}
 	/*
     // If already evaluated, return
@@ -186,17 +198,17 @@ void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outS
 
     u32 rootIndex = tree->size - 1;  // Root is always the last node
 	*/
-    EvalContext ctx = {
-        .srcSheet = srcSheet,
-        .inSheet = inSheet,
-        .outSheet = outSheet,
-        .currentX = cellX,
-        .currentY = cellY,
-    };
+    //EvalContext ctx = {
+    //    .srcSheet = srcSheet,
+    //    .inSheet = inSheet,
+    //    .outSheet = outSheet,
+    //    .currentX = cellX,
+    //    .currentY = cellY,
+    //};
 
-    // ✅ Declare and assign result before use
-    CellValue result = evaluateNode(tree, rootIndex, &ctx);
-    SpreadSheetSetCell(outSheet, pos, result);
+    //// ✅ Declare and assign result before use
+    //CellValue result = evaluateNode(tree, rootIndex, &ctx);
+    //SpreadSheetSetCell(outSheet, pos, result);
 }
 
 
@@ -206,7 +218,7 @@ static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext* ctx) {
     u32 y = ASTGet(tree, node->mchild).data.i;
 
     // Recursively evaluate the referenced cell
-    EvaluateCell(ctx->srcSheet, ctx->inSheet, ctx->outSheet, x, y);
+    EvaluateCell(ctx->srcSheet, ctx->inSheet, ctx->outSheet, x, y, ctx->str, tree->mem);
 
     // Return the already-computed result
     return *SpreadSheetGetCell(ctx->outSheet, (v2u){x, y});

@@ -8,6 +8,7 @@ typedef struct EvalContext {
     SpreadSheet* srcSheet;
     SpreadSheet* inSheet;
     SpreadSheet* outSheet;
+    StringTable* str;
     u32 currentX;
     u32 currentY;
 } EvalContext;
@@ -16,7 +17,8 @@ typedef struct EvalContext {
 // srcSheet: the original source sheet where the ASTs are stored
 // inSheet:  the input spreadsheet (read-only values for references)
 // outSheet: the destination to store computed values
-void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, u32 cellX, u32 cellY);
+void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, 
+		u32 cellX, u32 cellY, StringTable* strTable, Allocator allocator);
 
 CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx);
 

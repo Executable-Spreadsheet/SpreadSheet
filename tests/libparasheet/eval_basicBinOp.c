@@ -1,5 +1,6 @@
 #include <libparasheet/tokenizer.h>
 #include <libparasheet/lib_internal.h>
+#include <libparasheet/evaluator.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #define EPS UINT32_MAX
 
 #define PRINT_TOKENS 0
+#define PRINT_AST 1
 
 void testString(char* input, StringTable* table, Allocator allocator){
 	TokenList* tokens = Tokenize(input, table, allocator);
@@ -15,14 +17,14 @@ void testString(char* input, StringTable* table, Allocator allocator){
 	EvalContext evalContext = (EvalContext){0};
 	if (PRINT_TOKENS){
 		for (int j = 0; j < tokens->size; j++){
-			printf("tok: %s\n", getTokenErrorString(tokens->tokens[j].type));
+			log("tok: %s", getTokenErrorString(tokens->tokens[j].type));
 		}
 	}
 	assert(ast.size > 0);
 	if (PRINT_AST){
 		ASTPrint(stdout, &ast);
 	}
-	CellValue evaluation = evaluateNode(&ast, ast.nodes[ast.size - 1], EvalContext* ctx);
+	CellValue evaluation = evaluateNode(&ast, ast.size - 1, &evalContext);
 	log("eval type %d: %d/%f", evaluation.t, evaluation.d.i, evaluation.d.f);
 	ASTFree(&ast);
 	DestroyTokenList(&tokens);

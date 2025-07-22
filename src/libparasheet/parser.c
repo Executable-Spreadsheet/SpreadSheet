@@ -448,17 +448,17 @@ ASTNodeIndex ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError, StringTa
         case (TOKEN_LITERAL_INT):
             ast->nodes[new_node_index].op = AST_INT_LITERAL;
             ast->nodes[new_node_index].vt = V_INT;
-            ast->nodes[new_node_index].data.i = 4; // TODO: Get literal values
+            ast->nodes[new_node_index].data.i = literal->data.i; // TODO: Get literal values
             break;
         case (TOKEN_LITERAL_FLOAT):
             ast->nodes[new_node_index].op = AST_FLOAT_LITERAL;
             ast->nodes[new_node_index].vt = V_FLOAT;
-            ast->nodes[new_node_index].data.f = 4.2; // TODO: Get literal values
+            ast->nodes[new_node_index].data.f = literal->data.f; // TODO: Get literal values
             break;
         case (TOKEN_LITERAL_STRING):
             ast->nodes[new_node_index].op = AST_INVALID; // TODO: Add strings
             ast->nodes[new_node_index].vt = V_INT;		 // Interned string
-            ast->nodes[new_node_index].data.i = 0;		 // TODO: Get literal values
+            //ast->nodes[new_node_index].data.i = literal->data.s;		 // TODO: Get literal values
             break;
         default:
             break;
