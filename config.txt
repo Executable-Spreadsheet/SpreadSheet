@@ -1,2 +1,2 @@
-editor kitty nvim %s
+editor kitty nano %s
 keypreset arrow

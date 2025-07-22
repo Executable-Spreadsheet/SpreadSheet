@@ -481,7 +481,7 @@ int main(int argc, char* argv[]) {
         .str = &str,
         .keybinds = keybinds_hjkl,
         .edit = {
-            .notify = inotify_init(),
+            .notify = inotify_init1(IN_NONBLOCK),
         },
         //These are zero initialized if not mentioned,
         //This works for fixed sized structs
@@ -500,7 +500,7 @@ int main(int argc, char* argv[]) {
         log("mkdir: %n", strerror(errno));
     }
 
-    u32 t = inotify_add_watch(handler.edit.notify, "./cells", IN_CREATE | IN_ONLYDIR);
+    u32 t = inotify_add_watch(handler.edit.notify, "./cells", IN_CREATE | IN_MODIFY | IN_ONLYDIR & ~IN_ACCESS);
     if (t == -1) {
         log("watch: %n", strerror(errno));
     }
@@ -605,10 +605,7 @@ int main(int argc, char* argv[]) {
                 struct inotify_event* event = (struct inotify_event*)&events[0];
 
                 while (event < (&events[256])) {
-                    if (event->mask & IN_CREATE) {
-                        ReadBuffer(&handler, (SString){(i8*)event->name, event->len});
-                        break;
-                    }
+                    ReadBuffer(&handler, (SString){(i8*)event->name, event->len});
                     event += sizeof(struct inotify_event) + event->len;
                 }
 
