@@ -1,58 +1,68 @@
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <libparasheet/lib_internal.h>
 #include <libparasheet/evaluator.h>
+#include <libparasheet/lib_internal.h>
+#include <util/util.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-// Declare the functions to test
-CellValue evaluateNode(AST* tree, u32 index, struct EvalContext* ctx);
-
-// Stub: This must match what your evaluateNode expects
-CellValue evaluateLiteral(ASTNode* node) {
-    CellValue v;
-    if (node->op == AST_INT_LITERAL) {
-        v.t = CT_INT;
-        v.d.i = node->data.i;
-    } else if (node->op == AST_FLOAT_LITERAL) {
-        v.t = CT_FLOAT;
-        v.d.f = node->data.f;
-    } else {
-        fprintf(stderr, "Invalid literal\n");
-        exit(1);
-    }
-    return v;
+// Helper: create and initialize a spreadsheet
+SpreadSheet makeSheet(Allocator alloc) {
+    SpreadSheet sheet = {
+        .mem = alloc,
+        .values = NULL,
+        .keys = NULL,
+        .size = 0,
+        .tomb = 0,
+        .cap = 0,
+        .blockpool = NULL,
+        .freestatus = NULL,
+        .bsize = 0,
+        .fsize = 0,
+        .bcap = 0,
+    };
+    return sheet;
 }
 
+// Test: 2 + 3 = 5
+void test_addition() {
+    Allocator alloc = AllocatorCreateDefault();
+    SpreadSheet src = makeSheet(alloc);
+    SpreadSheet out = makeSheet(alloc);
+
+    // Build AST manually
+    AST* tree = PushStruct(&alloc, AST);
+    tree->mem = alloc;
+    tree->size = 0;
+    tree->cap = 4;
+    tree->nodes = PushArray(&alloc, ASTNode, tree->cap);
+
+    u32 lhs = ASTPush(tree);
+    tree->nodes[lhs] = (ASTNode){ .op = AST_INT_LITERAL, .data.i = 2 };
+
+    u32 rhs = ASTPush(tree);
+    tree->nodes[rhs] = (ASTNode){ .op = AST_INT_LITERAL, .data.i = 3 };
+
+    u32 root = ASTPush(tree);
+    tree->nodes[root] = (ASTNode){ .op = AST_ADD, .lchild = lhs, .mchild = rhs };
+
+    // Place AST as a formula in src spreadsheet
+    CellValue formula = { .t = CT_CODE, .d.index = (u32)(uintptr_t)tree };
+    SpreadSheetSetCell(&src, (v2u){0, 0}, formula);
+
+    // Evaluate
+    EvaluateCell(&src, NULL, &out, 0, 0);
+
+    CellValue* result = SpreadSheetGetCell(&out, (v2u){0, 0});
+    assert(result->t == CT_INT);
+    assert(result->d.i == 5);
+
+    printf("[PASS] 2 + 3 = %d\n", result->d.i);
+}
+
+// Entry point
 int main() {
-    // Fake AST for: 2 + 3
-    ASTNode nodes[3];
-
-    // Left operand: 2
-    nodes[0].op = AST_INT_LITERAL;
-    nodes[0].data.i = 2;
-
-    // Right operand: 3
-    nodes[1].op = AST_INT_LITERAL;
-    nodes[1].data.i = 3;
-
-    // Root node: 2 + 3
-    nodes[2].op = AST_ADD;
-    nodes[2].lchild = 0;
-    nodes[2].mchild = 1;
-
-    AST tree = {
-        .nodes = nodes,
-        .size = 3
-    };
-
-    EvalContext ctx = {
-        .tree = &tree
-    };
-
-    CellValue result = evaluateNode(&tree, 2, &ctx);
-    assert(result.t == CT_INT);
-    assert(result.d.i == 5);
-    printf("[PASS] 2 + 3 = %d\n", result.d.i);
-
+    test_addition();
+    printf("All evaluator tests passed.\n");
     return 0;
 }

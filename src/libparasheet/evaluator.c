@@ -30,6 +30,7 @@ CellValue evaluateLiteral(ASTNode* node) {
     return v;
 }
 
+// Evaluates a binary operator node: +, -, *, /
 static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx) {
     CellValue lhs = evaluateNode(tree, node->lchild, ctx);
     CellValue rhs = evaluateNode(tree, node->mchild, ctx);
@@ -74,7 +75,7 @@ static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx) {
     return result;
 }
 
-
+// Core evaluator function that dispatches based on AST node type
 CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx) {
     ASTNode* node = &ASTGet(tree, index);
 
@@ -95,6 +96,7 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx) {
     }
 }
 
+// Evaluates a single cell in the spreadsheet, recursively if needed
 void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, u32 cellX, u32 cellY) {
     v2u pos = { cellX, cellY };
 
@@ -129,6 +131,7 @@ void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outS
     SpreadSheetSetCell(outSheet, pos, result);  // Store result in output sheet
 }
 
+// Handles references to other spreadsheet cells (e.g. A1)
 static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext* ctx) {
     u32 x = ASTGet(tree, node->lchild).data.i;
     u32 y = ASTGet(tree, node->mchild).data.i;
