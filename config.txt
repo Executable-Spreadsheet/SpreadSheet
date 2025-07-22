@@ -1,0 +1,2 @@
+editor kitty nano %s
+keypreset arrow

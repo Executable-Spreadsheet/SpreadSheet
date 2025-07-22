@@ -78,8 +78,8 @@ void StringFree(StringTable* table);
 #define CELL_TO_INDEX(v) \
     (v.y + v.x * BLOCK_SIZE)
 
-//Gonna use a tagged union for spreadsheet values.
-//It just makes a lot of sense and it is fairly compact.
+// Gonna use a tagged union for spreadsheet values.
+// It just makes a lot of sense and it is fairly compact.
 
 typedef enum CellType : u32 {
 	CT_EMPTY = 0,
@@ -94,7 +94,7 @@ typedef struct CellValue {
 	union {
 		u32 i;
 		f32 f;
-		u32 index; // index into external buffer
+		StrID index; // index into external buffer
 	} d;
 } CellValue;
 
@@ -105,9 +105,10 @@ typedef struct Block {
 	CellValue cells[BLOCK_SIZE * BLOCK_SIZE];
 } Block;
 
-// TODO(ELI): In future organize to minimize padding
-// rn things are split based on usage but this should be
-// improved in the future.
+
+//TODO(ELI): In future organize to minimize padding
+//rn things are split based on usage but this should be
+//improved in the future.
 typedef struct SpreadSheet {
 	Allocator mem; // probably should be global allocator but
 				   //  might as well give ourselves options
@@ -125,6 +126,9 @@ typedef struct SpreadSheet {
     u32 fsize;
     u32 bcap;
 
+    SString* stringbuf;
+    u32 ssize;
+    u32 scap;
 
 } SpreadSheet;
 

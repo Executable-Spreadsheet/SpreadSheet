@@ -68,5 +68,9 @@ int main() {
 		print(stdout, "\t(%d %d %d)\n", i, e.type, e.idx);
 	}
 
+    SymbolPopScope(&t);
+
+    Free(t.mem, t.scopes, t.cap * sizeof(SymbolMap));
+
 	return 0;
 }

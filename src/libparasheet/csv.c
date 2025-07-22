@@ -4,121 +4,130 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "libparasheet/lib_internal.h" // for CellValue, SpreadSheet, SpreadSheetSetCell
 #include "util/util.h"				   // for DumpFile, Allocator, v2u
 
 // === Parse Helpers ===
-
-static void trim(char* str) {
-	char* end;
-	while (isspace((unsigned char)*str))
-		str++;
-	if (*str == 0)
-		return;
-	end = str + strlen(str) - 1;
-	while (end > str && isspace((unsigned char)*end))
-		end--;
-	*(end + 1) = 0;
+static char* trim(char* str) {
+    char* end;
+    while (isspace(str[0])) str++;
+    if (*str == 0) return str;
+    end = str + strlen(str) - 1;
+    while (end > str && isspace(end[0])) end--;
+    *(end + 1) = 0;
+    return str;
 }
 
-static bool is_integer(const char* s) {
-	if (*s == '-' || *s == '+')
-		s++;
-	while (*s) {
-		if (!isdigit(*s))
-			return false;
-		s++;
-	}
-	return true;
+bool is_integer(const char* s) {
+    if (*s == '-' || *s == '+') s++;
+    while (*s) {
+        if (!isdigit(*s)) return false;
+        s++;
+    }
+    return true;
 }
 
-static bool is_float(const char* s) {
-	char* endptr;
-	strtod(s, &endptr);
-	return endptr != s && *endptr == '\0';
+bool is_float(const char* s) {
+    char* endptr;
+    strtod(s, &endptr);
+    return endptr != s && *endptr == '\0';
 }
 
 // === Parse One Line of CSV ===
 
-int csv_parse_line(const char* line, CellValue* out_values, size_t max_values) {
-	char buf[1024];
-	strncpy(buf, line, sizeof(buf));
-	buf[sizeof(buf) - 1] = '\0';
+int csv_parse_line(StringTable* str, const char* line, u32 linesize, CellValue* out_values, size_t max_values) {
+    char buf[1024];
+    strncpy(buf, line, sizeof(buf));
+    buf[sizeof(buf) - 1] = '\0';
 
-	char* token = strtok(buf, ",");
-	size_t count = 0;
+    char* token = strtok(buf, ",");
+    size_t count = 0;
 
-	while (token && count < max_values) {
-		trim(token);
-		CellValue v;
+    while (token && count < max_values) {
+        token = trim(token);
+        CellValue v;
 
-		if (is_integer(token)) {
-			v.t = CT_INT;
-			v.d.i = atoi(token);
-		} else if (is_float(token)) {
-			v.t = CT_FLOAT;
-			v.d.f = (float)atof(token);
-		} else {
-			v.t = CT_TEXT;
-			v.d.index = 0; // string table index
-		}
+        if (is_integer(token)) {
+            v.t = CT_INT;
+            v.d.i = atoi(token);
+        } else if (is_float(token)) {
+            v.t = CT_FLOAT;
+            v.d.f = (float)atof(token);
+        } else {
+            v.t = CT_TEXT;
+            i8* copy = Alloc(str->mem, strlen(token));
+            strcpy((char*)copy, token);
+            v.d.index = StringAdd(str, copy);  // string table index
+        }
 
-		out_values[count++] = v;
-		token = strtok(NULL, ",");
-	}
+        out_values[count++] = v;
+        token = strtok(NULL, ",");
+    }
 
-	return (int)count;
+    return (int)count;
 }
 
 // === Load Entire CSV File ===
 
-bool csv_load_file(const char* filename, SpreadSheet* sheet) {
-	Allocator a = GlobalAllocatorCreate();
-	SString file = DumpFile(a, filename);
+bool csv_load_file(FILE* csv, StringTable* str, SpreadSheet* sheet) {
+    Allocator a = GlobalAllocatorCreate();
 
-	u32 row = 0;
-	char* cursor = (char*)file.data;
-	char* line_start = cursor;
+    struct stat info;
+    if (fstat(fileno(csv), &info)) {
+        err("Failed to stat file");
+        panic();
+    }
 
-	while (*cursor) {
-		if (*cursor == '\n' || *cursor == '\r') {
-			*cursor = '\0';
+    SString file = {.size = info.st_size, .data = Alloc(a, info.st_size)};
 
-			CellValue values[256];
-			int count = csv_parse_line(line_start, values, 256);
+    fread(file.data, 1, info.st_size, csv);
+    fclose(csv);
 
-			for (int col = 0; col < count; col++) {
-				v2u p = {.x = (u32)col, .y = row};
-				SpreadSheetSetCell(sheet, p, values[col]);
-			}
+    u32 row = 0;
+    char* cursor = (char*)file.data;
+    char* line_start = cursor;
 
-			row++;
-			cursor++;
-			if (*cursor == '\n' || *cursor == '\r')
-				cursor++;
-			line_start = cursor;
-		} else {
-			cursor++;
-		}
-	}
+    while (cursor - (char*)file.data < file.size) {
+        if (*cursor == '\n' || *cursor == '\r') {
+            *cursor = '\0';
 
-	// Final line (in case no newline at EOF)
-	if (cursor != line_start) {
-		CellValue values[256];
-		int count = csv_parse_line(line_start, values, 256);
-		for (int col = 0; col < count; col++) {
-			v2u p = {.x = (u32)col, .y = row};
-			SpreadSheetSetCell(sheet, p, values[col]);
-		}
-	}
+            CellValue values[256];
+            int count = csv_parse_line(str, line_start, strlen(line_start), values, 256);
 
-	return true;
+            for (int col = 0; col < count; col++) {
+                v2u p = { .x = (u32)col, .y = row };
+                SpreadSheetSetCell(sheet, p, values[col]);
+            }
+
+            row++;
+            cursor++;
+            if (*cursor == '\n' || *cursor == '\r') cursor++;
+            line_start = cursor;
+        } else {
+            cursor++;
+        }
+    }
+
+    // Final line (in case no newline at EOF)
+    if (cursor != line_start) {
+        CellValue values[256];
+        int count = csv_parse_line(str, line_start, strlen(line_start), values, 256);
+        for (int col = 0; col < count; col++) {
+            v2u p = { .x = (u32)col, .y = row };
+            SpreadSheetSetCell(sheet, p, values[col]);
+        }
+    }
+
+    Free(a, file.data, file.size);
+
+    return true;
 }
 
 // === Export CSV File ===
 
-void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet) {
+void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet, StringTable* str) {
 	SString out = {.data = Alloc(a, MB(1)), .size = 0};
 	i8* cursor = out.data;
 
@@ -149,9 +158,10 @@ void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet) {
 					case CT_FLOAT:
 						cursor += sprintf((char *)cursor, "%f", val->d.f);
 						break;
-					case CT_TEXT:
-						cursor += sprintf((char *)cursor, "%u", val->d.index);
-						break;
+                    case CT_TEXT: {
+                        SString text = StringGet(str, val->d.index);
+                        cursor += sprintf((char *)cursor, "%.*s", text.size, text.data);
+                    } break;
 					default:
 						break;
 				}
@@ -164,6 +174,6 @@ void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet) {
 	}
 
 	out.size = (u32)(cursor - out.data);
-	WriteFileS(out);
+	WriteFileS(filename, out);
 	Free(a, out.data, MB(1));
 }

@@ -285,29 +285,29 @@ static const char* print_arg(FILE* fd, u32 precision, const char* fmt,
 	return fmt;
 }
 
-static void vprint(FILE* fd, const char* fmt, va_list args) {
-	while (fmt[0]) {
-		switch (fmt[0]) {
-		case '%': {
-			u32 precision = 4;
-			if (fmt[1] == '.') {
-				fmt += 1;
-				precision = 0;
+static void vprint(FILE *fd, const char *fmt, va_list args) {
+    while (fmt[0]) {
+        switch (fmt[0]) {
+            case '%': {
+                u32 precision = 4;
+                if (fmt[1] == '.') {
+                    fmt += 1;
+                    precision = 0;
 
-				while (fmt[1] && isdigit(fmt[1])) {
-					precision *= 10;
-					precision += fmt[1] - '0';
-					fmt++;
-				}
-			}
-			fmt = print_arg(fd, precision, fmt, args);
-		} break;
-		default: {
-			putc(fmt[0], fd);
-			fmt++;
-		} break;
-		}
-	}
+                    while (fmt[1] && isdigit(fmt[1])) {
+                        precision *= 10;
+                        precision += fmt[1] - '0';
+                        fmt++;
+                    }
+                }
+                fmt = print_arg(fd, precision, fmt, args);
+            } break;
+            default: {
+                putc(fmt[0], fd);
+                fmt++;
+            } break;
+        }
+    }
 }
 
 FILE* errfile = NULL;
@@ -322,6 +322,7 @@ void logprint(const char* fmt, ...) {
 	va_start(args, fmt);
 	vprint(logfile, fmt, args);
 	va_end(args);
+    fflush(logfile);
 }
 
 void errprint(const char* fmt, ...) {
@@ -333,6 +334,7 @@ void errprint(const char* fmt, ...) {
 	va_start(args, fmt);
 	vprint(errfile, fmt, args);
 	va_end(args);
+    fflush(errfile);
 }
 
 void print(FILE* fd, const char* fmt, ...) {
@@ -385,36 +387,32 @@ typedef struct StackAllocator {
 static alloc_func_def(StackAllocate) {
 	StackAllocator* s = ctx;
 
-	if (oldsize == 0) {
-//		log("Stack Alloc: %p %d", ctx, newsize);
-		if (s->size + newsize > s->cap)
-			return 0; // error
-		void* out = &s->data[s->size];
-		s->size += newsize;
+    if (oldsize == 0) {
+        if (s->size + newsize > s->cap)
+            return 0; // error
+        void *out = &s->data[s->size];
+        s->size += newsize;
 
 		return out;
 	}
 
-	// realloc works via an alloc + memcpy
-	if (ptr && oldsize && newsize) {
-//		log("Stack Realloc: %p (%p, %d) -> %d", ctx, ptr, oldsize, newsize);
-		if (s->size + newsize > s->cap)
-			return ptr; // error
+  // realloc works via an alloc + memcpy
+    if (ptr && oldsize && newsize) {
+        if (s->size + newsize > s->cap)
+            return ptr; // error
 
-		void* dst = &s->data[s->size];
-		s->size += newsize;
+        void* dst = &s->data[s->size];
+        s->size += newsize;
 
 		memcpy(dst, ptr, oldsize);
 		return dst;
 	}
 
-	if (ptr) {
-//		log("Stack Free: %p (%p, %d)", ctx, ptr, oldsize);
-		// free
-		return 0;
-	}
-
-	panic();
+    if (ptr) {
+        // free
+        return 0;
+    }
+    panic();
 }
 
 // requires additional allocator.
@@ -466,9 +464,17 @@ SString DumpFile(Allocator a, const char* filename) {
 void DumpFileS(SString* dst, SString filename) { todo(); }
 
 // Write full contents of buffer into file
-void WriteFile(const char* data) { todo(); }
+void WriteFile(const char* filename, const char* data) { 
+    WriteFileS(filename, (SString){.data = (i8*)data, .size = strlen(data)}); 
+}
 
-void WriteFileS(SString data) { todo(); }
+void WriteFileS(const char* filename, SString data) { 
+    
+    FILE* output = fopen(filename, "w+");
+    fwrite(data.data, data.size, 1, output);
+    fclose(output);
+
+}
 
 // INFO(ELI): Going to go with FNV-1a since its fast
 // and easy to implement.
