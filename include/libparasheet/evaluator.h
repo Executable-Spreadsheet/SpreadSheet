@@ -10,7 +10,6 @@ typedef struct EvalContext {
     SpreadSheet* outSheet;
     u32 currentX;
     u32 currentY;
-    AST* tree;
 } EvalContext;
 
 // Evaluates a single cell by walking its AST and computing the result.

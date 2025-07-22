@@ -8,10 +8,11 @@
 
 
 // Forward declarations
-static CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx);
-static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx);
 static CellValue evaluateLiteral(ASTNode* node);
+static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx);
+static CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx);
 static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext* ctx);
+void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, u32 cellX, u32 cellY);
 
 // Evaluator logic
 CellValue evaluateLiteral(ASTNode* node) {
@@ -122,7 +123,6 @@ void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outS
         .outSheet = outSheet,
         .currentX = cellX,
         .currentY = cellY,
-        .tree = tree
     };
 
     CellValue result = evaluateNode(tree, rootIndex, &ctx);
