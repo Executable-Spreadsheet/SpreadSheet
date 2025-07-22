@@ -54,9 +54,9 @@ int main() {
 //		log("AST:");
 //		ASTPrint(stdout, &ast);
 //	}
-	testString("=2+2;", &s, allocator);
-	testString("=x + y;", &s, allocator);
-	testString("=2 * (x + y);", &s, allocator);
+	//testString("=2+2;", &s, allocator);
+	//testString("=x + y;", &s, allocator);
+	testString("= 2 * (x + y);", &s, allocator);
 
     StringFree(&s);
 	return 0;

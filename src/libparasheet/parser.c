@@ -32,19 +32,19 @@
 void PrintFoundDifferentError(TokenType expected, Token* found, StringTable* s) {
 	// We probably want to have a better way to handle errors (so the user can
 	// see errors in the ncurses TUI)
-	warn("Syntax error on line %d: Expected %s but found \"%n\"",
+	warn("Syntax error on line %d: Expected %n but found \"%s\"",
 		 found->lineNumber, getTokenErrorString(expected), StringGet(s, found->sourceString));
 }
 
 void PrintNullTokenErrror(Token* prev, StringTable* s) {
-	warn("Syntax error on line %d: Expected token after \"%n\"",
+	warn("Syntax error on line %d: Expected token after \"%s\"",
 		 prev->lineNumber, StringGet(s, prev->sourceString));
 }
 
 void PrintUnexpectedTokenError(Token* unexpected, StringTable* s) {
 	// We probably want to have a better way to handle errors (so the user can
 	// see errors in the ncurses TUI)
-	warn("Syntax error on line %d: Unexpected token \"%n\"",
+	warn("Syntax error on line %d: Unexpected token \"%s\"",
 		 unexpected->lineNumber, StringGet(s, unexpected->sourceString));
 }
 
@@ -285,7 +285,7 @@ ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError, Strin
 	UnconsumeToken(tokens);
     Token* peek = PeekToken(tokens);
     if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
-			peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN){
+			peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
         ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
         ASTNodeIndex node2 = ParseExpression2(tokens, ast, syntaxError, node, s);
 		return node2;
@@ -311,7 +311,8 @@ ASTNodeIndex ParseExpression2(TokenList* tokens, AST* ast, u8* syntaxError,
 }
 ASTNodeIndex ParseSummation(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
-    if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT || peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN){
+    if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
+        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
 		ASTNodeIndex node = ParseTerm(tokens, ast, syntaxError, s);
 		ASTNodeIndex node2 = ParseSummation2(tokens, ast, syntaxError, node, s);
 		return node2;
@@ -340,7 +341,8 @@ ASTNodeIndex ParseSummation2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNo
 }
 ASTNodeIndex ParseTerm(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
-    if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT || peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN){
+    if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
+        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
         ASTNodeIndex node = ParseReference(tokens, ast, syntaxError, s);
         ASTNodeIndex node2 = ParseTerm2(tokens, ast, syntaxError, node, s);
         return node2;
@@ -370,7 +372,8 @@ ASTNodeIndex ParseTerm2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeInd
 }
 ASTNodeIndex ParseReference(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
-    if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT || peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN){
+    if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
+        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
         ASTNodeIndex node = ParseAbsolute(tokens, ast, syntaxError, s);
         ASTNodeIndex node2 = ParseReference2(tokens, ast, syntaxError, node, s);
         return node2;
@@ -394,7 +397,8 @@ ASTNodeIndex ParseReference2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNo
 
 ASTNodeIndex ParseAbsolute(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
-    if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT || peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN){
+    if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
+        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
         ASTNodeIndex node = ParseUnit(tokens, ast, syntaxError, s);
         return node;
     }
@@ -502,6 +506,7 @@ ASTNodeIndex ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError, StringTable
 		UnconsumeToken(tokens);
 		return ParseLiteral(tokens, ast, syntaxError, s);
 	case TOKEN_CHAR_OPEN_PAREN:
+        ConsumeToken(tokens);
 		tmp = ParseExpression(tokens, ast, syntaxError, s);
 		CheckSyntaxError();
 		ExpectToken(tokens, TOKEN_CHAR_CLOSE_PAREN, s);
