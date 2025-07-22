@@ -53,14 +53,14 @@ SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen);
 
 // supplies the currently selected keybinds
 typedef struct KeyBinds {
-    u8 cursor_up;
-    u8 cursor_down;
-    u8 cursor_left;
-    u8 cursor_right;
-    u8 terminal;
-    u8 exit; // quit the program
-    u8 edit; // open a cell for editing
-    u8 nav;  // go back to normal mode
+    u32 cursor_up;
+    u32 cursor_down;
+    u32 cursor_left;
+    u32 cursor_right;
+    u32 terminal;
+    u32 exit; // quit the program
+    u32 edit; // open a cell for editing
+    u32 nav;  // go back to normal mode
 } KeyBinds;
 
 typedef struct TypeBuffer {

@@ -1,2 +1,2 @@
 editor kitty nvim %s
-keypreset hjkl
+keypreset arrow
