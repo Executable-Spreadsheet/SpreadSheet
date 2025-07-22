@@ -8,7 +8,7 @@
 
 
 // Forward declarations
-CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx);
+static CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx);
 static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx);
 static CellValue evaluateLiteral(ASTNode* node);
 static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext* ctx);
