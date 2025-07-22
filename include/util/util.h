@@ -168,12 +168,12 @@ typedef struct Allocator {
 	void* ctx;
 } Allocator;
 
-#define Alloc(m, size) (log("Mem Alloc: %d", size), m.a(0, size, NULL, m.ctx))
+#define Alloc(m, size) (m.a(0, size, NULL, m.ctx))
 
-#define Free(m, ptr, size) (log("Mem Free: %p", ptr), m.a(size, 0, ptr, m.ctx))
+#define Free(m, ptr, size) (m.a(size, 0, ptr, m.ctx))
 
 #define Realloc(m, ptr, oldsize, newsize)                                      \
-	(log("Mem Realloc: %p %d", ptr, newsize), m.a(oldsize, newsize, ptr, m.ctx))
+	(m.a(oldsize, newsize, ptr, m.ctx))
 
 // Memory allocators
 Allocator GlobalAllocatorCreate();

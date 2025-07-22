@@ -24,7 +24,7 @@ TokenList* CreateTokenList(Allocator allocator) {
 	tokenList->size = 0;
 
 	tokenList->head = 0;
-  
+
 	tokenList->capacity = 2;
 	tokenList->tokens = Alloc(allocator, tokenList->capacity * sizeof(Token));
 	return tokenList;
@@ -58,7 +58,7 @@ Token* PopTokenDangerous(TokenList* tokenList) {
 }
 
 Token* ConsumeToken(TokenList* tokenList) {
-	if (tokenList->head == tokenList->size) {
+	if (tokenList->head >= tokenList->size) {
 		return NULL;
 	}
 	Token* consumed = &(tokenList->tokens[tokenList->head]);
@@ -73,7 +73,7 @@ void UnconsumeToken(TokenList* tokenList) {
 	tokenList->head -= 1;
 }
 
-Token* PeekToken(TokenList* tokenList){
+Token* PeekToken(TokenList* tokenList) {
 	return &(tokenList->tokens[tokenList->head]);
 }
 
@@ -88,6 +88,9 @@ SString tokenErrorStrings[] = {
 	sstring("\"(\""),		sstring("\")\""),		  sstring("\"[\""),
 	sstring("\"]\""),		sstring("\"{\""),		  sstring("\"}\""),
 	sstring("\"=\""),		sstring("\",\""),		  sstring("\";\""),
+	sstring("\">\""),		sstring("\"<\""),		  sstring("\"!\""),
+	sstring("\"==\""),		sstring("\"<=\""),		  sstring("\">=\""),
+	sstring("\"!=\""),		sstring("\"&&\""),		  sstring("\"||\""),
 	sstring("INVALID")};
 
 SString getTokenErrorString(TokenType type) { return tokenErrorStrings[type]; }
