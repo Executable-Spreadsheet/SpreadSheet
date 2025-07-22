@@ -1,3 +1,4 @@
+#include "libparasheet/tokenizer_types.h"
 #include <libparasheet/lib_internal.h>
 #include <libparasheet/tokenizer.h>
 #include <stdio.h>
@@ -16,32 +17,113 @@ int main() {
 
 	// Verify token types
 	TokenList* tokens = Tokenize(input, &stringTable, allocator);
-	assert(ConsumeToken(tokens)->type == TOKEN_KEYWORD_IF);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_OPEN_PAREN);
-	assert(ConsumeToken(tokens)->type == TOKEN_ID);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_PLUS);
-	assert(ConsumeToken(tokens)->type == TOKEN_LITERAL_INT);
-	assert(ConsumeToken(tokens)->type == TOKEN_DOUBLECHAR_EQUALS_EQUALS);
-	assert(ConsumeToken(tokens)->type == TOKEN_LITERAL_INT);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_CLOSE_PAREN);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_OPEN_BRACE);
-	assert(ConsumeToken(tokens)->type == TOKEN_KEYWORD_LET);
-	assert(ConsumeToken(tokens)->type == TOKEN_ID);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_COLON);
-	assert(ConsumeToken(tokens)->type == TOKEN_KEYWORD_FLOAT);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_EQUALS);
-	assert(ConsumeToken(tokens)->type == TOKEN_LITERAL_FLOAT);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_SEMICOLON);
-	assert(ConsumeToken(tokens)->type == TOKEN_KEYWORD_RETURN);
-	assert(ConsumeToken(tokens)->type == TOKEN_ID);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_SEMICOLON);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_CLOSE_BRACE);
-	assert(ConsumeToken(tokens)->type == TOKEN_KEYWORD_ELSE);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_OPEN_BRACE);
-	assert(ConsumeToken(tokens)->type == TOKEN_KEYWORD_RETURN);
-	assert(ConsumeToken(tokens)->type == TOKEN_LITERAL_STRING);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_SEMICOLON);
-	assert(ConsumeToken(tokens)->type == TOKEN_CHAR_CLOSE_BRACE);
+	Token* curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_KEYWORD_IF);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("if")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_OPEN_PAREN);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring("(")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_ID);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring("x")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_PLUS);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring("+")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_LITERAL_INT);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("42")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_DOUBLECHAR_EQUALS_EQUALS);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("==")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_LITERAL_INT);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("25")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_CLOSE_PAREN);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring(")")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_OPEN_BRACE);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring("{")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_KEYWORD_LET);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("let")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_ID);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("numba")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_COLON);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring(":")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_KEYWORD_FLOAT);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("float")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_EQUALS);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring("=")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_LITERAL_FLOAT);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("2.1")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_SEMICOLON);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring(";")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_KEYWORD_RETURN);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("return")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_ID);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("numba")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_SEMICOLON);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring(";")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_CLOSE_BRACE);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring("}")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_KEYWORD_ELSE);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("else")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_OPEN_BRACE);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring("{")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_KEYWORD_RETURN);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString),
+				   sstring("return")) == 0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_LITERAL_STRING);
+	assert(SStrCmp(
+			   StringGet(&stringTable, curr->sourceString),
+			   sstring(
+				   "\"Hold on a second,\\nthis is a different data type!\"")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_SEMICOLON);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring(";")) ==
+		   0);
+	curr = ConsumeToken(tokens);
+	assert(curr->type == TOKEN_CHAR_CLOSE_BRACE);
+	assert(SStrCmp(StringGet(&stringTable, curr->sourceString), sstring("}")) ==
+		   0);
 
 	// Verify literals
 	assert(tokens->tokens[4].data.i == 42);
