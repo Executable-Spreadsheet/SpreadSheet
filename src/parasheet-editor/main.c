@@ -98,6 +98,17 @@ KeyBinds keybinds_wasd = {
     .nav = (u8)KEY_ESCAPE
 };
 
+KeyBinds keybinds_arrows = {
+    .cursor_up = KEY_UP,
+    .cursor_down = KEY_DOWN,
+    .cursor_left = KEY_LEFT,
+    .cursor_right = KEY_RIGHT,
+    .terminal = ':',
+    .exit = 'q',
+    .edit = (u8)KEY_ENTER_REAL,
+    .nav = (u8)KEY_ESCAPE,
+};
+
 typedef enum EditorState {
     NORMAL,
     TERMINAL,
@@ -172,15 +183,16 @@ void editCell(RenderHandler * handler){
     //INFO(ELI): We have to close both stdout and stdin to prevent the
     //terminal window from being polluted by garbage.
 
-    close(STDOUT_FILENO);
     close(STDERR_FILENO);
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
 
-    //Equivalent to the command: Terminal texteditor filename
-    execlp((char*)handler->preferred_terminal, (char*)handler->preferred_terminal, handler->preferred_text_editor, filename, 0);
-    err("Failed to Execute Terminal");
+    char cmd[PATH_MAX + 1] = {0};
+    snprintf(cmd, PATH_MAX, (char*)handler->preferred_text_editor, filename);
+    system(cmd);
 
-    //crash if somehow the exec call fails
-    panic();
+    exit(0);
+
 }
 
 void runCommand(RenderHandler* hand) {
@@ -261,15 +273,10 @@ void readConfig(RenderHandler* handler){
         // lookups (jump tables) so none of that unfortunately.
 
         log("info: %n %n", configLine, info);
-        if (!strcmp(configLine, "terminal")){
-            log("terminal line");
-            strcpy((char*)handler->preferred_terminal, info);
-            log("pt: %n", handler->preferred_terminal);
-        }
-        else if (!strcmp(configLine, "editor")){
+        if (!strcmp(configLine, "editor")){
             log("editor line");
             strcpy((char*)handler->preferred_text_editor, info);
-            log("te: %n", handler->preferred_text_editor);
+            log("te: \"%n\"", handler->preferred_text_editor);
         }
         else if (!strcmp(configLine, "keypreset")) {
             log("key preset");

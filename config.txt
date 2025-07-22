@@ -1,3 +1,2 @@
-terminal kitty
-editor nvim
+editor kitty nvim %s
 keypreset hjkl
