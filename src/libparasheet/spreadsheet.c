@@ -170,7 +170,8 @@ void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue val) {
 	// So this is always safe
 	if (val.t == CT_EMPTY) {
 		if (block->cells[index].t != CT_EMPTY) block->nonempty--;
-		if (block->nonempty <= 0) SheetBlockDelete(sheet, blockpos);
+        if (block->nonempty <= 0) SheetBlockDelete(sheet, blockpos);
+        else block->cells[index] = val;
 		return;
 	} else if (block->cells[index].t == CT_EMPTY) {
         block->nonempty++;

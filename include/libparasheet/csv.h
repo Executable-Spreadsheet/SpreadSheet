@@ -36,4 +36,7 @@ bool csv_load_file(FILE* csv, StringTable* str, SpreadSheet* sheet);
 
 void csv_export_file(Allocator a, const char* filename, SpreadSheet* sheet, StringTable* str);
 
+bool is_integer(const char* s);
+bool is_float(const char* s);
+
 #endif // CSV_H

@@ -20,7 +20,7 @@ static char* trim(char* str) {
     return str;
 }
 
-static bool is_integer(const char* s) {
+bool is_integer(const char* s) {
     if (*s == '-' || *s == '+') s++;
     while (*s) {
         if (!isdigit(*s)) return false;
@@ -29,7 +29,7 @@ static bool is_integer(const char* s) {
     return true;
 }
 
-static bool is_float(const char* s) {
+bool is_float(const char* s) {
     char* endptr;
     strtod(s, &endptr);
     return endptr != s && *endptr == '\0';

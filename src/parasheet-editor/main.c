@@ -1,6 +1,10 @@
 #include "libparasheet/lib_internal.h"
 #include "libparasheet/csv.h"
+#include <asm-generic/errno-base.h>
+#include <errno.h>
 #include <linux/limits.h>
+#include <sys/poll.h>
+#include <sys/stat.h>
 #include <util/util.h>
 
 #include <stdint.h>
@@ -13,6 +17,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/inotify.h>
+#include <sys/select.h>
 
 
 /*
@@ -66,7 +71,6 @@ typedef struct TypeBuffer {
 // store a file reference with position of data
 typedef struct EditHandles {
     u32 notify; //inotify context handle
-    u32* fd;    //specific file watches
     v2u* idx;   //associate files with cells
     u32 size;
     u32 cap;
@@ -102,6 +106,7 @@ typedef enum EditorState {
 } EditorState;
 
 typedef struct RenderHandler {
+    Allocator mem;
     u32 ch;
     v2i base;
     v2i cursor;
@@ -109,7 +114,6 @@ typedef struct RenderHandler {
     EditHandles edit;
     EditorState state;
     SpreadSheet* sheet;
-    SpreadSheet* files;
     StringTable* str;
     KeyBinds keybinds;
     TypeBuffer type;
@@ -141,25 +145,13 @@ void editCell(RenderHandler * handler){
     v2u pos = {handler->base.x + handler->cursor.x, handler->base.y + handler->cursor.y};
 
     CellValue* data = SpreadSheetGetCell(handler->sheet, pos);
-    CellValue* file = SpreadSheetGetCell(handler->files, pos);
 
     char filename[PATH_MAX + 1] = {0};
-    snprintf(filename, PATH_MAX, "cell%d%d", pos.x, pos.y);
+    snprintf(filename, PATH_MAX, "./cells/cell_%d_%d", pos.x, pos.y);
     //snprintf(filename, PATH_MAX, "test");
 
-    if (!file || file->t == CT_EMPTY) {
-        CellValue val = {0};
-        val.d.i = open(filename, O_CREAT | O_RDWR | O_TRUNC, 0666);
-        val.t = CT_INT;
-        SpreadSheetSetCell(handler->files, pos, val);
-
-        //inotify_add_watch(handler->notify, filename, IN_MODIFY);
-
-        file = SpreadSheetGetCell(handler->files, pos);
-    }
-
     if (data) {
-        FILE* stream = fdopen(file->d.i, "w");
+        FILE* stream = fopen(filename, "w");
         switch (data->t) {
             case CT_INT: { print(stream, "%d", data->d.i); } break;
             case CT_FLOAT: { print(stream, "%f", data->d.f); } break;
@@ -218,11 +210,31 @@ void runCommand(RenderHandler* hand) {
     if ((trimmed.size > rename.size + 1) && (memcmp(trimmed.data, rename.data, rename.size) == 0)) {
         
         SString name = (SString){.data = trimmed.data, .size = trimmed.size};
-        while (name.data - trimmed.data < trimmed.size && name.data[0] != ' '){
+        while ((name.data - trimmed.data < trimmed.size) && name.data[0] != ' '){
             name.data++;
             name.size--;
         }
+        name.data++;
+        name.size--;
         log("rename %s", name);
+        hand->sheetname = name;
+    }
+
+
+    SString open = sstring("open");
+    if ((trimmed.size > open.size + 1) && (memcmp(trimmed.data, open.data, open.size) == 0)) {
+        SString name = (SString){.data = trimmed.data, .size = trimmed.size};
+        while ((name.data - trimmed.data < trimmed.size) && name.data[0] != ' '){
+            name.data++;
+            name.size--;
+        }
+        name.data++;
+        name.size--;
+        log("open \"%s\"", name);
+
+        FILE* csv = fopen((char*)name.data, "r");
+        log("file: %p", csv);
+        csv_load_file(csv, hand->str, hand->sheet);
         hand->sheetname = name;
     }
 
@@ -355,6 +367,73 @@ void handleKey(RenderHandler* handler){
     handler->cursor.y = CLAMP(handler->cursor.y, 0, maxheight);
 }
 
+void ReadBuffer(RenderHandler* hand, SString name) {
+    if (name.size < 6 || memcmp(name.data, "cell", 4) != 0) {
+        return;
+    }
+
+    char bufname[PATH_MAX + 1] = {0};
+    snprintf(bufname, PATH_MAX, "./cells/%.*s", name.size, name.data);
+    log("buf: %n", bufname);
+
+    FILE* buffer = fopen(bufname, "r");
+    if (!buffer) {
+        return;
+    }
+    
+    struct stat info;
+    if (stat(bufname, &info)) {
+        err("Failed to Stat");
+    }
+
+    u32 xstr = 0;
+    while (bufname[xstr] != '_') xstr++;
+
+    u32 ystr = ++xstr;
+    while (bufname[ystr] != '_') ystr++;
+    bufname[ystr++] = 0;
+
+    u32 x = stou(&bufname[xstr]);
+    u32 y = stou(&bufname[ystr]);
+
+    log("pos: (%d %d)", x, y);
+
+    char* data = Alloc(hand->mem, info.st_size + 1);
+    data[info.st_size] = 0;
+    fread(data, info.st_size, 1, buffer);
+    fclose(buffer);
+
+    if (info.st_size) {
+        u32 end = info.st_size - 1;
+        while (isspace(data[end])) { 
+            info.st_size--;
+            end--;
+        }
+        data[end + 1] = 0;
+    }
+
+
+    print(logfile, "%s\n", (SString){.data = (i8*)data, .size = info.st_size});
+
+    CellValue new = {0};
+
+    if (info.st_size == 0) {
+        new.t = CT_EMPTY;
+    } else if (is_integer(data)) {
+        new.t = CT_INT;
+        new.d.i = atoi(data);
+        Free(hand->mem, data, info.st_size);
+    } else if (is_float(data)) {
+        new.t = CT_FLOAT;
+        new.d.f = atof(data);
+        Free(hand->mem, data, info.st_size);
+    } else {
+        new.t = CT_TEXT;
+        new.d.index = StringAdd(hand->str, (i8*)data);
+    }
+    SpreadSheetSetCell(hand->sheet, (v2u){x, y}, new);
+}
+
 
 int main(int argc, char* argv[]) {
     // ncurses setup
@@ -382,22 +461,20 @@ int main(int argc, char* argv[]) {
         .mem = GlobalAllocatorCreate(),
     };
 
-    //file descriptor table
-    SpreadSheet files = (SpreadSheet){
-        .mem = GlobalAllocatorCreate(),
-    };
-
-
+    
     // if you want different keybinds u change that here
     RenderHandler handler = {
+        .mem = GlobalAllocatorCreate(),
         .ch = 0,
         .base = {0, 0},
         .cursor = {0, 0},
         .state = NORMAL,
         .sheet = &sheet,
-        .files = &files,
         .str = &str,
         .keybinds = keybinds_hjkl,
+        .edit = {
+            .notify = inotify_init(),
+        },
         //These are zero initialized if not mentioned,
         //This works for fixed sized structs
         //
@@ -406,6 +483,20 @@ int main(int argc, char* argv[]) {
         //Easy mistake to make but they have static memory allocated
         //at program startup rather than dynamically on the stack
     };
+    log("notify: %d", handler.edit.notify);
+
+    if (rmdir("cells")) {
+        log("rmdir: %n", strerror(errno));
+    }
+    if (mkdir("./cells", 0777)) {
+        log("mkdir: %n", strerror(errno));
+    }
+
+    u32 t = inotify_add_watch(handler.edit.notify, "./cells", IN_CREATE | IN_ONLYDIR);
+    if (t == -1) {
+        log("watch: %n", strerror(errno));
+    }
+
     
     if (argc >= 2) {
         FILE* csv = fopen(argv[1], "r"); 
@@ -472,9 +563,50 @@ int main(int argc, char* argv[]) {
         refresh();
 
         //updating
-        handler.ch = getch();
-        handleKey(&handler);
-        if (handler.state == SHUTDOWN) break;
+        
+        struct pollfd fd[2] = {0};
+        fd[0] = (struct pollfd) {
+            .fd = 0,
+            .events = POLLIN,
+        };
+
+        fd[1] = (struct pollfd) {
+            .fd = handler.edit.notify,
+            .events = POLLIN
+        };
+
+        u32 found = poll(fd, 2, -1);
+
+        if (!found) {
+            continue;
+        }
+
+        if (fd[0].revents & POLLIN) {
+            handler.ch = getch();
+            handleKey(&handler);
+            if (handler.state == SHUTDOWN) break;
+            continue;
+        }
+
+        if (fd[1].revents & POLLIN) {
+            i64 r = 0;
+            do {
+                struct inotify_event events[256] = {0};
+                r = read(fd[1].fd, events, (256 * sizeof(struct inotify_event)));
+
+                struct inotify_event* event = (struct inotify_event*)&events[0];
+
+                while (event < (&events[256])) {
+                    if (event->mask & IN_CREATE) {
+                        ReadBuffer(&handler, (SString){(i8*)event->name, event->len});
+                        break;
+                    }
+                    event += sizeof(struct inotify_event) + event->len;
+                }
+
+            } while (r > 0);
+            continue;
+        }
 
     }
 
@@ -484,7 +616,7 @@ int main(int argc, char* argv[]) {
 }
 
 SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen) {
-    static i8 buf[CELL_WIDTH + 1] = {0};
+    static i8 buf[CELL_WIDTH + 2] = {0};
     CellValue* cell = SpreadSheetGetCell(sheet, pos);
 
     if (!cell) {
@@ -494,12 +626,15 @@ SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen) {
     SString value = {NULL, 0};
     memset(buf, 0, sizeof(buf));
     value.data = buf;
-    char* fmt = "";
 
     switch (cell->t) {
         case CT_EMPTY: break;
-        case CT_FLOAT: { fmt = "%f"; } break;
-        case CT_INT: { fmt = "%d"; } break;
+        case CT_FLOAT: { 
+            value.size = snprintf((char*)value.data, CELL_WIDTH + 1, "%f", cell->d.f);
+        } break;
+        case CT_INT: { 
+            value.size = snprintf((char*)value.data, CELL_WIDTH + 1, "%d", cell->d.i);
+        } break;
         case CT_TEXT: {  
             SString data = StringGet(str, cell->d.index);
             value.size = snprintf((char*)value.data, maxlen, "%.*s", data.size, data.data);
@@ -512,7 +647,6 @@ SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen) {
         } break;
     }
 
-    value.size = snprintf((char*)value.data, maxlen, fmt, cell->d);
     return value;
 }
 

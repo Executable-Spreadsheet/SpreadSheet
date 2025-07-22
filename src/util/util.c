@@ -322,6 +322,7 @@ void logprint(const char* fmt, ...) {
 	va_start(args, fmt);
 	vprint(logfile, fmt, args);
 	va_end(args);
+    fflush(logfile);
 }
 
 void errprint(const char* fmt, ...) {
@@ -333,6 +334,7 @@ void errprint(const char* fmt, ...) {
 	va_start(args, fmt);
 	vprint(errfile, fmt, args);
 	va_end(args);
+    fflush(errfile);
 }
 
 void print(FILE* fd, const char* fmt, ...) {

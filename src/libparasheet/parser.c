@@ -301,11 +301,9 @@ ASTNodeIndex ParseExpression2(TokenList* tokens, AST* ast, u8* syntaxError,
 		ASTNodeIndex curr = ASTCreateNode(ast, AST_ASSIGN_VALUE, inNode, node, EPS);
         ASTNodeIndex node2 = ParseExpression2(tokens, ast, syntaxError, curr, s);
         return node2;
-    }
-	else if (peek->type == TOKEN_CHAR_SEMICOLON || peek->type == TOKEN_CHAR_CLOSE_PAREN){
+    } else if (peek->type == TOKEN_CHAR_SEMICOLON || peek->type == TOKEN_CHAR_CLOSE_PAREN){
         return inNode;
-    }
-	else {
+    } else {
 		return EPS;
 	}
 }
@@ -444,25 +442,25 @@ ASTNodeIndex ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError, StringTa
 
 	ASTNodeIndex new_node_index = ASTCreateNode(ast, AST_INVALID, EPS, EPS, EPS);
 
-	switch (literal->type) {
-	case (TOKEN_LITERAL_INT):
-		ast->nodes[new_node_index].op = AST_INT_LITERAL;
-		ast->nodes[new_node_index].vt = V_INT;
-		ast->nodes[new_node_index].data.i = literal->data.i; // TODO: Get literal values
-		break;
-	case (TOKEN_LITERAL_FLOAT):
-		ast->nodes[new_node_index].op = AST_FLOAT_LITERAL;
-		ast->nodes[new_node_index].vt = V_FLOAT;
-		ast->nodes[new_node_index].data.f = literal->data.f; // TODO: Get literal values
-		break;
-	case (TOKEN_LITERAL_STRING):
-		ast->nodes[new_node_index].op = AST_INVALID; // TODO: Add strings
-		ast->nodes[new_node_index].vt = V_INT;		 // Interned string
-		ast->nodes[new_node_index].data.i = 0;		 // TODO: Get literal values
-		break;
-	default:
-		break;
-	}
+    switch (literal->type) {
+        case (TOKEN_LITERAL_INT):
+            ast->nodes[new_node_index].op = AST_INT_LITERAL;
+            ast->nodes[new_node_index].vt = V_INT;
+            ast->nodes[new_node_index].data.i = 4; // TODO: Get literal values
+            break;
+        case (TOKEN_LITERAL_FLOAT):
+            ast->nodes[new_node_index].op = AST_FLOAT_LITERAL;
+            ast->nodes[new_node_index].vt = V_FLOAT;
+            ast->nodes[new_node_index].data.f = 4.2; // TODO: Get literal values
+            break;
+        case (TOKEN_LITERAL_STRING):
+            ast->nodes[new_node_index].op = AST_INVALID; // TODO: Add strings
+            ast->nodes[new_node_index].vt = V_INT;		 // Interned string
+            ast->nodes[new_node_index].data.i = 0;		 // TODO: Get literal values
+            break;
+        default:
+            break;
+    }
 
 	return new_node_index;
 }
