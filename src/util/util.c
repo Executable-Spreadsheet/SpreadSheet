@@ -385,21 +385,19 @@ typedef struct StackAllocator {
 static alloc_func_def(StackAllocate) {
 	StackAllocator* s = ctx;
 
-	if (oldsize == 0) {
-//		log("Stack Alloc: %p %d", ctx, newsize);
-		if (s->size + newsize > s->cap)
-			return 0; // error
-		void* out = &s->data[s->size];
-		s->size += newsize;
+  if (oldsize == 0) {
+    if (s->size + newsize > s->cap)
+      return 0; // error
+    void *out = &s->data[s->size];
+    s->size += newsize;
 
 		return out;
 	}
 
-	// realloc works via an alloc + memcpy
-	if (ptr && oldsize && newsize) {
-//		log("Stack Realloc: %p (%p, %d) -> %d", ctx, ptr, oldsize, newsize);
-		if (s->size + newsize > s->cap)
-			return ptr; // error
+  // realloc works via an alloc + memcpy
+  if (ptr && oldsize && newsize) {
+    if (s->size + newsize > s->cap)
+      return ptr; // error
 
 		void* dst = &s->data[s->size];
 		s->size += newsize;
@@ -408,11 +406,10 @@ static alloc_func_def(StackAllocate) {
 		return dst;
 	}
 
-	if (ptr) {
-//		log("Stack Free: %p (%p, %d)", ctx, ptr, oldsize);
-		// free
-		return 0;
-	}
+  if (ptr) {
+    // free
+    return 0;
+  }
 
 	panic();
 }

@@ -1,6 +1,7 @@
 #include "libparasheet/lib_internal.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <util/util.h>
 #include <ncurses.h>
 #include <stdlib.h>
@@ -25,12 +26,15 @@
 #define KEY_ESCAPE 27
 #define KEY_ENTER_REAL 10
 
+//NOTE(ELI): I would recommend using PATH_MAX for this
+//rather than a custom macro. PATH_MAX is the maximum length of a path in
+//the filesystem so it garuntees any executable is at most that size.
 #define STRING_SIZE 2048
 #define CONFIG_FILEPATH "config.txt"
 
 
 void drawBox(v2u pos, v2u size, SString str);
-SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen);
+SString cellDisplay(SpreadSheet* sheet, v2u pos, u32 maxlen);
 
 // supplies the currently selected keybinds
 typedef struct KeyBinds {
@@ -101,18 +105,32 @@ void editCell(RenderHandler * handler){
     // create new tempfile for cell
     // open vim on tempfile
     // TODO
-    char command[STRING_SIZE];
-    // https://askubuntu.com/questions/974756/how-can-i-open-a-extra-console-and-run-a-program-in-it-with-one-command
-    snprintf(command, STRING_SIZE, "%s -- bash -c \" %s cell%d-%d; exec bash\"", handler->preferred_terminal, handler->preferred_text_editor, handler->cursor.x, handler->cursor.y);
+
     log("wasd: %n, %n", handler->preferred_text_editor, handler->preferred_terminal);
-    log("cmd: %n", command);
-    system(command);
+    //You can run this as system, however I suspect it would be better to run as a fork-execl style instead.
+    if (fork()) {
+        return;
+    }
+    
+    //INFO(ELI): We have to close both stdout and stdin to prevent the
+    //terminal window from being polluted by garbage.
+
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+
+    //Equivalent to the command: Terminal texteditor filename
+    execlp((char*)handler->preferred_terminal, (char*)handler->preferred_terminal, handler->preferred_text_editor, "cellname", 0);
+
+    //crash if somehow the exec call fails
+    panic();
 }
 
 void readConfig(RenderHandler* handler){
     FILE * configFile = fopen(CONFIG_FILEPATH, "r");
     if (!configFile){
-        warn("No Config File Detected.");
+        //NOTE(ELI): This seems like an error at the moment since we aren't
+        //detecting any terminal or text editors.
+        err("No Config File Detected.");
         return;
     }
     char configLine[STRING_SIZE];
@@ -123,20 +141,27 @@ void readConfig(RenderHandler* handler){
         char * info = strtok(NULL, "\n");
         // configLine is the item, info is the content
         // oof no switch statements with strings (reasonable) :/
+        //
+        // NOTE(ELI): Yeah, technically switch statements are table
+        // lookups (jump tables) so none of that unfortunately.
+
+        log("info: %n %n", configLine, info);
         if (!strcmp(configLine, "terminal")){
             log("terminal line");
-            strcpy(handler->preferred_terminal, info);
+            strcpy((char*)handler->preferred_terminal, info);
             log("pt: %n", handler->preferred_terminal);
         }
         else if (!strcmp(configLine, "editor")){
             log("editor line");
-            strcpy(handler->preferred_text_editor, info);
+            strcpy((char*)handler->preferred_text_editor, info);
             log("te: %n", handler->preferred_text_editor);
         }
         else {
             err("Invalid identifier in config file: %n", configLine);
         }
     }
+
+    fclose(configFile);
 }
 
 void handleKey(RenderHandler* handler){
@@ -163,7 +188,10 @@ void handleKey(RenderHandler* handler){
             }
             else if (keyIn == handler->keybinds.edit) {
                 handler->state = EDIT;
-                editCell(&handler);
+                //NOTE(ELI): Handler is already a pointer and doesn't need to have its address taken
+                //This was the main bug in the previous version, it was reinterpreting a weird part of
+                //the stack as a RenderHandler and reading garbage values.
+                editCell(handler);
             }
             break;
         case EDIT:
@@ -201,7 +229,6 @@ int main(int argc, char* argv[]) {
     SpreadSheet sheet = {
         .mem = GlobalAllocatorCreate(),
     };
-    Allocator stack = StackAllocatorCreate(sheet.mem, KB(1));
 
     
     //set logging
@@ -214,19 +241,22 @@ int main(int argc, char* argv[]) {
     SpreadSheetSetCell(&sheet, (v2u){0,0}, (CellValue){.t = CT_INT, .d = {1}});
 
     // if you want different keybinds u change that here
-    struct RenderHandler handler = {
+    RenderHandler handler = {
         .ch = 0,
         .base = {0, 0},
         .cursor = {0, 0},
         .state = NORMAL,
         .sheet = &sheet,
         .keybinds = keybinds_wasd,
-        .preferred_terminal[256] = "",
-        .preferred_text_editor[256] = ""
+        //These are zero initialized if not mentioned,
+        //This works for fixed sized structs
+        //
+        //Also side note, "" string literals are of type
+        //char*, which means they must be assigned to a pointer.
+        //Easy mistake to make but they have static memory allocated
+        //at program startup rather than dynamically on the stack
     };
     
-    handler.preferred_terminal[255] = '\0';
-    handler.preferred_text_editor[255] = '\0';
     readConfig(&handler);
     log("term: %n", handler.preferred_terminal);
     log("edit: %n", handler.preferred_text_editor);
@@ -242,25 +272,23 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                SString info = cellDisplay(stack, &sheet, 
+                SString info = cellDisplay(&sheet, 
                                            (v2u){handler.base.x + i, handler.base.y + j},
                                            CELL_WIDTH - 2);
 
                 drawBox((v2u){i * CELL_WIDTH, j * CELL_HEIGHT}, 
                         (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
 
-                StackAllocatorReset(&stack);
             }
         }
 
         // currently selected cell
         attron(A_REVERSE);
-        SString info = cellDisplay(stack, &sheet, (v2u)
+        SString info = cellDisplay(&sheet, (v2u)
                 {handler.cursor.x, handler.cursor.y}, CELL_WIDTH - 2);
         drawBox((v2u){handler.cursor.x * CELL_WIDTH, handler.cursor.y * CELL_HEIGHT},
                 (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
 
-        StackAllocatorReset(&stack);
 
         mvprintw(LINES - 2, 0, "Cursor (%d %d)  ch: %d State: %s", 
                 handler.cursor.x, handler.cursor.y, handler.ch, stateToString(handler.state).data);
@@ -278,7 +306,8 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen) {
+SString cellDisplay(SpreadSheet* sheet, v2u pos, u32 maxlen) {
+    static i8 buf[CELL_WIDTH + 1] = {0};
     CellValue* cell = SpreadSheetGetCell(sheet, pos);
 
     if (!cell) {
@@ -286,7 +315,8 @@ SString cellDisplay(Allocator mem, SpreadSheet* sheet, v2u pos, u32 maxlen) {
     }
 
     SString value = {NULL, 0};
-    value.data = Alloc(mem, maxlen);
+    memset(buf, 0, sizeof(buf));
+    value.data = buf;
     char* fmt = "";
 
     switch (cell->t) {
