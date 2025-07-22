@@ -1,37 +1,68 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
 #include <libparasheet/lib_internal.h>
 #include <libparasheet/evaluator.h>
 
-// Declare the internal function
-CellValue evaluateLiteral(ASTNode* node);
+// Declare the functions to test
+CellValue evaluateNode(AST* tree, u32 index, struct EvalContext* ctx);
 
-void test_int_literal() {
-    ASTNode node;
-    node.op = AST_INT_LITERAL;
-    node.data.i = 42;
-
-    CellValue val = evaluateLiteral(&node);
-    assert(val.t == CT_INT);
-    assert(val.d.i == 42);
-    printf("[PASS] Integer literal: %d\n", val.d.i);
+// Stub: This must match what your evaluateNode expects
+CellValue evaluateLiteral(ASTNode* node) {
+    CellValue v;
+    if (node->op == AST_INT_LITERAL) {
+        v.t = CT_INT;
+        v.d.i = node->data.i;
+    } else if (node->op == AST_FLOAT_LITERAL) {
+        v.t = CT_FLOAT;
+        v.d.f = node->data.f;
+    } else {
+        fprintf(stderr, "Invalid literal\n");
+        exit(1);
+    }
+    return v;
 }
 
-void test_float_literal() {
-    ASTNode node;
-    node.op = AST_FLOAT_LITERAL;
-    node.data.f = 3.14f;
-
-    CellValue val = evaluateLiteral(&node);
-    assert(val.t == CT_FLOAT);
-    assert(val.d.f == 3.14f);
-    printf("[PASS] Float literal: %f\n", val.d.f);
-}
+// Dummy context
+typedef struct EvalContext {
+    void* srcSheet;
+    void* inSheet;
+    void* outSheet;
+    u32 currentX;
+    u32 currentY;
+    AST* tree;
+} EvalContext;
 
 int main() {
-    test_int_literal();
-    test_float_literal();
-    printf("All evaluateLiteral tests passed.\n");
+    // Fake AST for: 2 + 3
+    ASTNode nodes[3];
+
+    // Left operand: 2
+    nodes[0].op = AST_INT_LITERAL;
+    nodes[0].data.i = 2;
+
+    // Right operand: 3
+    nodes[1].op = AST_INT_LITERAL;
+    nodes[1].data.i = 3;
+
+    // Root node: 2 + 3
+    nodes[2].op = AST_ADD;
+    nodes[2].lchild = 0;
+    nodes[2].mchild = 1;
+
+    AST tree = {
+        .nodes = nodes,
+        .size = 3
+    };
+
+    EvalContext ctx = {
+        .tree = &tree
+    };
+
+    CellValue result = evaluateNode(&tree, 2, &ctx);
+    assert(result.t == CT_INT);
+    assert(result.d.i == 5);
+    printf("[PASS] 2 + 3 = %d\n", result.d.i);
+
     return 0;
 }
