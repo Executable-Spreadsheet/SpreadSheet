@@ -9,7 +9,7 @@
 
 void testString(char* input, StringTable* table, Allocator allocator){
 	TokenList* tokens = Tokenize(input, table, allocator);
-	AST ast = BuildASTFromTokens(tokens, allocator);
+	AST ast = BuildASTFromTokens(tokens, table, allocator);
 	if (ast.size > 0){
 		ASTPrint(stdout, &ast);
 		for (int i = 0; i < ast.size - 1; i++){
@@ -51,8 +51,9 @@ int main() {
 //		log("AST:");
 //		ASTPrint(stdout, &ast);
 //	}
-	char* input1 = "=2+2;";	
-	testString(input1, &s, allocator);
+	testString("=2+2;", &s, allocator);
+	testString("=x + y;", &s, allocator);
+	testString("=2 * (x + y);", &s, allocator);
 
     StringFree(&s);
 	return 0;

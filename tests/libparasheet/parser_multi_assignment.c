@@ -47,7 +47,7 @@ int main() {
 			   TokenTypeToString(t->type), val.size, val.data);
 	}
 
-	AST ast = BuildASTFromTokens(tokens, allocator);
+	AST ast = BuildASTFromTokens(tokens, &s, allocator);
 	if (ast.size > 0) {
 		log("AST:");
 		ASTPrint(stdout, &ast);
