@@ -23,16 +23,6 @@ CellValue evaluateLiteral(ASTNode* node) {
     return v;
 }
 
-// Dummy context
-typedef struct EvalContext {
-    void* srcSheet;
-    void* inSheet;
-    void* outSheet;
-    u32 currentX;
-    u32 currentY;
-    AST* tree;
-} EvalContext;
-
 int main() {
     // Fake AST for: 2 + 3
     ASTNode nodes[3];

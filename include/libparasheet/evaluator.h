@@ -3,13 +3,14 @@
 
 #include "lib_internal.h"
 
-// Local EvalContext definition for testing
+//EvalContext definition
 typedef struct EvalContext {
     SpreadSheet* srcSheet;
     SpreadSheet* inSheet;
     SpreadSheet* outSheet;
     u32 currentX;
     u32 currentY;
+    AST* tree;
 } EvalContext;
 
 // Evaluates a single cell by walking its AST and computing the result.

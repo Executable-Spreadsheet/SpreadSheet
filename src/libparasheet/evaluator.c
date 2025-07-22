@@ -95,7 +95,38 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx) {
 }
 
 void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, u32 cellX, u32 cellY) {
+    v2u pos = { cellX, cellY };
 
+    // If already evaluated, return
+    CellValue* outCell = SpreadSheetGetCell(outSheet, pos);
+    if (outCell->t != CT_EMPTY) return;
+
+    // Get formula/code from source sheet
+    CellValue* srcCell = SpreadSheetGetCell(srcSheet, pos);
+
+    // If it's not code (e.g. it's a literal value), just copy it directly
+    if (srcCell->t != CT_CODE) {
+        *outCell = *srcCell;
+        return;
+    }
+
+    // Otherwise evaluate the formula
+    AST* tree = (AST*)(uintptr_t)(srcCell->d.index);
+    if (!tree) return;
+
+    u32 rootIndex = tree->size - 1;  // Root is always the last node
+
+    EvalContext ctx = {
+        .srcSheet = srcSheet,
+        .inSheet = inSheet,
+        .outSheet = outSheet,
+        .currentX = cellX,
+        .currentY = cellY,
+        .tree = tree
+    };
+
+    CellValue result = evaluateNode(tree, rootIndex, &ctx);
+    SpreadSheetSetCell(outSheet, pos, result);  // Store result in output sheet
 }
 
 static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext* ctx) {
