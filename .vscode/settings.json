@@ -3,6 +3,7 @@
         "tokenizer_types.h": "c",
         "util.h": "c",
         "lib_internal.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "evaluator.h": "c"
     }
 }
