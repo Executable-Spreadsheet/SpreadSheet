@@ -64,6 +64,9 @@ SString nodeops[] = {
 	sstring("WHILE () {}"),
 	sstring("FOR (,) {}"),
 	sstring("RETURN ()"),
+    sstring("Scope Pop"),
+    sstring("Scope Push"),
+
 
 	// Function Things
 	sstring("=(...)"),

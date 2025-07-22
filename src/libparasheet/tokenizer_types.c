@@ -22,6 +22,7 @@ TokenList* CreateTokenList(Allocator allocator) {
 	TokenList* tokenList = Alloc(allocator, sizeof(TokenList));
 	tokenList->mem = allocator;
 	tokenList->size = 0;
+    tokenList->sym.mem = allocator;
 
 	tokenList->head = 0;
 
