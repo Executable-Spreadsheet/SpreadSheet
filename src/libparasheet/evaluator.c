@@ -10,10 +10,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-//TEMP
-extern Allocator GlobalAllocator;
-
-
 // Forward declarations
 static CellValue evaluateLiteral(ASTNode* node);
 static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx);
@@ -76,7 +72,7 @@ static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext* ctx) {
 
         default:
             fprintf(stderr, "Unknown binary op: %u\n", node->op);
-            exit(1);
+			exit(1);
     }
 
     return result;
@@ -140,10 +136,35 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext* ctx) {
     }
 }
 
+// clarise TODO: add error checking, somehow?
+// maybe create a new cell value of "#ERROR!" lol
 // Evaluates a single cell in the spreadsheet, recursively if needed
-void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, u32 cellX, u32 cellY) {
+void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outSheet, 
+		u32 cellX, u32 cellY, StringTable* strTable, Allocator allocator) {
     v2u pos = { cellX, cellY };
-
+	
+	CellValue* sourceCell = SpreadSheetGetCell(srcSheet, pos);
+	// Eli's code checks for numbers at entry into sheet from file.
+	// cell knows if it is a number (int/float) or a string. parse string.
+	switch (sourceCell->t) {
+		case CT_INT: 
+		case CT_FLOAT:
+			SpreadSheetSetCell(outSheet, pos, sourceCell);
+			break;
+		default:
+			// is a string	
+			// invoke the tokenizer
+			TokenList* tokens = Tokenize(input, strTable, allocator);
+//			if (tokens)
+			// run the parser on the tokens
+			AST ast = BuildASTFromTokens(tokens, strTable, allocator);
+			// run the evaluator on the ast
+			CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
+			SpreadSheetSetCell(outSheet, pos, result);
+			// error checking
+			break;
+	}
+	/*
     // If already evaluated, return
     CellValue* outCell = SpreadSheetGetCell(outSheet, pos);
     if (outCell->t != CT_EMPTY) return;
@@ -164,7 +185,7 @@ void EvaluateCell(SpreadSheet* srcSheet, SpreadSheet* inSheet, SpreadSheet* outS
     if (!tree) return;
 
     u32 rootIndex = tree->size - 1;  // Root is always the last node
-
+	*/
     EvalContext ctx = {
         .srcSheet = srcSheet,
         .inSheet = inSheet,
