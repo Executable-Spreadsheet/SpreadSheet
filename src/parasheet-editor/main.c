@@ -1,4 +1,5 @@
 #include "libparasheet/lib_internal.h"
+#include "libparasheet/csv.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -255,12 +256,6 @@ int main(int argc, char* argv[]) {
     set_escdelay(0);        //remove delay when processing esc
     curs_set(0);            //set cursor to be invisible
 
-
-    SpreadSheet sheet = {
-        .mem = GlobalAllocatorCreate(),
-    };
-
-    
     //set logging
     //INFO(ELI): dev/null stops all printing,
     //change to enable printing to log file
@@ -268,7 +263,19 @@ int main(int argc, char* argv[]) {
     logfile = fopen("log.out", "w+");
     errfile = fopen("err.out", "w+");
 
-    SpreadSheetSetCell(&sheet, (v2u){0,0}, (CellValue){.t = CT_INT, .d = {1}});
+    SpreadSheet sheet = (SpreadSheet){
+        .mem = GlobalAllocatorCreate(),
+    };
+
+    if (argc >= 2) {
+        FILE* csv = fopen(argv[1], "r"); 
+        if (csv) {
+            csv_load_file(csv, &sheet);
+        }
+    }
+    
+
+    //SpreadSheetSetCell(&sheet, (v2u){0,0}, (CellValue){.t = CT_INT, .d = {1}});
 
     // if you want different keybinds u change that here
     RenderHandler handler = {
@@ -367,8 +374,12 @@ SString cellDisplay(SpreadSheet* sheet, v2u pos, u32 maxlen) {
         case CT_EMPTY: break;
         case CT_FLOAT: { fmt = "%f"; } break;
         case CT_INT: { fmt = "%d"; } break;
+        case CT_TEXT: { err("Failure"); } break;
 
-        default: { endwin(); todo(); } break;
+        default: { 
+            endwin();
+            todo();
+        } break;
     }
 
     value.size = snprintf((char*)value.data, maxlen, fmt, cell->d);

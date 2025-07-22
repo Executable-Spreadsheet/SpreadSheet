@@ -23,7 +23,7 @@
  * @param max_values  Maximum number of values to write into out_values.
  * @return            Number of values parsed.
  */
-int csv_parse_line(const char* line, CellValue* out_values, size_t max_values);
+int csv_parse_line(const char* line, u32 linesize, CellValue* out_values, size_t max_values);
 
 /**
  * Loads an entire CSV file into the given spreadsheet.
@@ -32,6 +32,6 @@ int csv_parse_line(const char* line, CellValue* out_values, size_t max_values);
  * @param sheet     Pointer to the target SpreadSheet to populate.
  * @return          True on success, false on failure.
  */
-bool csv_load_file(const char* filename, SpreadSheet* sheet);
+bool csv_load_file(FILE* f, SpreadSheet* sheet);
 
 #endif // CSV_H
