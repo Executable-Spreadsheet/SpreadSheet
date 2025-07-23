@@ -4,20 +4,20 @@
 #include <util/util.h>
 
 int main() {
-	Allocator AllieO_O = GlobalAllocatorCreate();
+	Allocator AllieOwO = GlobalAllocatorCreate();
 
 	StringTable shaun = {
-		.mem = AllieO_O,
+		.mem = AllieOwO,
 	};
 
 	SpreadSheet steve = {
-		.mem = AllieO_O,
+		.mem = AllieOwO,
 	};
 	SpreadSheet stephan = {
-		.mem = AllieO_O,
+		.mem = AllieOwO,
 	};
 	SymbolTable sid = {
-		.mem = AllieO_O,
+		.mem = AllieOwO,
 	};
 
 	SymbolPushScope(&sid);
@@ -31,7 +31,7 @@ int main() {
 							   .outSheet = &stephan,
 							   .currentX = 1,
 							   .currentY = 1,
-							   .mem = AllieO_O,
+							   .mem = AllieOwO,
 							   .str = &shaun,
 							   .table = &sid});
 
