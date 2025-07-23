@@ -97,8 +97,11 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 
         case AST_SEQ: {
             // Evaluate lchild and mchild sequentially; return result of mchild
-            evaluateNode(tree, node->lchild, ctx);
-            return evaluateNode(tree, node->mchild, ctx);
+            CellValue a = evaluateNode(tree, node->lchild, ctx);
+            CellValue b = evaluateNode(tree, node->mchild, ctx);
+            if (b.t == CT_EMPTY)
+                return a;
+            return b;
         }
 
         case AST_IF_ELSE: {
@@ -121,16 +124,76 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
             exit(1);
 
         case AST_DECLARE_VARIABLE:
+            {
+                SymbolEntry e = {
+                    .type = S_VAR,
+                };
+                
+
+                if (node->vt == V_INT) e.data.t = CT_INT; 
+                if (node->vt == V_FLOAT) e.data.t = CT_FLOAT;
+
+
+                log("declare: %s", StringGet(ctx.str, node->data.s));
+                SymbolInsert(ctx.table, node->data.s, e);
+                return e.data; 
+            } break;
         case AST_ASSIGN_VALUE:
+            {
+                CellValue lhs = evaluateNode(tree, node->lchild, ctx);
+                CellValue rhs = evaluateNode(tree, node->mchild, ctx);
+
+                StrID var = ASTGet(tree, node->lchild).data.s;
+                log("assign: %d", StringGet(ctx.str, var));
+                SymbolEntry e = SymbolGet(ctx.table, var);
+                if (e.type == S_INVALID) {
+                    err("inavalid name");
+                    panic();
+                }
+
+                if (e.data.t == rhs.t) {
+                    e.data = rhs;
+                    SymbolInsert(ctx.table, var, e);
+                    return e.data;
+                }
+
+                if (e.data.t == CT_INT) {
+                    e.data.d.i = (i32)rhs.d.f;
+                } else if (e.data.t == CT_FLOAT) {
+                    e.data.d.f = (f32)rhs.d.i;
+                }
+
+                return e.data;
+            } break;
         case AST_ID:
+            {
+
+                StrID var = node->data.s;
+                SymbolEntry e = SymbolGet(ctx.table, var);
+                if (e.type == S_INVALID) {
+                    err("inavalid name");
+                    panic();
+                }
+                return e.data;
+            }
+        case AST_SCOPE_BEGIN:
+            {
+                SymbolPushScope(ctx.table);
+                return (CellValue){0};
+            } break;
+        case AST_SCOPE_END:
+            {
+                SymbolPopScope(ctx.table);
+                return (CellValue){0};
+            } break;
         case AST_INT_TYPE:
         case AST_FLOAT_TYPE:
             fprintf(stderr, "Variable/Type logic not implemented yet in evaluator\n");
             exit(1);
 
         default:
-            fprintf(stderr, "Unhandled AST node type: %u\n", node->op);
-            exit(1);
+            err("Unhandled AST node type: %d\n", node->op);
+            panic();
     }
 }
 

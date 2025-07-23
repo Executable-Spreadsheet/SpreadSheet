@@ -12,7 +12,7 @@ int main() {
 		u32 e = SymbolMapInsert(&map, insert);
 		map.entries[e] = (SymbolEntry){
 			.type = 0,
-			.idx = i,
+			.data.d.i = i,
 		};
 	}
 
@@ -21,20 +21,20 @@ int main() {
 		u32 e = SymbolMapInsert(&map, insert);
 		map.entries[e] = (SymbolEntry){
 			.type = 0,
-			.idx = i * 2,
+			.data.d.i = i * 2,
 		};
 	}
 
 	print(stdout, "Table:\n");
 	for (u32 i = 0; i < map.cap; i++) {
-		print(stdout, "\t(%d %d)\n", map.keys[i], map.entries[i].idx);
+		print(stdout, "\t(%d %d)\n", map.keys[i], map.entries[i].data.d.i);
 	}
 
 	print(stdout, "Vals:\n");
 	for (u32 i = 0; i < 10; i++) {
 		StrID insert = {.idx = i, .gen = 1};
 		u32 e = SymbolMapGet(&map, insert);
-		print(stdout, "\t(%d %d)\n", i, map.entries[e].idx);
+		print(stdout, "\t(%d %d)\n", i, map.entries[e].data.d.i);
 	}
 
 	SymbolMapFree(&map);
@@ -46,18 +46,18 @@ int main() {
 
 	for (u32 i = 0; i < 10; i++) {
 		StrID insert = {.idx = i, .gen = 1};
-		SymbolInsert(&t, insert, (SymbolEntry){.type = S_VAR, .idx = i});
+		SymbolInsert(&t, insert, (SymbolEntry){.type = S_VAR, .data.d.i = i});
 	}
 	SymbolPushScope(&t);
 	for (u32 i = 5; i < 15; i++) {
 		StrID insert = {.idx = i, .gen = 1};
-		SymbolInsert(&t, insert, (SymbolEntry){.type = S_VAR, .idx = i * 2});
+		SymbolInsert(&t, insert, (SymbolEntry){.type = S_VAR, .data.d.i = i * 2});
 	}
 
 	for (u32 i = 0; i < 15; i++) {
 		StrID insert = {.idx = i, .gen = 1};
 		SymbolEntry e = SymbolGet(&t, insert);
-		print(stdout, "\t(%d %d %d)\n", i, e.type, e.idx);
+		print(stdout, "\t(%d %d %d)\n", i, e.type, e.data.d.i);
 	}
 
 	SymbolPopScope(&t);
@@ -65,7 +65,7 @@ int main() {
 	for (u32 i = 0; i < 15; i++) {
 		StrID insert = {.idx = i, .gen = 1};
 		SymbolEntry e = SymbolGet(&t, insert);
-		print(stdout, "\t(%d %d %d)\n", i, e.type, e.idx);
+		print(stdout, "\t(%d %d %d)\n", i, e.type, e.data.d.i);
 	}
 
     SymbolPopScope(&t);

@@ -18,14 +18,11 @@ void testString(char* input, StringTable* table, Allocator allocator){
     SymbolTable sym = {
         .mem = GlobalAllocatorCreate(),
     };
-
-    StringTable str = {
-        .mem = GlobalAllocatorCreate(),
-    };
+    SymbolPushScope(&sym);
 
 	EvalContext evalContext = (EvalContext){
         .table = &sym,
-        .str = &str,
+        .str = &table,
 
     };
 	if (PRINT_TOKENS){
@@ -39,6 +36,12 @@ void testString(char* input, StringTable* table, Allocator allocator){
 	}
 	CellValue evaluation = evaluateNode(&ast, ast.size - 1, evalContext);
 	log("eval type %d: %d/%f", evaluation.t, evaluation.d.i, evaluation.d.f);
+
+    while (sym.size){
+        SymbolPopScope(&sym);
+    }
+    Free(sym.mem, sym.scopes, sym.cap * sizeof(SymbolMap));
+
 	ASTFree(&ast);
 	DestroyTokenList(&tokens);
 }
@@ -52,7 +55,7 @@ int main() {
 	testString("=2+2;", &s, allocator);
 	testString("=2+2;3+3;", &s, allocator);
 	testString("=let x : int = 2; let y : int = 2; x + y;", &s, allocator);
-	testString("=2 * (x + y);", &s, allocator);
+	testString("=let x : int = 3; let y: int = 4; 2 * (x + y);", &s, allocator);
 
     StringFree(&s);
 	return 0;

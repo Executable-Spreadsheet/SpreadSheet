@@ -92,7 +92,7 @@ typedef enum CellType : u32 {
 typedef struct CellValue {
 	CellType t;
 	union {
-		u32 i;
+		i32 i;
 		f32 f;
 		StrID index; // index into external buffer
 	} d;
@@ -266,7 +266,7 @@ typedef enum SymbolType : u32 {
 
 typedef struct SymbolEntry {
     SymbolType type;
-    u32 idx;
+    CellValue data;
 } SymbolEntry;
 
 //Insertion and getting only, never delete

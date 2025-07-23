@@ -434,7 +434,7 @@ ASTNodeIndex ParseID(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* 
 	ASTNodeIndex new_node_index = ASTCreateNode(ast, AST_ID, EPS, EPS, EPS);
 
 	ast->nodes[new_node_index].vt = V_INT;
-	ast->nodes[new_node_index].data.i = id->data.i;
+	ast->nodes[new_node_index].data.s = id->sourceString;
 
 	return new_node_index;
 }
@@ -585,7 +585,7 @@ ASTNodeIndex ParseDeclaration(TokenList* tokens, AST* ast, u8* syntaxError, Stri
     }
 
     ASTGet(ast, n).data.s = id->sourceString;
-    log("Parsed Declaration");
+    log("Parsed Declaration: %s", StringGet(s, ASTGet(ast, n).data.s));
 
     return n;
 }
