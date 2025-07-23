@@ -170,7 +170,8 @@ ASTNodeIndex ParseBlock(TokenList* tokens, AST* ast, u8* syntaxError, StringTabl
 	ASTNodeIndex continueBlock = ParseBlock(tokens, ast, syntaxError, s);
 	CheckSyntaxError();
 	if (continueBlock == EPS) {
-		return statement;
+        u32 scope_end = ASTCreateNode(ast, AST_SCOPE_END, EPS, EPS, EPS);
+        return ASTCreateNode(ast, AST_SEQ, statement, scope_end, EPS);
 	}
 
 	return ASTCreateNode(ast, AST_SEQ, statement, continueBlock, EPS);
@@ -203,7 +204,8 @@ ASTNodeIndex ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError, String
 		tmp = ParseBlock(tokens, ast, syntaxError, s);
 		CheckSyntaxError();
 		ExpectToken(tokens, TOKEN_CHAR_CLOSE_BRACE, s);
-		return tmp;
+        u32 scope_start = ASTCreateNode(ast, AST_SCOPE_BEGIN, EPS, EPS, EPS);
+		return ASTCreateNode(ast, AST_SEQ, scope_start, tmp, EPS);
 		break;
 	default:
 		UnconsumeToken(tokens);

@@ -78,6 +78,7 @@ typedef struct Token {
 
 typedef struct TokenList {
 	Allocator mem;
+
 	Token* tokens;
 	u32 head;
 	u32 size;

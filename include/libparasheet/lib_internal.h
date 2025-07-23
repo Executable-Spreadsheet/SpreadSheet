@@ -192,6 +192,8 @@ typedef enum ASTNodeType : u32 {
 	AST_WHILE,
 	AST_FOR,
 	AST_RETURN,
+    AST_SCOPE_END,
+    AST_SCOPE_BEGIN,
 
 	// Function Things
 	AST_HEADER,
