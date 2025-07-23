@@ -1,5 +1,6 @@
 #include "libparasheet/csv.h"
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,8 +77,8 @@ bool csv_load_file(FILE* csv, StringTable* str, SpreadSheet* sheet) {
 
     struct stat info;
     if (fstat(fileno(csv), &info)) {
-        err("Failed to stat file");
-        panic();
+        err("Failed to stat file: %n", strerror(errno));
+        return false;
     }
 
     SString file = {.size = info.st_size, .data = Alloc(a, info.st_size)};

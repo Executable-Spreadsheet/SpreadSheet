@@ -1,3 +1,0 @@
-make clean
-make library-build-tests
-valgrind ./build/tests/libparasheet/eval_basicBinOp

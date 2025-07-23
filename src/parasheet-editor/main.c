@@ -223,7 +223,7 @@ void runCommand(RenderHandler* hand) {
         if (a.a == NULL) {
             a = StackAllocatorCreate(GlobalAllocatorCreate(), MB(1));
         }
-        csv_export_file(a, (char*)hand->sheetname.data, hand->dispSheet, hand->str);
+        csv_export_file(a, (char*)hand->sheetname.data, hand->srcSheet, hand->str);
         StackAllocatorReset(&a);
     }
 
@@ -259,9 +259,11 @@ void runCommand(RenderHandler* hand) {
             err("Failed to load file");
             return;
         }
+
+        SpreadSheetClear(hand->srcSheet);
+        SpreadSheetClear(hand->dispSheet);
+
         csv_load_file(csv, hand->str, hand->srcSheet);
-		// not the best way to do it, but its fiiiine
-        csv_load_file(csv, hand->str, hand->dispSheet);
         hand->sheetname = name;
     }
 
@@ -318,32 +320,25 @@ void handleKey(RenderHandler* handler){
         case NORMAL:
             if (keyIn == handler->keybinds.cursor_up) {
                 handler->cursor.y -= 1;
-            }
-            else if (keyIn == handler->keybinds.cursor_down) {
+            } else if (keyIn == handler->keybinds.cursor_down) {
                 handler->cursor.y += 1;
-            }
-            else if (keyIn == handler->keybinds.cursor_left) {
+            } else if (keyIn == handler->keybinds.cursor_left) {
                 handler->cursor.x -= 1;
-            }
-            else if (keyIn == handler->keybinds.cursor_right) {
+            } else if (keyIn == handler->keybinds.cursor_right) {
                 handler->cursor.x += 1;
-            } 
-            else if (keyIn == handler->keybinds.exit) {
+            } else if (keyIn == handler->keybinds.exit) {
                 handler->state = SHUTDOWN;
-            }
-            else if (keyIn == handler->keybinds.terminal) {
+            } else if (keyIn == handler->keybinds.terminal) {
                 handler->state = TERMINAL;
                 handler->type.top = 0;
-            }
-            else if (keyIn == handler->keybinds.edit) {
+            } else if (keyIn == handler->keybinds.edit) {
                 handler->state = EDIT;
                 //NOTE(ELI): Handler is already a pointer and doesn't need to have its address taken
                 //This was the main bug in the previous version, it was reinterpreting a weird part of
                 //the stack as a RenderHandler and reading garbage values.
                 editCell(handler);
 				handler->state = NORMAL;
-            }
-			else if (keyIn == handler->keybinds.run_cell){
+            } else if (keyIn == handler->keybinds.run_cell){
 			    SpreadSheet tempSheet = (SpreadSheet){
 			        .mem = GlobalAllocatorCreate(),
 			    };
@@ -358,23 +353,35 @@ void handleKey(RenderHandler* handler){
                 //Display sheet acts like an overlay rather than being
                 //the current display sheet directly.
 
-//				EvaluateCell(
-//					(EvalContext){
-//						.srcSheet = handler->srcSheet,
-//						.inSheet = handler->dispSheet,
-//						.outSheet = &tempSheet,
-//						.currentX = handler->cursor.x,
-//						.currentY = handler->cursor.y
-//					}
-//				);
+                SymbolTable sym = {
+                    .mem = GlobalAllocatorCreate(),
+                };
+                SymbolPushScope(&sym);
+
+				EvaluateCell(
+					(EvalContext){
+						.srcSheet = handler->srcSheet,
+						.inSheet = handler->dispSheet,
+						.outSheet = &tempSheet,
+                        .str = handler->str,
+                        .table = &sym,
+						.currentX = handler->cursor.x,
+						.currentY = handler->cursor.y
+					}
+				);
+
+                while (sym.size) {
+                    SymbolPopScope(&sym);
+                }
+                Free(sym.mem, sym.scopes, sym.cap * sizeof(SymbolMap));
 
 				// copies values from tempSheet to dispSheet after execution is done
-//				CellValue* transfer;
-//				for (int i = 0; i < tempSheet.size; i++){
-//					transfer = SpreadSheetGetCell(&tempSheet, tempSheet.keys[i]);
-//					SpreadSheetSetCell(handler->dispSheet, tempSheet.keys[i], *transfer);
-//				}
-//				SpreadSheetFree(&tempSheet);
+				CellValue* transfer;
+				for (int i = 0; i < tempSheet.size; i++){
+					transfer = SpreadSheetGetCell(&tempSheet, tempSheet.keys[i]);
+					SpreadSheetSetCell(handler->dispSheet, tempSheet.keys[i], *transfer);
+				}
+				SpreadSheetFree(&tempSheet);
 			}
             break;
         case EDIT:
@@ -490,7 +497,7 @@ void ReadBuffer(RenderHandler* hand, SString name) {
     }
 
     SpreadSheetSetCell(hand->srcSheet, (v2u){x, y}, new);
-    SpreadSheetSetCell(hand->dispSheet, (v2u){x, y}, new);
+    SpreadSheetClearCell(hand->dispSheet, (v2u){x, y});
 }
 
 
@@ -509,7 +516,7 @@ int main(int argc, char* argv[]) {
     //change to enable printing to log file
     //logfile = fopen("/dev/null", "w+");
     logfile = fopen("log.out", "w+");
-    errfile = fopen("err.out", "w+");
+    errfile = logfile;
 
     StringTable str = (StringTable) {
         .mem = GlobalAllocatorCreate(),
@@ -682,7 +689,7 @@ SString cellDisplay(RenderHandler* handle, v2u pos, u32 maxlen) {
 
     //prefer display sheet, src sheet as fallback
     CellValue* cell = SpreadSheetGetCell(handle->dispSheet, pos);
-    //if (!cell) cell = SpreadSheetGetCell(handle->srcSheet, pos);
+    if (!cell) cell = SpreadSheetGetCell(handle->srcSheet, pos);
     if (!cell) {
         return (SString){NULL, 0};
     }
