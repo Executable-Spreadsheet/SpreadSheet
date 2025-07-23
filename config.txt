@@ -1,2 +1,2 @@
 editor kitty nano %s
-keypreset arrow
+keypreset hjkl

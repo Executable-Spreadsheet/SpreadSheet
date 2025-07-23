@@ -9,3 +9,4 @@ vgcore*
 *.out
 cell*
 vgcore*
+cell/*

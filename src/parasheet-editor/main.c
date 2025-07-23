@@ -52,7 +52,6 @@
 
 
 void drawBox(v2u pos, v2u size, SString str);
-SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen);
 
 // supplies the currently selected keybinds
 typedef struct KeyBinds {
@@ -139,6 +138,8 @@ typedef struct RenderHandler {
     u8 preferred_terminal[STRING_SIZE];
     u8 preferred_text_editor[STRING_SIZE];
 } RenderHandler;
+
+SString cellDisplay(RenderHandler* handle, v2u pos, u32 maxlen);
 
 // NOTE(ELI): I made this an SString and converted it to a switch
 // since that seemed better for formating and readability.
@@ -254,6 +255,10 @@ void runCommand(RenderHandler* hand) {
 
         FILE* csv = fopen((char*)name.data, "r");
         log("file: %p", csv);
+        if (!csv) {
+            err("Failed to load file");
+            return;
+        }
         csv_load_file(csv, hand->str, hand->srcSheet);
 		// not the best way to do it, but its fiiiine
         csv_load_file(csv, hand->str, hand->dispSheet);
@@ -342,6 +347,17 @@ void handleKey(RenderHandler* handler){
 			    SpreadSheet tempSheet = (SpreadSheet){
 			        .mem = GlobalAllocatorCreate(),
 			    };
+
+                //TODO(ELI): I will implement a ClearSheet function,
+                //that way we can clear a spreadsheet without freeing
+                //the memory.
+                //
+                //Also we should only need two sheets. All writes go to
+                //display sheet, and anything not written can default
+                //to src sheet in the cell display function. Basically
+                //Display sheet acts like an overlay rather than being
+                //the current display sheet directly.
+
 //				EvaluateCell(
 //					(EvalContext){
 //						.srcSheet = handler->srcSheet,
@@ -472,6 +488,7 @@ void ReadBuffer(RenderHandler* hand, SString name) {
         new.t = CT_TEXT;
         new.d.index = StringAdd(hand->str, (i8*)data);
     }
+
     SpreadSheetSetCell(hand->srcSheet, (v2u){x, y}, new);
     SpreadSheetSetCell(hand->dispSheet, (v2u){x, y}, new);
 }
@@ -561,7 +578,6 @@ int main(int argc, char* argv[]) {
 
     // rendering loop
     while (1) {
-		usleep(25600);
         erase();
         //rendering
 
@@ -585,7 +601,7 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                SString info = cellDisplay(&dispSheet, &str,
+                SString info = cellDisplay(&handler,
                                            (v2u){handler.base.x + i, handler.base.y + j},
                                            CELL_WIDTH - 2);
 
@@ -597,7 +613,7 @@ int main(int argc, char* argv[]) {
 
         // currently selected cell
         attron(A_REVERSE);
-        SString info = cellDisplay(&dispSheet, &str, (v2u)
+        SString info = cellDisplay(&handler, (v2u)
                 {handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y}, CELL_WIDTH - 2);
 
         drawBox((v2u){(handler.cursor.x) * CELL_WIDTH + MARGIN_LEFT, (handler.cursor.y) * CELL_HEIGHT + MARGIN_TOP},
@@ -608,6 +624,7 @@ int main(int argc, char* argv[]) {
                 handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y, handler.ch, stateToString(handler.state).data);
         if (handler.state == TERMINAL) mvprintw(LINES - 3, MARGIN_LEFT + 2, ":%.*s", handler.type.top, handler.type.buf);
         refresh();
+		usleep(25600);
 
         //updating
         
@@ -659,10 +676,12 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen) {
+SString cellDisplay(RenderHandler* handle, v2u pos, u32 maxlen) {
     static i8 buf[CELL_WIDTH + 2] = {0};
-    CellValue* cell = SpreadSheetGetCell(sheet, pos);
 
+    //prefer display sheet, src sheet as fallback
+    CellValue* cell = SpreadSheetGetCell(handle->dispSheet, pos);
+    //if (!cell) cell = SpreadSheetGetCell(handle->srcSheet, pos);
     if (!cell) {
         return (SString){NULL, 0};
     }
@@ -680,7 +699,7 @@ SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen) {
             value.size = snprintf((char*)value.data, CELL_WIDTH + 1, "%d", cell->d.i);
         } break;
         case CT_TEXT: {  
-            SString data = StringGet(str, cell->d.index);
+            SString data = StringGet(handle->str, cell->d.index);
             value.size = snprintf((char*)value.data, maxlen, "%.*s", data.size, data.data);
             return value;
         } break;
