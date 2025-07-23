@@ -56,8 +56,12 @@ int main() {
 //	}
 	//testString("=2+2;", &s, allocator);
 	//testString("=x + y;", &s, allocator);
-	testString("= 2 * (x + y);", &s, allocator);
 	testString("= 2 == 2;", &s, allocator);
+	testString("= 2 <= 2;", &s, allocator);
+	testString("= 2 >= 2;", &s, allocator);
+	testString("= 2 < 2;", &s, allocator);
+	testString("= 2 > 2;", &s, allocator);
+	testString("= 2 != 2;", &s, allocator);
 
     StringFree(&s);
 	return 0;

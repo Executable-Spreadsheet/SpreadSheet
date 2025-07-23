@@ -196,6 +196,14 @@ typedef enum ASTNodeType : u32 {
 	AST_HEADER_ARGS,
 	AST_CALL,
 	AST_FUNC_ARGS,
+
+	// Equality Ops
+	AST_EQUAL,
+	AST_LESS,
+	AST_LESSEQ,
+	AST_GREAT,
+	AST_GREATEQ,
+	AST_NOT,
 } ASTNodeOp;
 
 typedef enum ASTValueType : u32 {

@@ -73,6 +73,14 @@ SString nodeops[] = {
 	sstring("(...)"),
 	sstring("ID(...)"),
 	sstring("(...)"),
+
+	// Ops
+	sstring("=="),
+	sstring("<"),
+	sstring("<="),
+	sstring(">"),
+	sstring(">="),
+	sstring("!="),
 };
 
 static void ASTPrintNode(FILE* fd, AST* tree, ASTNode* node, u32 indent) {

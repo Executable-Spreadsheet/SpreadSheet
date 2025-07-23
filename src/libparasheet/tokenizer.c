@@ -280,6 +280,7 @@ static void handle_single_char_token(TokenList* tokens, StringTable* table,
 					  StringAddS(table, substr(source, *i, *i + 1)),
 					  lineNumber);
 		}
+		break;
 	case '<':
 		if (source[*i + 1] == '=') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_LESS_EQUALS,
@@ -291,6 +292,7 @@ static void handle_single_char_token(TokenList* tokens, StringTable* table,
 					  StringAddS(table, substr(source, *i, *i + 1)),
 					  lineNumber);
 		}
+		break;
 	case '!':
 		if (source[*i + 1] == '=') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_EXCLAMATION_EQUALS,
@@ -302,6 +304,7 @@ static void handle_single_char_token(TokenList* tokens, StringTable* table,
 					  StringAddS(table, substr(source, *i, *i + 1)),
 					  lineNumber);
 		}
+		break;
 	case '&':
 		if (source[*i + 1] == '&') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_AMPERSAND_AMPERSAND,
@@ -314,6 +317,7 @@ static void handle_single_char_token(TokenList* tokens, StringTable* table,
 					  StringAddS(table, substr(source, *i, *i + 1)),
 					  lineNumber);
 		}
+		break;
 	case '|':
 		if (source[*i + 1] == '|') {
 			PushToken(tokens, TOKEN_DOUBLECHAR_PIPE_PIPE,
@@ -326,6 +330,7 @@ static void handle_single_char_token(TokenList* tokens, StringTable* table,
 					  StringAddS(table, substr(source, *i, *i + 1)),
 					  lineNumber);
 		}
+		break;
 	default:
 		log("Unknown char token: '%c'", source[*i]);
 		PushToken(tokens, TOKEN_INVALID,

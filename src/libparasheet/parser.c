@@ -98,6 +98,8 @@ ASTNodeIndex ParseReference(TokenList* tokens, AST* ast, u8* syntaxError, String
 ASTNodeIndex ParseReference2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeIndex inNode, StringTable* s);
 ASTNodeIndex ParseAbsolute(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s);
 ASTNodeIndex ParseAbsolute2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeIndex inNode, StringTable* s);
+ASTNodeIndex ParseComparison(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s);
+ASTNodeIndex ParseComparison2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeIndex inNode, StringTable* s);
 
 
 AST BuildASTFromTokens(TokenList* tokens, StringTable* s, Allocator allocator) {
@@ -292,7 +294,7 @@ ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError, Strin
     if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
 			peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN ||
         peek->type == TOKEN_ID || peek->type == TOKEN_KEYWORD_LET || peek->type == TOKEN_CHAR_OPEN_BRACKET){
-        ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+        ASTNodeIndex node = ParseComparison(tokens, ast, syntaxError, s);
         ASTNodeIndex node2 = ParseExpression2(tokens, ast, syntaxError, node, s);
 		return node2;
     }
@@ -303,12 +305,65 @@ ASTNodeIndex ParseExpression2(TokenList* tokens, AST* ast, u8* syntaxError,
     Token* peek = PeekToken(tokens);
     if (peek->type == TOKEN_CHAR_EQUALS){
         ExpectToken(tokens, TOKEN_CHAR_EQUALS, s);
-        ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+        ASTNodeIndex node = ParseComparison(tokens, ast, syntaxError, s);
 		ASTNodeIndex curr = ASTCreateNode(ast, AST_ASSIGN_VALUE, inNode, node, EPS);
         ASTNodeIndex node2 = ParseExpression2(tokens, ast, syntaxError, curr, s);
         return node2;
     } 
     return inNode;
+}
+
+ASTNodeIndex ParseComparison(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
+	// we know its already a good expression
+	ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+	ASTNodeIndex node2 = ParseComparison2(tokens, ast, syntaxError, node, s);
+	return node2;
+}
+ASTNodeIndex ParseComparison2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeIndex inNode, StringTable* s) {
+	Token* peek = PeekToken(tokens);
+	if (peek->type == TOKEN_DOUBLECHAR_EQUALS_EQUALS){
+		ExpectToken(tokens, TOKEN_DOUBLECHAR_EQUALS_EQUALS, s);
+        ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+		ASTNodeIndex curr = ASTCreateNode(ast, AST_EQUAL, inNode, node, EPS);
+        ASTNodeIndex node2 = ParseComparison2(tokens, ast, syntaxError, curr, s);
+		return node2;
+	}
+	else if (peek->type == TOKEN_DOUBLECHAR_LESS_EQUALS){
+		ExpectToken(tokens, TOKEN_DOUBLECHAR_LESS_EQUALS, s);
+        ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+		ASTNodeIndex curr = ASTCreateNode(ast, AST_LESSEQ, inNode, node, EPS);
+        ASTNodeIndex node2 = ParseComparison2(tokens, ast, syntaxError, curr, s);
+		return node2;
+	}
+	else if (peek->type == TOKEN_DOUBLECHAR_GREATER_EQUALS){
+		ExpectToken(tokens, TOKEN_DOUBLECHAR_GREATER_EQUALS, s);
+        ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+		ASTNodeIndex curr = ASTCreateNode(ast, AST_GREATEQ, inNode, node, EPS);
+        ASTNodeIndex node2 = ParseComparison2(tokens, ast, syntaxError, curr, s);
+		return node2;
+	}
+	else if (peek->type == TOKEN_DOUBLECHAR_EXCLAMATION_EQUALS){
+		ExpectToken(tokens, TOKEN_DOUBLECHAR_EXCLAMATION_EQUALS, s);
+        ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+		ASTNodeIndex curr = ASTCreateNode(ast, AST_NOT, inNode, node, EPS);
+        ASTNodeIndex node2 = ParseComparison2(tokens, ast, syntaxError, curr, s);
+		return node2;
+	}
+	else if (peek->type == TOKEN_CHAR_LESS_THAN){
+		ExpectToken(tokens, TOKEN_CHAR_LESS_THAN, s);
+        ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+		ASTNodeIndex curr = ASTCreateNode(ast, AST_LESS, inNode, node, EPS);
+        ASTNodeIndex node2 = ParseComparison2(tokens, ast, syntaxError, curr, s);
+		return node2;
+	}
+	else if (peek->type == TOKEN_CHAR_GREATER_THAN){
+		ExpectToken(tokens, TOKEN_CHAR_GREATER_THAN, s);
+        ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
+		ASTNodeIndex curr = ASTCreateNode(ast, AST_GREAT, inNode, node, EPS);
+        ASTNodeIndex node2 = ParseComparison2(tokens, ast, syntaxError, curr, s);
+		return node2;
+	}
+	return inNode;
 }
 ASTNodeIndex ParseSummation(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);

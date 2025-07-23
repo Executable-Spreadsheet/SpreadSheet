@@ -127,7 +127,7 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 
 	case AST_WHILE:
 	case AST_FOR:
-		fprintf(stderr, "Control flow '%u' not implemented yet\n", node->op);
+		err("Control flow '%d' not implemented yet\n", node->op);
 		exit(1);
 
 	case AST_DECLARE_VARIABLE: {
