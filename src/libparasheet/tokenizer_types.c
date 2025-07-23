@@ -84,7 +84,7 @@ SString tokenErrorStrings[] = {
 	sstring("\"float\""),	sstring("\"string\""),	  sstring("\"cell\""),
 	sstring("int literal"), sstring("float literal"), sstring("\"string\""),
 	sstring("\"+\""),		sstring("\"-\""),		  sstring("\"*\""),
-	sstring("\"/\""),		sstring("\"#\""),		  sstring("\"#\""),
+	sstring("\"/\""),		sstring("\"#\""),		  sstring("\":\""),
 	sstring("\"(\""),		sstring("\")\""),		  sstring("\"[\""),
 	sstring("\"]\""),		sstring("\"{\""),		  sstring("\"}\""),
 	sstring("\"=\""),		sstring("\",\""),		  sstring("\";\""),

@@ -154,7 +154,10 @@ void tokenizeNumberLiteral(const char* source, u32* i, TokenList* tokens,
 			*i += 1;
 		}
 		data.f = floatNum;
-	}
+        log("Parsed Float: %f", data.f);
+	} else {
+        log("Parsed Int: %d", data.i);
+    }
 	PushTokenLiteral(tokens, type, StringAddS(table, substr(source, start, *i)),
 					 lineNumber, data);
 }

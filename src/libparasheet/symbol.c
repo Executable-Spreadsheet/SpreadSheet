@@ -90,7 +90,7 @@ u32 SymbolMapGet(SymbolMap* map, StrID key) {
 }
 
 void SymbolMapFree(SymbolMap* map) {
-	Free(map->mem, map->keys, map->cap * sizeof(u32));
+	Free(map->mem, map->keys, map->cap * sizeof(StrID));
 	Free(map->mem, map->entries, map->cap * sizeof(SymbolEntry));
 }
 
@@ -114,9 +114,16 @@ void SymbolPushScope(SymbolTable* table) {
 		u32 oldsize = table->cap;
 		table->cap = table->cap ? table->cap * 2 : 2;
 
-		table->scopes =
-			Realloc(table->mem, table->scopes, oldsize * sizeof(SymbolMap),
-					table->cap * sizeof(SymbolMap));
+        SymbolMap* temp = Realloc(table->mem, table->scopes, oldsize * sizeof(SymbolMap),
+                    table->cap * sizeof(SymbolMap));
+        if (!temp) {
+            Free(table->mem, table->scopes, oldsize * sizeof(SymbolMap)); 
+            err("Failed to realloc!");
+            panic();
+        }
+
+
+		table->scopes = temp;
 	}
 
 	table->scopes[table->size++] = (SymbolMap){

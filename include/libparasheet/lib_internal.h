@@ -92,7 +92,7 @@ typedef enum CellType : u32 {
 typedef struct CellValue {
 	CellType t;
 	union {
-		u32 i;
+		i32 i;
 		f32 f;
 		StrID index; // index into external buffer
 	} d;
@@ -226,6 +226,7 @@ typedef struct ASTNode {
 	union {
 		u32 i; // Symbols use this as an index
 		f32 f;
+        StrID s;
 	} data;
 
 	u32 lchild;
@@ -265,7 +266,7 @@ typedef enum SymbolType : u32 {
 
 typedef struct SymbolEntry {
     SymbolType type;
-    u32 idx;
+    CellValue data;
 } SymbolEntry;
 
 //Insertion and getting only, never delete

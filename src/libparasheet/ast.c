@@ -46,7 +46,7 @@ SString nodeops[] = {
 	sstring("ID"),
 	sstring("LET"),
 	sstring("[x,y]"),
-	sstring("x=y"),
+	sstring("Assign"),
 
 	// Ops
 	sstring("+"),

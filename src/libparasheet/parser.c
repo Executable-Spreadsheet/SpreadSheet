@@ -83,6 +83,7 @@ ASTNodeIndex ParseID(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* 
 ASTNodeIndex ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s);
 ASTNodeIndex ParseDatatype(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s);
 ASTNodeIndex ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s);
+ASTNodeIndex ParseDeclaration(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s);
 ASTNodeIndex ParseFunctionCall(u32 cellRef, TokenList* tokens, AST* ast,
 					  u8* syntaxError, StringTable* s);
 ASTNodeIndex ParseFunctionArgs(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s);
@@ -128,6 +129,7 @@ ASTNodeIndex ParseHeader(TokenList* tokens, AST* ast, u8* syntaxError, StringTab
 
 		return ASTCreateNode(ast, AST_HEADER, headerArgs, mainBlock, EPS);
 	} else {
+        UnconsumeToken(tokens);
 		return ParseBlock(tokens, ast, syntaxError, s);
 	}
 }
@@ -167,6 +169,7 @@ ASTNodeIndex ParseBlock(TokenList* tokens, AST* ast, u8* syntaxError, StringTabl
 	if (statement == EPS) {
 		return EPS;
 	}
+
 	ASTNodeIndex continueBlock = ParseBlock(tokens, ast, syntaxError, s);
 	CheckSyntaxError();
 	if (continueBlock == EPS) {
@@ -182,10 +185,11 @@ ASTNodeIndex ParseStatement(TokenList* tokens, AST* ast, u8* syntaxError, String
 	if (nextToken == NULL) {
 		return EPS;
 	}
+    log("next: %s", getTokenErrorString(nextToken->type));
 	ASTNodeIndex tmp;
 	switch (nextToken->type) {
 	case TOKEN_CHAR_SEMICOLON:
-		return EPS;
+		return ParseStatement(tokens, ast, syntaxError, s);
 	case TOKEN_CHAR_CLOSE_BRACE:
 		return EPS;
 	case TOKEN_KEYWORD_IF:
@@ -284,10 +288,10 @@ ASTNodeIndex ParseFor(TokenList* tokens, AST* ast, u8* syntaxError, StringTable*
 
 // Expression parsing. A little scuffed due to a change in primitives. We'll survive.
 ASTNodeIndex ParseExpression(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
-	UnconsumeToken(tokens);
     Token* peek = PeekToken(tokens);
     if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
-			peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
+			peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN ||
+        peek->type == TOKEN_ID || peek->type == TOKEN_KEYWORD_LET){
         ASTNodeIndex node = ParseSummation(tokens, ast, syntaxError, s);
         ASTNodeIndex node2 = ParseExpression2(tokens, ast, syntaxError, node, s);
 		return node2;
@@ -312,7 +316,7 @@ ASTNodeIndex ParseExpression2(TokenList* tokens, AST* ast, u8* syntaxError,
 ASTNodeIndex ParseSummation(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
     if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
-        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
+        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID || peek->type == TOKEN_KEYWORD_LET){
 		ASTNodeIndex node = ParseTerm(tokens, ast, syntaxError, s);
 		ASTNodeIndex node2 = ParseSummation2(tokens, ast, syntaxError, node, s);
 		return node2;
@@ -342,7 +346,7 @@ ASTNodeIndex ParseSummation2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNo
 ASTNodeIndex ParseTerm(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
     if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
-        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
+        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID || peek->type == TOKEN_KEYWORD_LET){
         ASTNodeIndex node = ParseReference(tokens, ast, syntaxError, s);
         ASTNodeIndex node2 = ParseTerm2(tokens, ast, syntaxError, node, s);
         return node2;
@@ -373,7 +377,7 @@ ASTNodeIndex ParseTerm2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNodeInd
 ASTNodeIndex ParseReference(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
     if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
-        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
+        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID || peek->type == TOKEN_KEYWORD_LET){
         ASTNodeIndex node = ParseAbsolute(tokens, ast, syntaxError, s);
         ASTNodeIndex node2 = ParseReference2(tokens, ast, syntaxError, node, s);
         return node2;
@@ -398,7 +402,7 @@ ASTNodeIndex ParseReference2(TokenList* tokens, AST* ast, u8* syntaxError, ASTNo
 ASTNodeIndex ParseAbsolute(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
     Token* peek = PeekToken(tokens);
     if (peek->type == TOKEN_LITERAL_INT || peek->type == TOKEN_LITERAL_FLOAT ||
-        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID){
+        peek->type == TOKEN_LITERAL_STRING || peek->type == TOKEN_CHAR_OPEN_PAREN || peek->type == TOKEN_ID || peek->type == TOKEN_KEYWORD_LET){
         ASTNodeIndex node = ParseUnit(tokens, ast, syntaxError, s);
         return node;
     }
@@ -430,7 +434,7 @@ ASTNodeIndex ParseID(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* 
 	ASTNodeIndex new_node_index = ASTCreateNode(ast, AST_ID, EPS, EPS, EPS);
 
 	ast->nodes[new_node_index].vt = V_INT;
-	ast->nodes[new_node_index].data.i = id->data.i;
+	ast->nodes[new_node_index].data.s = id->sourceString;
 
 	return new_node_index;
 }
@@ -448,17 +452,17 @@ ASTNodeIndex ParseLiteral(TokenList* tokens, AST* ast, u8* syntaxError, StringTa
         case (TOKEN_LITERAL_INT):
             ast->nodes[new_node_index].op = AST_INT_LITERAL;
             ast->nodes[new_node_index].vt = V_INT;
-            ast->nodes[new_node_index].data.i = 4; // TODO: Get literal values
+            ast->nodes[new_node_index].data.i = literal->data.i; // TODO: Get literal values
             break;
         case (TOKEN_LITERAL_FLOAT):
             ast->nodes[new_node_index].op = AST_FLOAT_LITERAL;
             ast->nodes[new_node_index].vt = V_FLOAT;
-            ast->nodes[new_node_index].data.f = 4.2; // TODO: Get literal values
+            ast->nodes[new_node_index].data.f = literal->data.f; // TODO: Get literal values
             break;
         case (TOKEN_LITERAL_STRING):
             ast->nodes[new_node_index].op = AST_INVALID; // TODO: Add strings
             ast->nodes[new_node_index].vt = V_INT;		 // Interned string
-            ast->nodes[new_node_index].data.i = 0;		 // TODO: Get literal values
+            //ast->nodes[new_node_index].data.i = literal->data.s;		 // TODO: Get literal values
             break;
         default:
             break;
@@ -496,6 +500,8 @@ ASTNodeIndex ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError, StringTable
 
 	ASTNodeIndex tmp;
 	switch (unit->type) {
+    case TOKEN_KEYWORD_LET:
+        return ParseDeclaration(tokens, ast, syntaxError, s); 
 	case TOKEN_LITERAL_INT:
 		UnconsumeToken(tokens);
 		return ParseLiteral(tokens, ast, syntaxError, s);
@@ -506,7 +512,7 @@ ASTNodeIndex ParseUnit(TokenList* tokens, AST* ast, u8* syntaxError, StringTable
 		UnconsumeToken(tokens);
 		return ParseLiteral(tokens, ast, syntaxError, s);
 	case TOKEN_CHAR_OPEN_PAREN:
-        ConsumeToken(tokens);
+        //ConsumeToken(tokens);
 		tmp = ParseExpression(tokens, ast, syntaxError, s);
 		CheckSyntaxError();
 		ExpectToken(tokens, TOKEN_CHAR_CLOSE_PAREN, s);
@@ -553,4 +559,33 @@ ASTNodeIndex ParseFunctionArgs(TokenList* tokens, AST* ast, u8* syntaxError, Str
 		return EPS;
 	}
 	return ASTCreateNode(ast, AST_FUNC_ARGS, arg, nextArgs, EPS);
+}
+
+ASTNodeIndex ParseDeclaration(TokenList* tokens, AST* ast, u8* syntaxError, StringTable* s) {
+
+    Token* id = ConsumeToken(tokens);
+    CheckNull(id, s);
+    ExpectToken(tokens, TOKEN_CHAR_COLON, s);
+
+    Token* type = ConsumeToken(tokens);
+    CheckNull(type, s);
+
+    u32 n = ASTCreateNode(ast, AST_DECLARE_VARIABLE, EPS, EPS, EPS);
+
+    switch (type->type) {
+        case TOKEN_KEYWORD_INT:
+            ASTGet(ast, n).vt = V_INT;
+        break;
+        case TOKEN_KEYWORD_FLOAT:
+            ASTGet(ast, n).vt = V_FLOAT;
+        break;
+
+        default:
+            ThrowUnexpectedTokenError(type, s);
+    }
+
+    ASTGet(ast, n).data.s = id->sourceString;
+    log("Parsed Declaration: %s", StringGet(s, ASTGet(ast, n).data.s));
+
+    return n;
 }
