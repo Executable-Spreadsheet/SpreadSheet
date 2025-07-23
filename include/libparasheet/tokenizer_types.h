@@ -1,7 +1,7 @@
 #ifndef PS_TOKENIZER_TYPES_H
 #define PS_TOKENIZER_TYPES_H
 
-#include "libparasheet/lib_internal.h"
+#include <libparasheet/lib_internal.h>
 #include <util/util.h>
 
 typedef enum TokenType : u32 {
