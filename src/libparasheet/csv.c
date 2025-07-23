@@ -216,6 +216,6 @@ void csv_export_file(const char* filename, SpreadSheet* sheet, StringTable* str)
 		}
         fputc('\n', out);
 	}
-
+    fflush(out);
     fclose(out);
 }

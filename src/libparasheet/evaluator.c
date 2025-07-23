@@ -150,35 +150,34 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 
 		StrID var = ASTGet(tree, node->lchild).data.s;
 		log("assign: %d", StringGet(ctx.str, var));
-		SymbolEntry e = SymbolGet(ctx.table, var);
-		if (e.type == S_INVALID) {
+		SymbolEntry* e = SymbolGet(ctx.table, var);
+		if (!e) {
 			err("inavalid name");
 			panic();
 		}
 
-		if (e.data.t == rhs.t) {
-			e.data = rhs;
-			SymbolInsert(ctx.table, var, e);
-			return e.data;
+		if (e->data.t == rhs.t) {
+			e->data = rhs;
+			return e->data;
 		}
 
-		if (e.data.t == CT_INT) {
-			e.data.d.i = (i32)rhs.d.f;
-		} else if (e.data.t == CT_FLOAT) {
-			e.data.d.f = (f32)rhs.d.i;
+		if (e->data.t == CT_INT) {
+			e->data.d.i = (i32)rhs.d.f;
+		} else if (e->data.t == CT_FLOAT) {
+			e->data.d.f = (f32)rhs.d.i;
 		}
 
-		return e.data;
+		return e->data;
 	} break;
 	case AST_ID: {
 
 		StrID var = node->data.s;
-		SymbolEntry e = SymbolGet(ctx.table, var);
-		if (e.type == S_INVALID) {
+		SymbolEntry* e = SymbolGet(ctx.table, var);
+		if (!e) {
 			err("inavalid name");
 			panic();
 		}
-		return e.data;
+		return e->data;
 	}
 	case AST_SCOPE_BEGIN: {
 		SymbolPushScope(ctx.table);

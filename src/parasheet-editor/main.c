@@ -127,7 +127,6 @@ typedef struct RenderHandler {
     u32 ch;
     v2i base;
     v2i cursor;
-    SString sheetname;
     EditHandles edit;
     EditorState state;
     SpreadSheet* srcSheet;
@@ -135,6 +134,7 @@ typedef struct RenderHandler {
     StringTable* str;
     KeyBinds keybinds;
     TypeBuffer type;
+    u8 sheetname[PATH_MAX + 1];
     u8 preferred_terminal[STRING_SIZE];
     u8 preferred_text_editor[STRING_SIZE];
 } RenderHandler;
@@ -219,7 +219,21 @@ void runCommand(RenderHandler* hand) {
     
     log("command: \"%s\"", trimmed);
     if (SStrCmp(trimmed, sstring("save")) == 0) {
-        csv_export_file((char*)hand->sheetname.data, hand->srcSheet, hand->str);
+        csv_export_file(hand->sheetname, hand->srcSheet, hand->str);
+    }
+
+    SString export = sstring("export");
+    if ((trimmed.size > export.size + 1) && (memcmp(trimmed.data, export.data, export.size) == 0)) {
+        SString name = (SString){.data = trimmed.data, .size = trimmed.size};
+        while ((name.data - trimmed.data < trimmed.size) && name.data[0] != ' '){
+            name.data++;
+            name.size--;
+        }
+        name.data++;
+        name.size--;
+
+        log("export \"%s\"", name);
+        csv_export_file((char*)name.data, hand->dispSheet, hand->str);
     }
 
     SString rename = sstring("rename");
@@ -233,7 +247,7 @@ void runCommand(RenderHandler* hand) {
         name.data++;
         name.size--;
         log("rename %s", name);
-        hand->sheetname = name;
+        strncpy(hand->sheetname, name.data, PATH_MAX);
     }
 
 
@@ -246,7 +260,7 @@ void runCommand(RenderHandler* hand) {
         }
         name.data++;
         name.size--;
-        log("open \"%s\"", name);
+        log("open \"%s\"", name.data);
 
         FILE* csv = fopen((char*)name.data, "r");
         log("file: %p", csv);
@@ -259,7 +273,7 @@ void runCommand(RenderHandler* hand) {
         SpreadSheetClear(hand->dispSheet);
 
         csv_load_file(csv, hand->str, hand->srcSheet);
-        hand->sheetname = name;
+        strncpy(hand->sheetname, name.data, PATH_MAX);
     }
 
 }
@@ -325,6 +339,7 @@ void handleKey(RenderHandler* handler){
                 handler->state = SHUTDOWN;
             } else if (keyIn == handler->keybinds.terminal) {
                 handler->state = TERMINAL;
+                memset(handler->type.buf, 0, CELL_WIDTH * 10 + 1); 
                 handler->type.top = 0;
             } else if (keyIn == handler->keybinds.edit) {
                 handler->state = EDIT;
@@ -334,9 +349,6 @@ void handleKey(RenderHandler* handler){
                 editCell(handler);
 				handler->state = NORMAL;
             } else if (keyIn == handler->keybinds.run_cell){
-			    SpreadSheet tempSheet = (SpreadSheet){
-			        .mem = GlobalAllocatorCreate(),
-			    };
 
                 //TODO(ELI): I will implement a ClearSheet function,
                 //that way we can clear a spreadsheet without freeing
@@ -390,7 +402,7 @@ void handleKey(RenderHandler* handler){
             if (keyIn == handler->keybinds.nav) {
                 handler->state = NORMAL;
             } else if (keyIn == KEY_BACKSPACE && handler->type.top) {
-                handler->type.top--;
+                handler->type.buf[--handler->type.top] = 0;
             } else if (keyIn == KEY_ENTER_REAL) {
                 runCommand(handler);
                 handler->state = NORMAL;
@@ -569,7 +581,7 @@ int main(int argc, char* argv[]) {
         if (csv) {
             csv_load_file(csv, &str, &srcSheet);
             csv_load_file(csv, &str, &dispSheet);
-            handler.sheetname = (SString){.data = (i8*)argv[1], .size = strlen(argv[1])};
+            strncpy(handler.sheetname, argv[0], PATH_MAX);
         }
     }
 
@@ -624,7 +636,7 @@ int main(int argc, char* argv[]) {
                 (v2u){CELL_WIDTH, CELL_HEIGHT}, info);
 
 
-        mvprintw(LINES - 2, MARGIN_LEFT + 2, "%.*s Cursor (%d %d)  ch: %d State: %s", handler.sheetname.size, handler.sheetname.data, 
+        mvprintw(LINES - 2, MARGIN_LEFT + 2, "%s Cursor (%d %d)  ch: %d State: %s", handler.sheetname, 
                 handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y, handler.ch, stateToString(handler.state).data);
         if (handler.state == TERMINAL) mvprintw(LINES - 3, MARGIN_LEFT + 2, ":%.*s", handler.type.top, handler.type.buf);
         refresh();
@@ -704,7 +716,11 @@ SString cellDisplay(RenderHandler* handle, v2u pos, u32 maxlen) {
         } break;
         case CT_TEXT: {  
             SString data = StringGet(handle->str, cell->d.index);
-            value.size = snprintf((char*)value.data, maxlen, "%.*s", data.size, data.data);
+            for (u32 i = 0; i < MIN(maxlen, data.size); i++) {
+                if (data.data[i] == '\n' || data.data[i] == '\t') break;
+                value.data[i] = data.data[i];
+                value.size++;
+            }
             return value;
         } break;
 

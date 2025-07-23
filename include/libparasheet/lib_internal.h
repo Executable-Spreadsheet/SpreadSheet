@@ -297,7 +297,7 @@ void SymbolMapFree(SymbolMap* map);
 
 
 void SymbolInsert(SymbolTable* table, StrID key, SymbolEntry entry);
-SymbolEntry SymbolGet(SymbolTable* table, StrID key);
+SymbolEntry* SymbolGet(SymbolTable* table, StrID key);
 
 void SymbolPushScope(SymbolTable* table);
 void SymbolPopScope(SymbolTable* table);

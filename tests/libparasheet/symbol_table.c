@@ -54,6 +54,7 @@ int main() {
 		SymbolInsert(&t, insert, (SymbolEntry){.type = S_VAR, .data.d.i = i * 2});
 	}
 
+    print(stdout, "Table:\n");
 	for (u32 i = 0; i < 15; i++) {
 		StrID insert = {.idx = i, .gen = 1};
 		SymbolEntry e = SymbolGet(&t, insert);
@@ -62,6 +63,7 @@ int main() {
 
 	SymbolPopScope(&t);
 
+    print(stdout, "Table:\n");
 	for (u32 i = 0; i < 15; i++) {
 		StrID insert = {.idx = i, .gen = 1};
 		SymbolEntry e = SymbolGet(&t, insert);

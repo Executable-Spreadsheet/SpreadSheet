@@ -99,14 +99,14 @@ void SymbolInsert(SymbolTable* table, StrID key, SymbolEntry entry) {
 	table->scopes[table->size - 1].entries[idx] = entry;
 }
 
-SymbolEntry SymbolGet(SymbolTable* table, StrID key) {
+SymbolEntry* SymbolGet(SymbolTable* table, StrID key) {
 	for (i32 i = table->size - 1; i >= 0; i--) {
 		u32 e = SymbolMapGet(&table->scopes[i], key);
 		if (e != UINT32_MAX)
-			return table->scopes[i].entries[e];
+			return &table->scopes[i].entries[e];
 	}
 
-	return (SymbolEntry){0};
+	return NULL;
 }
 
 void SymbolPushScope(SymbolTable* table) {
