@@ -1,2 +1,2 @@
-editor kitty nano %s
+editor kitty nvim %s
 keypreset hjkl

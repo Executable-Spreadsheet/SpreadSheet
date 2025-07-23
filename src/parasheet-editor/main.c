@@ -219,12 +219,7 @@ void runCommand(RenderHandler* hand) {
     
     log("command: \"%s\"", trimmed);
     if (SStrCmp(trimmed, sstring("save")) == 0) {
-        static Allocator a = {0};
-        if (a.a == NULL) {
-            a = StackAllocatorCreate(GlobalAllocatorCreate(), MB(1));
-        }
-        csv_export_file(a, (char*)hand->sheetname.data, hand->srcSheet, hand->str);
-        StackAllocatorReset(&a);
+        csv_export_file((char*)hand->sheetname.data, hand->srcSheet, hand->str);
     }
 
     SString rename = sstring("rename");
@@ -256,7 +251,7 @@ void runCommand(RenderHandler* hand) {
         FILE* csv = fopen((char*)name.data, "r");
         log("file: %p", csv);
         if (!csv) {
-            err("Failed to load file");
+            err("Failed to load file: %n",strerror(errno));
             return;
         }
 
@@ -393,7 +388,7 @@ void handleKey(RenderHandler* handler){
         case TERMINAL:
             if (keyIn == handler->keybinds.nav) {
                 handler->state = NORMAL;
-            } else if (keyIn == KEY_BACKSPACE) {
+            } else if (keyIn == KEY_BACKSPACE && handler->type.top) {
                 handler->type.top--;
             } else if (keyIn == KEY_ENTER_REAL) {
                 runCommand(handler);
