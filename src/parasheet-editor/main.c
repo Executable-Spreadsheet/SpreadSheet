@@ -1,5 +1,6 @@
 #include "libparasheet/lib_internal.h"
 #include "libparasheet/csv.h"
+#include "libparasheet/evaluator.h"
 #include <asm-generic/errno-base.h>
 #include <errno.h>
 #include <linux/limits.h>
@@ -47,6 +48,8 @@
 #define STRING_SIZE PATH_MAX + 1
 #define CONFIG_FILEPATH "config.txt"
 
+#define FPS_CAP 15
+
 
 void drawBox(v2u pos, v2u size, SString str);
 SString cellDisplay(SpreadSheet* sheet, StringTable* str, v2u pos, u32 maxlen);
@@ -61,6 +64,7 @@ typedef struct KeyBinds {
     u32 exit; // quit the program
     u32 edit; // open a cell for editing
     u32 nav;  // go back to normal mode
+	u32 run_cell;
 } KeyBinds;
 
 typedef struct TypeBuffer {
@@ -85,7 +89,8 @@ KeyBinds keybinds_hjkl = {
     .terminal = ':',
     .exit = 'q',
     .edit = (u8)KEY_ENTER_REAL,
-    .nav = (u8)KEY_ESCAPE
+    .nav = (u8)KEY_ESCAPE,
+	.run_cell = 'r'
 };
 KeyBinds keybinds_wasd = {
     .cursor_up = 'w',
@@ -95,7 +100,8 @@ KeyBinds keybinds_wasd = {
     .terminal = ':',
     .exit = 'q',
     .edit = (u8)KEY_ENTER_REAL,
-    .nav = (u8)KEY_ESCAPE
+    .nav = (u8)KEY_ESCAPE,
+	.run_cell = 'r'
 };
 
 KeyBinds keybinds_arrows = {
@@ -107,6 +113,7 @@ KeyBinds keybinds_arrows = {
     .exit = 'q',
     .edit = (u8)KEY_ENTER_REAL,
     .nav = (u8)KEY_ESCAPE,
+	.run_cell = 'r'
 };
 
 typedef enum EditorState {
@@ -124,7 +131,8 @@ typedef struct RenderHandler {
     SString sheetname;
     EditHandles edit;
     EditorState state;
-    SpreadSheet* sheet;
+    SpreadSheet* srcSheet;
+    SpreadSheet* dispSheet;
     StringTable* str;
     KeyBinds keybinds;
     TypeBuffer type;
@@ -155,7 +163,7 @@ void editCell(RenderHandler * handler){
 
     v2u pos = {handler->base.x + handler->cursor.x, handler->base.y + handler->cursor.y};
 
-    CellValue* data = SpreadSheetGetCell(handler->sheet, pos);
+    CellValue* data = SpreadSheetGetCell(handler->srcSheet, pos);
 
     char filename[PATH_MAX + 1] = {0};
     snprintf(filename, PATH_MAX, "./cells/cell_%d_%d", pos.x, pos.y);
@@ -214,7 +222,7 @@ void runCommand(RenderHandler* hand) {
         if (a.a == NULL) {
             a = StackAllocatorCreate(GlobalAllocatorCreate(), MB(1));
         }
-        csv_export_file(a, (char*)hand->sheetname.data, hand->sheet, hand->str);
+        csv_export_file(a, (char*)hand->sheetname.data, hand->dispSheet, hand->str);
         StackAllocatorReset(&a);
     }
 
@@ -246,7 +254,9 @@ void runCommand(RenderHandler* hand) {
 
         FILE* csv = fopen((char*)name.data, "r");
         log("file: %p", csv);
-        csv_load_file(csv, hand->str, hand->sheet);
+        csv_load_file(csv, hand->str, hand->srcSheet);
+		// not the best way to do it, but its fiiiine
+        csv_load_file(csv, hand->str, hand->dispSheet);
         hand->sheetname = name;
     }
 
@@ -326,7 +336,30 @@ void handleKey(RenderHandler* handler){
                 //This was the main bug in the previous version, it was reinterpreting a weird part of
                 //the stack as a RenderHandler and reading garbage values.
                 editCell(handler);
+				handler->state = NORMAL;
             }
+			else if (keyIn == handler->keybinds.run_cell){
+			    SpreadSheet tempSheet = (SpreadSheet){
+			        .mem = GlobalAllocatorCreate(),
+			    };
+//				EvaluateCell(
+//					(EvalContext){
+//						.srcSheet = handler->srcSheet,
+//						.inSheet = handler->dispSheet,
+//						.outSheet = &tempSheet,
+//						.currentX = handler->cursor.x,
+//						.currentY = handler->cursor.y
+//					}
+//				);
+
+				// copies values from tempSheet to dispSheet after execution is done
+//				CellValue* transfer;
+//				for (int i = 0; i < tempSheet.size; i++){
+//					transfer = SpreadSheetGetCell(&tempSheet, tempSheet.keys[i]);
+//					SpreadSheetSetCell(handler->dispSheet, tempSheet.keys[i], *transfer);
+//				}
+//				SpreadSheetFree(&tempSheet);
+			}
             break;
         case EDIT:
             // implement input to cell
@@ -439,7 +472,8 @@ void ReadBuffer(RenderHandler* hand, SString name) {
         new.t = CT_TEXT;
         new.d.index = StringAdd(hand->str, (i8*)data);
     }
-    SpreadSheetSetCell(hand->sheet, (v2u){x, y}, new);
+    SpreadSheetSetCell(hand->srcSheet, (v2u){x, y}, new);
+    SpreadSheetSetCell(hand->dispSheet, (v2u){x, y}, new);
 }
 
 
@@ -464,20 +498,24 @@ int main(int argc, char* argv[]) {
         .mem = GlobalAllocatorCreate(),
     };
 
-    //actual spreadsheet
-    SpreadSheet sheet = (SpreadSheet){
+    // actual spreadsheet
+	// spreadsheet with true values
+    SpreadSheet srcSheet = (SpreadSheet){
+        .mem = GlobalAllocatorCreate(),
+    };
+    SpreadSheet dispSheet = (SpreadSheet){
         .mem = GlobalAllocatorCreate(),
     };
 
     
-    // if you want different keybinds u change that here
     RenderHandler handler = {
         .mem = GlobalAllocatorCreate(),
         .ch = 0,
         .base = {0, 0},
         .cursor = {0, 0},
         .state = NORMAL,
-        .sheet = &sheet,
+        .srcSheet = &srcSheet,
+        .dispSheet = &srcSheet,
         .str = &str,
         .keybinds = keybinds_hjkl,
         .edit = {
@@ -509,7 +547,7 @@ int main(int argc, char* argv[]) {
     if (argc >= 2) {
         FILE* csv = fopen(argv[1], "r"); 
         if (csv) {
-            csv_load_file(csv, &str, &sheet);
+            csv_load_file(csv, &str, &srcSheet);
             handler.sheetname = (SString){.data = (i8*)argv[1], .size = strlen(argv[1])};
         }
     }
@@ -523,6 +561,7 @@ int main(int argc, char* argv[]) {
 
     // rendering loop
     while (1) {
+		usleep(25600);
         erase();
         //rendering
 
@@ -546,7 +585,7 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                SString info = cellDisplay(&sheet, &str,
+                SString info = cellDisplay(&dispSheet, &str,
                                            (v2u){handler.base.x + i, handler.base.y + j},
                                            CELL_WIDTH - 2);
 
@@ -558,7 +597,7 @@ int main(int argc, char* argv[]) {
 
         // currently selected cell
         attron(A_REVERSE);
-        SString info = cellDisplay(&sheet, &str, (v2u)
+        SString info = cellDisplay(&dispSheet, &str, (v2u)
                 {handler.cursor.x + handler.base.x, handler.cursor.y + handler.base.y}, CELL_WIDTH - 2);
 
         drawBox((v2u){(handler.cursor.x) * CELL_WIDTH + MARGIN_LEFT, (handler.cursor.y) * CELL_HEIGHT + MARGIN_TOP},

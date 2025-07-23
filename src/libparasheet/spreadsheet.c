@@ -139,7 +139,7 @@ u32 SheetBlockGet(SpreadSheet* sheet, v2u pos) {
 void SheetBlockDelete(SpreadSheet* sheet, v2u pos) {
 	u32 idx = hash((u8*)&pos, sizeof(pos)) % sheet->cap;
 
-	for (u32 i = 0; i < sheet->size; i++) {
+	for (u32 i = 0; i < sheet->cap; i++) {
 		v2u curr = sheet->keys[idx];
 		if (CMPV2(curr, pos)) {
 			FreeBlock(sheet, sheet->values[idx]);
