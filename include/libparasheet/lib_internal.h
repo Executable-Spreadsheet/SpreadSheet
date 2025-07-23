@@ -125,17 +125,13 @@ typedef struct SpreadSheet {
 	u32 bsize;
     u32 fsize;
     u32 bcap;
-
-    SString* stringbuf;
-    u32 ssize;
-    u32 scap;
-
 } SpreadSheet;
 
 void SpreadSheetSetCell(SpreadSheet* sheet, v2u pos, CellValue value);
 CellValue* SpreadSheetGetCell(SpreadSheet* sheet, v2u pos);
 
 void SpreadSheetClearCell(SpreadSheet* sheet, v2u pos);
+void SpreadSheetClear(SpreadSheet* sheet);
 void SpreadSheetFree(SpreadSheet* sheet);
 
 // INFO(ELI): I decided to have these return indicies

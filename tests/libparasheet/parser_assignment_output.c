@@ -35,7 +35,7 @@ int main() {
         .mem = allocator,
     };
 
-	testString("= int x;\n x = 2;\n return x + 2;", &s, allocator);
+	testString("= let x : int;\n x = 2;\n return x + 2;", &s, allocator);
 
     StringFree(&s);
 	return 0;

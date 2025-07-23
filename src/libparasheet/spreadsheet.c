@@ -229,3 +229,17 @@ void SpreadSheetFree(SpreadSheet* sheet) {
 	Free(sheet->mem, sheet->keys, sheet->cap * sizeof(v2u));
 	Free(sheet->mem, sheet->values, sheet->cap * sizeof(u32));
 }
+
+void SpreadSheetClear(SpreadSheet* sheet) {
+    sheet->size = 0;
+    sheet->tomb = 0;
+    memset(sheet->keys, UINT32_MAX, sheet->cap * sizeof(v2u));
+
+    sheet->fsize = 0;
+    sheet->bsize = 0;
+    memset(sheet->blockpool, 0, sheet->bcap * sizeof(Block));
+
+    for (u32 i = 0; i < sheet->bcap; i++) {
+        FreeBlock(sheet, i);
+    }
+}
