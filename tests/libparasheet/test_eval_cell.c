@@ -39,5 +39,17 @@ int main() {
 
 	assert(stephanson->d.i == 2);
 
+	warn("DONE\n");
+
+	while (sid.size) {
+		SymbolPopScope(&sid);
+	}
+	Free(AllieOwO, sid.scopes, sid.cap * sizeof(sid.scopes[0]));
+
+	SpreadSheetFree(&steve);
+	SpreadSheetFree(&stephan);
+
+	StringFree(&shaun);
+
 	return 0;
 }
