@@ -220,6 +220,7 @@ void EvaluateCell(EvalContext ctx) {
 	// cell knows if it is a number (int/float) or a string. parse string.
 
 	EvalContext evalContext = ctx;
+	SymbolPushScope(ctx.table);
 
 	switch (sourceCell->t) {
 	case CT_INT:
@@ -227,20 +228,20 @@ void EvaluateCell(EvalContext ctx) {
 		SpreadSheetSetCell(outSheet, pos, *sourceCell);
 		break;
 	default: {
-
 		SString input = StringGet(strTable, sourceCell->d.index);
 
 		// is a string
 		// invoke the tokenizer
 		TokenList* tokens =
 			Tokenize((const char*)input.data, strTable, allocator);
-		//			if (tokens)
 		// run the parser on the tokens
 		AST ast = BuildASTFromTokens(tokens, strTable, allocator);
 		// run the evaluator on the ast
 		CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
 		SpreadSheetSetCell(outSheet, pos, result);
 		// error checking
+		DestroyTokenList(&tokens);
+		ASTFree(&ast);
 	} break;
 	}
 	/*
