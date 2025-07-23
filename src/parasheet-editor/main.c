@@ -532,7 +532,7 @@ int main(int argc, char* argv[]) {
         .cursor = {0, 0},
         .state = NORMAL,
         .srcSheet = &srcSheet,
-        .dispSheet = &srcSheet,
+        .dispSheet = &dispSheet,
         .str = &str,
         .keybinds = keybinds_hjkl,
         .edit = {
@@ -565,6 +565,7 @@ int main(int argc, char* argv[]) {
         FILE* csv = fopen(argv[1], "r"); 
         if (csv) {
             csv_load_file(csv, &str, &srcSheet);
+            csv_load_file(csv, &str, &dispSheet);
             handler.sheetname = (SString){.data = (i8*)argv[1], .size = strlen(argv[1])};
         }
     }
