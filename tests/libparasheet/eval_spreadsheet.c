@@ -11,10 +11,28 @@
 #define PRINT_TOKENS 1
 #define PRINT_AST 1
 
-void testString(char* input, StringTable* table, Allocator allocator){
+void testString(char* input, CellValue expected,
+		StringTable* strTable, SymbolTable* symTable, Allocator allocator){
 	SpreadSheet testSheet = {
 		.mem = allocator,
 	};
+	SpreadSheet outputSheet = {
+		.mem = allocator,
+	};
+	
+	EvaluateCell((EvalContext){
+		.srcSheet = &testSheet,
+		.inSheet = &outputSheet,
+		.outSheet = &outputSheet,
+		.currentX = 0,
+		.currentY = 0,
+		.mem = allocator,
+		.str = strTable,
+		.table = symTable,
+	});
+	
+	// assert cell value is equal to expected
+	assert();
 }
 
 // Optional helper
