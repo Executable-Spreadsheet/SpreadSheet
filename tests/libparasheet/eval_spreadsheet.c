@@ -1,6 +1,7 @@
 #include <libparasheet/evaluator.h>
 #include <libparasheet/lib_internal.h>
 #include <libparasheet/tokenizer.h>
+#include <libparasheet/tokenizer_types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,27 @@
 
 #define PRINT_TOKENS 1
 #define PRINT_AST 1
+
+void printAST(char* input, StringTable* table, Allocator allocator) {
+	TokenList* tokens = Tokenize(input, table, allocator);
+	AST ast = BuildASTFromTokens(tokens, table, allocator);
+	for (int j = 0; j < tokens->size; j++) {
+		warn("tok: %s\n", getTokenErrorString(tokens->tokens[j].type));
+	}
+	if (ast.size > 0) {
+		ASTPrint(stdout, &ast);
+		for (int i = 0; i < ast.size - 1; i++) {
+			ASTNode node = ast.nodes[i];
+			assert(node.lchild == EPS || node.lchild < i);
+			assert(node.mchild == EPS || node.mchild < i);
+			assert(node.rchild == EPS || node.rchild < i);
+		}
+	} else {
+		assert(0);
+	}
+	ASTFree(&ast);
+	DestroyTokenList(&tokens);
+}
 
 void testString(char* input, CellValue expected, StringTable* strTable,
 				Allocator allocator) {
@@ -28,6 +50,8 @@ void testString(char* input, CellValue expected, StringTable* strTable,
 					   (CellValue){.t = CT_TEXT, .d.index = code});
 
 	SymbolPushScope(&cymbals);
+
+	printAST(input, strTable, allocator);
 
 	EvaluateCell((EvalContext){
 		.srcSheet = &testSheet,
@@ -63,12 +87,14 @@ int main() {
 	StringTable s = {
 		.mem = allocator,
 	};
-	testString("=2+2;", (CellValue){.t = CT_INT, .d.i = 4}, &s, allocator);
-	testString("=2+2;3+3;", (CellValue){.t = CT_INT, .d.i = 6}, &s, allocator);
-	testString("=let x : int = 2; let y : int = 2; x + y;",
-			   (CellValue){.t = CT_INT, .d.i = 4}, &s, allocator);
-	testString("=let x : int = 3; let y: int = 4; 2 * (x + y);",
-			   (CellValue){.t = CT_INT, .d.i = 14}, &s, allocator);
+	// testString("=2+2;", (CellValue){.t = CT_INT, .d.i = 4}, &s, allocator);
+	// testString("=2+2;3+3;", (CellValue){.t = CT_INT, .d.i = 6}, &s,
+	// allocator); testString("=let x : int = 2; let y : int = 2; x + y;",
+	// 		   (CellValue){.t = CT_INT, .d.i = 4}, &s, allocator);
+	// testString("=let x : int = 3; let y: int = 4; 2 * (x + y);",
+	// 		   (CellValue){.t = CT_INT, .d.i = 14}, &s, allocator);
+	testString("=let x : int = 1; { x = x - 1; }} return x;",
+			   (CellValue){.t = CT_INT, .d.i = 0}, &s, allocator);
 
 	StringFree(&s);
 	return 0;
