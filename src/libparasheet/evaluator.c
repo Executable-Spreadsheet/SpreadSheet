@@ -24,8 +24,8 @@ CellValue evaluateLiteral(ASTNode* node) {
 		v.t = CT_FLOAT;
 		v.d.f = node->data.f;
 	} else {
-		fprintf(stderr, "Invalid literal\n");
-		exit(1);
+		err("Invalid literal");
+        panic();
 	}
 	return v;
 }
@@ -206,7 +206,6 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 void EvaluateCell(EvalContext ctx) {
 
 	SpreadSheet* srcSheet = ctx.srcSheet;
-	SpreadSheet* inSheet = ctx.inSheet;
 	SpreadSheet* outSheet = ctx.outSheet;
 	u32 cellX = ctx.currentX;
 	u32 cellY = ctx.currentY;
@@ -222,66 +221,38 @@ void EvaluateCell(EvalContext ctx) {
 	EvalContext evalContext = ctx;
 	SymbolPushScope(ctx.table);
 
-	switch (sourceCell->t) {
-	case CT_INT:
-	case CT_FLOAT:
-		SpreadSheetSetCell(outSheet, pos, *sourceCell);
-		break;
-	default: {
-		SString input = StringGet(strTable, sourceCell->d.index);
+    switch (sourceCell->t) {
+        case CT_INT:
+        case CT_FLOAT:
+            SpreadSheetSetCell(outSheet, pos, *sourceCell);
+            break;
+        default: {
+            SString input = StringGet(strTable, sourceCell->d.index);
 
-		// is a string
-		// invoke the tokenizer
-		TokenList* tokens =
-			Tokenize((const char*)input.data, strTable, allocator);
-		// run the parser on the tokens
-		AST ast = BuildASTFromTokens(tokens, strTable, allocator);
-		// run the evaluator on the ast
-		CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
-		SpreadSheetSetCell(outSheet, pos, result);
-		// error checking
-		DestroyTokenList(&tokens);
-		ASTFree(&ast);
-	} break;
+            // is a string
+            // invoke the tokenizer
+            TokenList* tokens =
+                Tokenize((const char*)input.data, strTable, allocator);
+            // run the parser on the tokens
+            AST ast = BuildASTFromTokens(tokens, strTable, allocator);
+            // run the evaluator on the ast
+            ASTPrint(logfile, &ast);
+            CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
+            SpreadSheetSetCell(outSheet, pos, result);
+            // error checking
+            DestroyTokenList(&tokens);
+            ASTFree(&ast);
+        } break;
 	}
-	/*
-	// If already evaluated, return
-	CellValue* outCell = SpreadSheetGetCell(outSheet, pos);
-	if (outCell->t != CT_EMPTY) return;
-
-	// Get formula/code from source sheet
-	CellValue* srcCell = SpreadSheetGetCell(srcSheet, pos);
-
-	// If it's not code (e.g. it's a literal value), just copy it directly
-	if (srcCell->t != CT_CODE) {
-		*outCell = *srcCell;
-		return;
-	}
-
-	// 🔧 Reconstruct AST* from StrID
-	uintptr_t raw = ((uintptr_t)srcCell->d.index.gen << 32) |
-	srcCell->d.index.idx; AST* tree = (AST*)raw;
-
-	if (!tree) return;
-
-	u32 rootIndex = tree->size - 1;  // Root is always the last node
-	*/
-	// EvalContext ctx = {
-	//     .srcSheet = srcSheet,
-	//     .inSheet = inSheet,
-	//     .outSheet = outSheet,
-	//     .currentX = cellX,
-	//     .currentY = cellY,
-	// };
-
-	//// ✅ Declare and assign result before use
-	// CellValue result = evaluateNode(tree, rootIndex, &ctx);
-	// SpreadSheetSetCell(outSheet, pos, result);
 }
 
 static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext ctx) {
-	ctx.currentX = ASTGet(tree, node->lchild).data.i;
-	ctx.currentY = ASTGet(tree, node->mchild).data.i;
+
+    evaluateNode(tree, node->lchild, ctx); 
+    evaluateNode(tree, node->mchild, ctx); 
+
+    ctx.currentX = ASTGet(tree, node->lchild).data.i;
+    ctx.currentY = ASTGet(tree, node->mchild).data.i;
 
 	// Recursively evaluate the referenced cell
 	EvaluateCell(ctx);

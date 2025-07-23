@@ -36,6 +36,7 @@ int main() {
     };
 
 	testString("= let x : int;\n x = 2;\n return x + 2;", &s, allocator);
+	testString("= return [0,0] + 2;", &s, allocator);
 
     StringFree(&s);
 	return 0;

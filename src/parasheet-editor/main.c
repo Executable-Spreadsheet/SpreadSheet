@@ -355,9 +355,10 @@ void handleKey(RenderHandler* handler){
 
 				EvaluateCell(
 					(EvalContext){
+                        .mem = GlobalAllocatorCreate(),
 						.srcSheet = handler->srcSheet,
 						.inSheet = handler->dispSheet,
-						.outSheet = &tempSheet,
+						.outSheet = handler->dispSheet,
                         .str = handler->str,
                         .table = &sym,
 						.currentX = handler->cursor.x,
@@ -371,12 +372,12 @@ void handleKey(RenderHandler* handler){
                 Free(sym.mem, sym.scopes, sym.cap * sizeof(SymbolMap));
 
 				// copies values from tempSheet to dispSheet after execution is done
-				CellValue* transfer;
-				for (int i = 0; i < tempSheet.size; i++){
-					transfer = SpreadSheetGetCell(&tempSheet, tempSheet.keys[i]);
-					SpreadSheetSetCell(handler->dispSheet, tempSheet.keys[i], *transfer);
-				}
-				SpreadSheetFree(&tempSheet);
+				//CellValue* transfer;
+				//for (int i = 0; i < tempSheet.size; i++){
+				//	transfer = SpreadSheetGetCell(&tempSheet, tempSheet.keys[i]);
+				//	SpreadSheetSetCell(handler->dispSheet, tempSheet.keys[i], *transfer);
+				//}
+				//SpreadSheetFree(&tempSheet);
 			}
             break;
         case EDIT:
