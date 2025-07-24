@@ -1,3 +1,28 @@
+# Parasheet
+
+## Installation Guide
+Clone this repository from the main branch.
+Edit the configuration file, called `config.txt`, in the main directory.
+Then, run "`make editor-run`" in your terminal of choice.
+
+## Config file
+
+The config file looks like this:
+```
+editor
+keybind
+```
+
+After editor, write the command used to open a new terminal window and open a text editor. The %s is where the filename would be. It should be separated from the word editor by a space. Be careful when writing this command, as we do not validate the command for you, and it does run in your terminal.
+
+After keybind, write the keybind you would prefer. The options are hjkl, wasd, and arrow.
+
+## Usage
+The editor has multiple modes:
+Press : to enter terminal mode. Press ESC to return to normal mode.
+In normal mode, 'r' will run the current cell. 'ENTER' will edit the currently selected cell using the command specified in the config file. 'q' will close the editor.
+
+
 
 Updated: today
 
