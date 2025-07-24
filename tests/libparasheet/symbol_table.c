@@ -57,8 +57,8 @@ int main() {
     print(stdout, "Table:\n");
 	for (u32 i = 0; i < 15; i++) {
 		StrID insert = {.idx = i, .gen = 1};
-		SymbolEntry e = SymbolGet(&t, insert);
-		print(stdout, "\t(%d %d %d)\n", i, e.type, e.data.d.i);
+		SymbolEntry* e = SymbolGet(&t, insert);
+		print(stdout, "\t(%d %d %d)\n", i, e->type, e->data.d.i);
 	}
 
 	SymbolPopScope(&t);
@@ -66,8 +66,9 @@ int main() {
     print(stdout, "Table:\n");
 	for (u32 i = 0; i < 15; i++) {
 		StrID insert = {.idx = i, .gen = 1};
-		SymbolEntry e = SymbolGet(&t, insert);
-		print(stdout, "\t(%d %d %d)\n", i, e.type, e.data.d.i);
+		SymbolEntry* e = SymbolGet(&t, insert);
+        if (e) print(stdout, "\t(%d %d %d)\n", i, e->type, e->data.d.i);
+        print(stdout, "\n");
 	}
 
     SymbolPopScope(&t);

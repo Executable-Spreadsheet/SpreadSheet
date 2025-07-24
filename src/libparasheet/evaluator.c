@@ -278,6 +278,8 @@ void EvaluateCell(EvalContext ctx) {
 	SymbolPushScope(ctx.table);
 
     switch (sourceCell->t) {
+        case CT_EMPTY:
+            return;
         case CT_INT:
         case CT_FLOAT:
             SpreadSheetSetCell(outSheet, pos, *sourceCell);
