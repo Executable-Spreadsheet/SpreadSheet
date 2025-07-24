@@ -219,7 +219,7 @@ void runCommand(RenderHandler* hand) {
     
     log("command: \"%s\"", trimmed);
     if (SStrCmp(trimmed, sstring("save")) == 0) {
-        csv_export_file(hand->sheetname, hand->srcSheet, hand->str);
+        if (hand->sheetname[0]) csv_export_file(hand->sheetname, hand->srcSheet, hand->str);
     }
 
     SString export = sstring("export");
@@ -487,6 +487,12 @@ void ReadBuffer(RenderHandler* hand, SString name) {
 
     print(logfile, "%s\n", (SString){.data = (i8*)data, .size = info.st_size});
 
+    CellValue* c = SpreadSheetGetCell(hand->srcSheet, (v2u){x,y});
+    if (c && c->t == CT_TEXT) {
+        SString text = StringGet(hand->str, c->d.index);
+        Free(hand->mem, text.data, text.size); 
+    }
+
     CellValue new = {0};
 
     if (info.st_size == 0) {
@@ -697,7 +703,7 @@ SString cellDisplay(RenderHandler* handle, v2u pos, u32 maxlen) {
 
     //prefer display sheet, src sheet as fallback
     CellValue* cell = SpreadSheetGetCell(handle->dispSheet, pos);
-    if (!cell) cell = SpreadSheetGetCell(handle->srcSheet, pos);
+    if (!cell || cell->t == CT_EMPTY) cell = SpreadSheetGetCell(handle->srcSheet, pos);
     if (!cell) {
         return (SString){NULL, 0};
     }

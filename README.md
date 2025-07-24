@@ -22,6 +22,14 @@ The editor has multiple modes:
 Press : to enter terminal mode. Press ESC to return to normal mode.
 In normal mode, 'r' will run the current cell. 'ENTER' will edit the currently selected cell using the command specified in the config file. 'q' will close the editor.
 
+There are also terminal commands accessed by typing the following:
+
+`:open <filename>` loads a csv
+`:rename <new name>` renames the current sheet
+`:export <filename>` exports the display sheet
+`:save` saves current srcsheet to a csv
+
+You can see the current command in the bottom left above the status line.
 
 
 Updated: today

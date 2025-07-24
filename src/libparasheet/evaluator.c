@@ -195,7 +195,7 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 	}
 	case AST_FOR:
 		err("Control flow '%d' not implemented yet\n", node->op);
-		exit(1);
+        panic();
 
 	case AST_DECLARE_VARIABLE: {
 		SymbolEntry e = {
@@ -214,6 +214,8 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 	case AST_ASSIGN_VALUE: {
 		CellValue lhs = evaluateNode(tree, node->lchild, ctx);
 		CellValue rhs = evaluateNode(tree, node->mchild, ctx);
+
+        (void)lhs;
 
 		StrID var = ASTGet(tree, node->lchild).data.s;
 		log("assign: %d", StringGet(ctx.str, var));
@@ -256,12 +258,11 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 	} break;
 	case AST_INT_TYPE:
 	case AST_FLOAT_TYPE:
-		fprintf(stderr,
-				"Variable/Type logic not implemented yet in evaluator\n");
-		exit(1);
+		err("Variable/Type logic not implemented yet in evaluator");
+		panic();
 
 	default:
-		err("Unhandled AST node type: %d\n", node->op);
+		err("Unhandled AST node type: %d", node->op);
 		panic();
 	}
 }
@@ -284,45 +285,62 @@ void EvaluateCell(EvalContext ctx) {
 	// Eli's code checks for numbers at entry into sheet from file.
 	// cell knows if it is a number (int/float) or a string. parse string.
 
+    if (!sourceCell || sourceCell->t == CT_EMPTY) return;
+
 	EvalContext evalContext = ctx;
 	SymbolPushScope(ctx.table);
 
-	switch (sourceCell->t) {
-	case CT_INT:
-	case CT_FLOAT:
-		SpreadSheetSetCell(outSheet, pos, *sourceCell);
-		break;
-	default: {
-		SString input = StringGet(strTable, sourceCell->d.index);
+    switch (sourceCell->t) {
+        case CT_INT:
+        case CT_FLOAT:
+            SpreadSheetSetCell(outSheet, pos, *sourceCell);
+            break;
+        default: {
+            SString input = StringGet(strTable, sourceCell->d.index);
 
-		// is a string
-		// invoke the tokenizer
-		TokenList* tokens =
-			Tokenize((const char*)input.data, strTable, allocator);
-		// run the parser on the tokens
-		AST ast = BuildASTFromTokens(tokens, strTable, allocator);
-		// run the evaluator on the ast
-		ASTPrint(logfile, &ast);
-		CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
-		SpreadSheetSetCell(outSheet, pos, result);
-		// error checking
-		DestroyTokenList(&tokens);
-		ASTFree(&ast);
-	} break;
-	}
+            // is a string
+            // invoke the tokenizer
+            TokenList* tokens =
+                Tokenize((const char*)input.data, strTable, allocator);
+
+            // run the parser on the tokens
+            AST ast = BuildASTFromTokens(tokens, strTable, allocator);
+
+            if (!ast.size) { 
+                DestroyTokenList(&tokens);
+                return;
+            }
+
+            ASTPrint(logfile, &ast);
+
+            // run the evaluator on the ast
+            CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
+            SpreadSheetSetCell(outSheet, pos, result);
+            // error checking
+            DestroyTokenList(&tokens);
+            ASTFree(&ast);
+        } break;
+    }
 }
 
 static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext ctx) {
 
-	CellValue childX = evaluateNode(tree, node->lchild, ctx);
-	CellValue childY = evaluateNode(tree, node->mchild, ctx);
+    CellValue childX = evaluateNode(tree, node->lchild, ctx);
+    CellValue childY = evaluateNode(tree, node->mchild, ctx);
 
-	ctx.currentX = childX.d.i;
-	ctx.currentY = childY.d.i;
+    ctx.currentX = childX.d.i;
+    ctx.currentY = childY.d.i;
 
 	// Recursively evaluate the referenced cell
 	EvaluateCell(ctx);
 
+    CellValue* val = SpreadSheetGetCell(ctx.outSheet, (v2u){ctx.currentX, ctx.currentY});
+    log("hit");
+
+    if (!val || val->t == CT_EMPTY) { 
+        return (CellValue){0};
+    }
+
 	// Return the already-computed result
-	return *SpreadSheetGetCell(ctx.outSheet, (v2u){ctx.currentX, ctx.currentY});
+	return *val;
 }
