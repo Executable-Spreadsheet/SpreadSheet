@@ -176,7 +176,23 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 	case AST_RETURN:
 		return evaluateNode(tree, node->lchild, ctx);
 
-	case AST_WHILE:
+	case AST_WHILE: {
+		CellValue condition = evaluateNode(tree, node->lchild, ctx);
+		bool cond = (condition.t == CT_INT)
+						? (condition.d.i != 0)
+						: (condition.t == CT_FLOAT && condition.d.f != 0.0f);
+
+		CellValue output = {};
+
+		while (cond) {
+			output = evaluateNode(tree, node->mchild, ctx); // loop body
+			condition = evaluateNode(tree, node->lchild, ctx);
+			cond = (condition.t == CT_INT)
+					   ? (condition.d.i != 0)
+					   : (condition.t == CT_FLOAT && condition.d.f != 0.0f);
+		}
+		return output;
+	}
 	case AST_FOR:
 		err("Control flow '%d' not implemented yet\n", node->op);
 		exit(1);
