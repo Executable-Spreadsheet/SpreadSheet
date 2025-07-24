@@ -75,6 +75,57 @@ static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext ctx) {
 			result.d.i = lhs.d.i / rhs.d.i;
 		break;
 
+	case AST_EQUAL:
+		if (isFloat){
+			result.d.f = lf == rf;
+			result.t = CT_INT;
+		}
+		else
+			result.d.i = lhs.d.i == rhs.d.i;
+		break;
+	case AST_LESS:
+		if (isFloat){
+			result.d.f = lf < rf;
+			result.t = CT_INT;
+		}
+		else
+			result.d.i = lhs.d.i < rhs.d.i;
+		break;
+	case AST_LESSEQ:
+		if (isFloat){
+			result.d.f = lf <= rf;
+			result.t = CT_INT;
+		}
+		else
+			result.d.i = lhs.d.i <= rhs.d.i;
+		break;
+	case AST_GREAT:
+		if (isFloat){
+			result.d.f = lf > rf;
+			result.t = CT_INT;
+		}
+		else
+			result.d.i = lhs.d.i > rhs.d.i;
+		break;
+
+	case AST_GREATEQ:
+		if (isFloat){
+			result.d.f = lf >= rf;
+			result.t = CT_INT;
+		}
+		else
+			result.d.i = lhs.d.i >= rhs.d.i;
+		break;
+
+	case AST_NOT:
+		if (isFloat){
+			result.d.f = lf != rf;
+			result.t = CT_INT;
+		}
+		else
+			result.d.i = lhs.d.i != rhs.d.i;
+		break;
+
 	default:
 		fprintf(stderr, "Unknown binary op: %u\n", node->op);
 		exit(1);
@@ -99,6 +150,12 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 	case AST_SUB:
 	case AST_MUL:
 	case AST_DIV:
+	case AST_EQUAL:
+	case AST_LESS:
+	case AST_LESSEQ:
+	case AST_GREAT:
+	case AST_GREATEQ:
+	case AST_NOT:
 		return evaluateBinaryOp(tree, node, ctx);
 
 	case AST_SEQ: {
