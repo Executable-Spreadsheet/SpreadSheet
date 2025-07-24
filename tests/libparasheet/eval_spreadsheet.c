@@ -87,14 +87,15 @@ int main() {
 	StringTable s = {
 		.mem = allocator,
 	};
-	// testString("=2+2;", (CellValue){.t = CT_INT, .d.i = 4}, &s, allocator);
-	// testString("=2+2;3+3;", (CellValue){.t = CT_INT, .d.i = 6}, &s,
-	// allocator); testString("=let x : int = 2; let y : int = 2; x + y;",
-	// 		   (CellValue){.t = CT_INT, .d.i = 4}, &s, allocator);
-	// testString("=let x : int = 3; let y: int = 4; 2 * (x + y);",
-	// 		   (CellValue){.t = CT_INT, .d.i = 14}, &s, allocator);
-	testString("=let x : int = 1; { x = x - 1; }} return x;",
-			   (CellValue){.t = CT_INT, .d.i = 0}, &s, allocator);
+	testString("=2+2;", (CellValue){.t = CT_INT, .d.i = 4}, &s, allocator);
+	testString("=2+2;3+3;", (CellValue){.t = CT_INT, .d.i = 6}, &s, allocator);
+	testString("=let x : int = 2; let y : int = 2; x + y;",
+			   (CellValue){.t = CT_INT, .d.i = 4}, &s, allocator);
+	testString("=let x : int = 3; let y: int = 4; 2 * (x + y);",
+			   (CellValue){.t = CT_INT, .d.i = 14}, &s, allocator);
+	testString("=let x : int = 2; let y : int = 0; while (x) { x = x - 1; y = "
+			   "y + 2*x; }} return y;",
+			   (CellValue){.t = CT_INT, .d.i = 2}, &s, allocator);
 
 	StringFree(&s);
 	return 0;

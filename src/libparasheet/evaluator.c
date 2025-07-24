@@ -25,7 +25,7 @@ CellValue evaluateLiteral(ASTNode* node) {
 		v.d.f = node->data.f;
 	} else {
 		err("Invalid literal");
-        panic();
+		panic();
 	}
 	return v;
 }
@@ -76,53 +76,47 @@ static CellValue evaluateBinaryOp(AST* tree, ASTNode* node, EvalContext ctx) {
 		break;
 
 	case AST_EQUAL:
-		if (isFloat){
+		if (isFloat) {
 			result.d.f = lf == rf;
 			result.t = CT_INT;
-		}
-		else
+		} else
 			result.d.i = lhs.d.i == rhs.d.i;
 		break;
 	case AST_LESS:
-		if (isFloat){
+		if (isFloat) {
 			result.d.f = lf < rf;
 			result.t = CT_INT;
-		}
-		else
+		} else
 			result.d.i = lhs.d.i < rhs.d.i;
 		break;
 	case AST_LESSEQ:
-		if (isFloat){
+		if (isFloat) {
 			result.d.f = lf <= rf;
 			result.t = CT_INT;
-		}
-		else
+		} else
 			result.d.i = lhs.d.i <= rhs.d.i;
 		break;
 	case AST_GREAT:
-		if (isFloat){
+		if (isFloat) {
 			result.d.f = lf > rf;
 			result.t = CT_INT;
-		}
-		else
+		} else
 			result.d.i = lhs.d.i > rhs.d.i;
 		break;
 
 	case AST_GREATEQ:
-		if (isFloat){
+		if (isFloat) {
 			result.d.f = lf >= rf;
 			result.t = CT_INT;
-		}
-		else
+		} else
 			result.d.i = lhs.d.i >= rhs.d.i;
 		break;
 
 	case AST_NOT:
-		if (isFloat){
+		if (isFloat) {
 			result.d.f = lf != rf;
 			result.t = CT_INT;
-		}
-		else
+		} else
 			result.d.i = lhs.d.i != rhs.d.i;
 		break;
 
@@ -182,7 +176,23 @@ CellValue evaluateNode(AST* tree, u32 index, EvalContext ctx) {
 	case AST_RETURN:
 		return evaluateNode(tree, node->lchild, ctx);
 
-	case AST_WHILE:
+	case AST_WHILE: {
+		CellValue condition = evaluateNode(tree, node->lchild, ctx);
+		bool cond = (condition.t == CT_INT)
+						? (condition.d.i != 0)
+						: (condition.t == CT_FLOAT && condition.d.f != 0.0f);
+
+		CellValue output = {};
+
+		while (cond) {
+			output = evaluateNode(tree, node->mchild, ctx); // loop body
+			condition = evaluateNode(tree, node->lchild, ctx);
+			cond = (condition.t == CT_INT)
+					   ? (condition.d.i != 0)
+					   : (condition.t == CT_FLOAT && condition.d.f != 0.0f);
+		}
+		return output;
+	}
 	case AST_FOR:
 		err("Control flow '%d' not implemented yet\n", node->op);
 		exit(1);
@@ -277,40 +287,40 @@ void EvaluateCell(EvalContext ctx) {
 	EvalContext evalContext = ctx;
 	SymbolPushScope(ctx.table);
 
-    switch (sourceCell->t) {
-        case CT_EMPTY:
-            return;
-        case CT_INT:
-        case CT_FLOAT:
-            SpreadSheetSetCell(outSheet, pos, *sourceCell);
-            break;
-        default: {
-            SString input = StringGet(strTable, sourceCell->d.index);
+	switch (sourceCell->t) {
+	case CT_EMPTY:
+		return;
+	case CT_INT:
+	case CT_FLOAT:
+		SpreadSheetSetCell(outSheet, pos, *sourceCell);
+		break;
+	default: {
+		SString input = StringGet(strTable, sourceCell->d.index);
 
-            // is a string
-            // invoke the tokenizer
-            TokenList* tokens =
-                Tokenize((const char*)input.data, strTable, allocator);
-            // run the parser on the tokens
-            AST ast = BuildASTFromTokens(tokens, strTable, allocator);
-            // run the evaluator on the ast
-            ASTPrint(logfile, &ast);
-            CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
-            SpreadSheetSetCell(outSheet, pos, result);
-            // error checking
-            DestroyTokenList(&tokens);
-            ASTFree(&ast);
-        } break;
+		// is a string
+		// invoke the tokenizer
+		TokenList* tokens =
+			Tokenize((const char*)input.data, strTable, allocator);
+		// run the parser on the tokens
+		AST ast = BuildASTFromTokens(tokens, strTable, allocator);
+		// run the evaluator on the ast
+		ASTPrint(logfile, &ast);
+		CellValue result = evaluateNode(&ast, ast.size - 1, evalContext);
+		SpreadSheetSetCell(outSheet, pos, result);
+		// error checking
+		DestroyTokenList(&tokens);
+		ASTFree(&ast);
+	} break;
 	}
 }
 
 static CellValue evaluateCellRef(AST* tree, ASTNode* node, EvalContext ctx) {
 
-    evaluateNode(tree, node->lchild, ctx); 
-    evaluateNode(tree, node->mchild, ctx); 
+	evaluateNode(tree, node->lchild, ctx);
+	evaluateNode(tree, node->mchild, ctx);
 
-    ctx.currentX = ASTGet(tree, node->lchild).data.i;
-    ctx.currentY = ASTGet(tree, node->mchild).data.i;
+	ctx.currentX = ASTGet(tree, node->lchild).data.i;
+	ctx.currentY = ASTGet(tree, node->mchild).data.i;
 
 	// Recursively evaluate the referenced cell
 	EvaluateCell(ctx);
