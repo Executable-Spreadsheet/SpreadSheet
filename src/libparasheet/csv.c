@@ -17,7 +17,7 @@ static char* trim(char* str) {
     if (*str == 0) return str;
     end = str + strlen(str) - 1;
     while (end > str && isspace(end[0])) end--;
-    *(end + 1) = 0;
+    *(end+1) = 0;
     return str;
 }
 
